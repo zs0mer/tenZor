@@ -1,35 +1,56 @@
 
 # Compilers
 CXX = g++
-LIBER = ar
+AR = ar
 
 # Flags
-CXXFLAGS = -Ofast -ffast-math # -fsanitize=address -O0 -g -march=native #-ffast-math   #-std=c++10 -O3 -Wall -g -g -fsanitize=address 
+LIB_FLAGS = -Ofast -ffast-math
+APP_INCLUDE = -Iinclude
+APP_FLAGS = -Ofast -ffast-math -pthread $(APP_INCLUDE)
+APP_LIBS = -Lbin -lTenzor -Iinclude $(APP_INCLUDE)
 
 # Paths and files
-APPNAME = bin/libZI.a
-SRCPATH = src
-OBJPATH = obj
-CPP_SRC = $(wildcard $(SRCPATH)/*.cpp)
+LIB = bin/libTenzor.a
+L_SRCPATH = src
+L_OBJPATH = bin/obj
+L_CPP_SRC = $(wildcard $(L_SRCPATH)/*.cpp)
+
+APPNAME = Demo/targets/out
+A_SRCPATH = Demo/src
+A_OBJPATH = Demo/targets/obj
+A_CPP_SRC = $(wildcard $(A_SRCPATH)/*.cpp)
 
 #object file paths
-CPP_OBJ = $(patsubst $(SRCPATH)/%.cpp, $(OBJPATH)/%.o, $(CPP_SRC))
+L_CPP_OBJ = $(patsubst $(L_SRCPATH)/%.cpp, $(L_OBJPATH)/%.o, $(L_CPP_SRC))
+A_CPP_OBJ = $(patsubst $(A_SRCPATH)/%.cpp, $(A_OBJPATH)/%.o, $(A_CPP_SRC))
 
 # Targets
 all: $(APPNAME)
 
-#build from .o
-$(APPNAME): $(CPP_OBJ) $(CUDA_OBJ)
-	$(LIBER) rcs -o $@ $^  
+app: $(APPNAME)
 
-#bulid .cpp files
-$(OBJPATH)/%.o: $(SRCPATH)/%.cpp
-	mkdir -p $(OBJPATH)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+lib: $(LIB)
 
-clean:
-	rm -rf $(APPNAME) $(OBJPATH)
+# Demo
+$(APPNAME): $(A_CPP_OBJ) $(LIB)
+	$(CXX) -o $@ $(A_CPP_OBJ) $(APP_LIBS)
 
+$(A_OBJPATH)/%.o: $(A_SRCPATH)/%.cpp
+	mkdir -p $(A_OBJPATH)
+	$(CXX) $(APP_FLAGS) -c $< -o $@
 
+# Libary
+$(LIB): $(L_CPP_OBJ)
+	$(AR) rcs $@ $^ 
 
-#konsole "make" -> (may be Vscode "make" as vell) Vscode "./out"
+$(L_OBJPATH)/%.o: $(L_SRCPATH)/%.cpp
+	mkdir -p $(L_OBJPATH)
+	$(CXX) $(LIB_FLAGS) -c $< -o $@	 
+
+clean: capp clib
+
+capp:
+	rm -rf $(APPNAME) $(A_OBJPATH) 
+
+clib:
+	rm -rf $(LIB) $(L_OBJPATH)
