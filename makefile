@@ -4,8 +4,8 @@ CXX = g++
 AR = ar
 
 # Flags
-LIB_FLAGS = -Ofast -ffast-math
 APP_INCLUDE = -Iinclude
+LIB_FLAGS = -Ofast -ffast-math $(APP_INCLUDE)
 APP_FLAGS = -Ofast -ffast-math -pthread $(APP_INCLUDE)
 APP_LIBS = -Lbin -lTenzor -Iinclude $(APP_INCLUDE)
 
