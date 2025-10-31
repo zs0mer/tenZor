@@ -33,28 +33,50 @@ namespace TZ{
     }
 
 
+    // --------------------------------------------------------
     // this is to flaten a N-D nested std::vector
     // we will use a recursive aproach
 
-    template <typename E,typename X>
-    void unroll(const std::vector<E>& v,std::vector<X>& out){
-        std::cout << "unroll vector\n";
-        out.insert(out.end(), v.begin(), v.end());
-    }
-    
-    
-    template <typename V,typename X>
-    void unroll(const std::vector<std::vector<V>>& v,std::vector<X>& out) {
-        std::cout << "unroll vector of vectors\n";
-        for (const auto& e : v) unroll(e,out);
-    }
-    
-    
     template <typename T>
     template<typename NestedVector>
     void tensor<T>::set(const NestedVector &newData){
-
+        shape = {};
+        data = {};
+        discover(newData, shape);
+        unroll(newData, data);
+        dimenson = shape;
     }
+
+    // recursive function
+    template <typename V>
+    void discover(const std::vector<std::vector<V>> &v, std::vector<int> &shape) {
+        shape.push_back(v.size());
+        discover(v[0], shape);
+    }
+
+    // base case
+    template <typename T>
+    void discover(const std::vector<T> &arr, std::vector<int> &shape) {
+        shape.push_back(arr.size())
+    }
+
+    
+    // recursive function
+    template <typename V,typename T>
+    void unroll(const std::vector<std::vector<V>> &v, std::vector<T> &out, int depth, const std::vector<int> &shape) {
+        check(shape[depth] != v.size(), "missmaching array size when seting up the tensor from nested std::vectors");
+        for (const auto& i : v) unroll(i, out, depth+1, shape);
+    }
+
+    // base case
+    template <typename T>
+    void unroll(const std::vector<T> &arr, std::vector<T> &out, int depth, const std::vector<int> &shape){
+        check(shape[depth] != arr.size(), missmaching array size when seting up the tensor from nested std::vectors);
+        out.insert(out.end(), arr.begin(), arr.end());
+    }
+    
+    // --------------------------------------------------------
+
 
 
     template<typename T>
