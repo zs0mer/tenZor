@@ -1,7 +1,8 @@
-#include "hello.hpp"
+#include "Tenzor.hpp"
 
 
 int main(){
-    helloW();
+    TZ::Tensor<int32_t> t({1});
+    t.printShape();
     return 0;
 }
