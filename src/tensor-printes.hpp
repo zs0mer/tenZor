@@ -1,6 +1,7 @@
+#pragma once
 #include <iostream>
-#include "special_functions.hpp"
-#include "Tenzor.hpp"
+#include "tenzor_utils.hpp"
+#include "tensor.hpp"
 
 namespace TZ{
 
