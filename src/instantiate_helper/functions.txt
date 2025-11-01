@@ -1,0 +1,5 @@
+Tensor(const int &, const std::vector<int> &, const std::vector<T> &);
+void set(const int &, const std::vector<int> &, const std::vector<T> &);
+int getDimenson() const;
+std::vector<int> getShape() const;
+void printShape(const std::string &) const;

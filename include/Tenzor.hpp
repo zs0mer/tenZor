@@ -101,6 +101,3 @@ namespace TZ {
     };
     
 };
-
-template<typename T>
-TZ::Tensor<T> a(T);

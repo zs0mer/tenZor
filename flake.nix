@@ -22,6 +22,7 @@
         automake
         libtool
         direnv
+        python3
       ];
 
 
