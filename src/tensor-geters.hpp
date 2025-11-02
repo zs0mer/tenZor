@@ -19,7 +19,7 @@ namespace TZ{
     //* standard get element functions with std::vector<int>
     template<typename T>
     T& Tensor<T>::get(const std::vector<int> &index){
-        CHECK(index.size() != dimension, "missmaching get array dimenson");
+        CHECK_(index.size() != dimension);
 
         long long idx = 0;
         int dim = 0;
@@ -29,7 +29,7 @@ namespace TZ{
             dim++;
         }
 
-        CHECK(idx >= data.size(), "to large index");
+        CHECK_(idx >= data.size());
 
         return data[idx];
     }

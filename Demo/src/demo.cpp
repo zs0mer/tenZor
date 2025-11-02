@@ -1,4 +1,4 @@
-/*#include "Tenzor.hpp"
+#include "Tenzor.hpp"
 
 
 int main(){
@@ -9,12 +9,12 @@ int main(){
     std::vector<int> a = {2,1};
     
     for(int i = 0; i< n; i++)
-        k += t[a];
+        k += v[1][1];
     
     std::cout << k;
     return 0;
-}*/
-#include <vector>
+}
+/*#include <vector>
 #include <iostream>
 #include <stdexcept>
 
@@ -92,3 +92,4 @@ int main() {
     std::cout << k;
     return 0;
 }
+*/
