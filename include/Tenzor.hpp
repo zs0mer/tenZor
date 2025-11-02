@@ -1,6 +1,6 @@
 #pragma once
 
-#define ERRORS = 1
+#define ERRORS 0
 
 
 

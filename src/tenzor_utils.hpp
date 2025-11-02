@@ -9,7 +9,7 @@
 
 // a function to make error handleing easier
 void _check(const bool expresson, const std::string& error, const char* file, int line, const char* func){
-    #ifdef ERRORS
+    #if ERRORS
     if(expresson){
         std::time_t now = std::time(nullptr);
         std::string time = std::ctime(&now);

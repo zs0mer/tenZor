@@ -37,6 +37,8 @@ namespace TZ {
         // data[i][j]...[k] = data[i * (shape[1] * shape[2] ... shape[n]) + j * (shape[2] * shape[3] ... shape[n]) ... + k]   (I think)
         std::vector<T> data;
 
+        void calcLookup();
+
         public:
 
         // cals the standard set method
@@ -77,9 +79,9 @@ namespace TZ {
 
         const T& get(const std::vector<int> &index)const;
 
-        T& operator[](const std::vector<int>& coord);
+        T& operator[](const std::vector<int>& index);
     
-        const T& operator[](const std::vector<int>& coord)const;
+        const T& operator[](const std::vector<int>& index)const;
         
 
         //* using std::initializer_list
@@ -88,9 +90,9 @@ namespace TZ {
 
         const T& get(const std::initializer_list<int> &index)const;
 
-        T& operator[](const std::initializer_list<int>& coord);
+        T& operator[](const std::initializer_list<int>& index);
     
-        const T& operator[](const std::initializer_list<int>& coord)const;
+        const T& operator[](const std::initializer_list<int>& index)const;
 
         // --
 

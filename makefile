@@ -3,7 +3,7 @@ CXX = g++
 
 # Flags
 APP_INCLUDE = -Iinclude
-APP_FLAGS = -O0 -g $(APP_INCLUDE) # -Ofast -ffast-math -pthread
+APP_FLAGS = -Ofast -ffast-math -pthread $(APP_INCLUDE) # -Ofast -ffast-math -pthread   -O0 -g
 
 # Paths and files
 APPNAME = Demo/targets/out

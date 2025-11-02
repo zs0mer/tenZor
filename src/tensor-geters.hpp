@@ -22,7 +22,7 @@ namespace TZ{
         CHECK(index.size() != dimension, "missmaching get array dimenson");
         long long idx = 0;
 
-        for(int i = 0; i < dimension && dimension > 3; i++){
+        for(int i = 0; i < dimension; i++){
             idx *= shape[i];
             idx += index[i];
         }
@@ -34,17 +34,7 @@ namespace TZ{
 
     template<typename T>
     const T& Tensor<T>::get(const std::vector<int> &index) const{
-        CHECK(index.size() != dimension, "missmaching get array dimenson");
-        long long idx = 0;
-
-        for(int i = 0; i < dimension; i++){
-            idx *= shape[i];
-            idx += index[i];
-        }
-
-        CHECK(idx >= data.size(), "to large index");
-
-        return data[idx];
+        return get(index);
     }
 
     template<typename T>
