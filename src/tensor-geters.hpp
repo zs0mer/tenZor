@@ -1,5 +1,4 @@
 #pragma once
-#include "tenzor_utils.hpp"
 #include "tensor.hpp"
 
 namespace TZ{

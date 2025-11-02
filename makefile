@@ -3,7 +3,7 @@ CXX = g++
 
 # Flags
 APP_INCLUDE = -Iinclude
-APP_FLAGS = -Ofast -ffast-math -pthread $(APP_INCLUDE)
+APP_FLAGS = -O0 -g $(APP_INCLUDE) # -Ofast -ffast-math -pthread
 
 # Paths and files
 APPNAME = Demo/targets/out
@@ -13,7 +13,7 @@ CPP_SRC = $(wildcard $(SRCPATH)/*.cpp)
 CPP_OBJ = $(patsubst $(SRCPATH)/%.cpp, $(OBJPATH)/%.o, $(CPP_SRC))
 
 # Target
-all: $(APPNAME)
+all: clean $(APPNAME)
 
 $(APPNAME): $(CPP_OBJ)
 	mkdir -p $(dir $@)

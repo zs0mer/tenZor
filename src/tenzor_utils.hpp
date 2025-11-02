@@ -2,14 +2,13 @@
 #include <string>
 #include <iostream>
 #include <ctime>
-#include "tensor.hpp"
 
 #define CHECK(expresson, error) _check((expresson), (error), __FILE__, __LINE__, __func__)
 #define CHECK_(expresson) _check((expresson), "unexpected", __FILE__, __LINE__, __func__)
 
 
 // a function to make error handleing easier
-inline void check_impl(const bool expresson, const std::string& error, const char* file, int line, const char* func){
+void _check(const bool expresson, const std::string& error, const char* file, int line, const char* func){
     if(expresson){
         std::time_t now = std::time(nullptr);
         std::string time = std::ctime(&now);

@@ -1,8 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
-
-inline static void _check(const bool expresson, const std::string& error, const char* file, int line, const char* func);
+#include "tenzor_utils.hpp"
 
 // --------------------------------------------------
 // helper functions for the setter
@@ -42,19 +41,19 @@ namespace TZ {
         public:
 
         // cals the standard set method
-        Tensor(const int &newDimenson, const std::vector<int> &newShape, const std::vector<T> &newData);
+        explicit Tensor(const int &newDimenson, const std::vector<int> &newShape, const std::vector<T> &newData);
 
         // just cals the set method that unroll a nested std::vector
-        // sadly I have to put the definition in here as well
         template <typename NestedVector>
         Tensor(const NestedVector &newData);
+        
+
 
         // standard set with flat std::vector
         void set(const int &newDimenson, const std::vector<int> &newShape, const std::vector<T> &newData);
 
         // set with multiple std::vectors nested
         // for example: {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}
-        // sadly I have to put the definition in here as well
         template <typename NestedVector>
         void set(const NestedVector &newData);
 
