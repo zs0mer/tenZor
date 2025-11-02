@@ -1,5 +1,4 @@
 #pragma once
-#include "tensor.hpp"
 
 
 namespace TZ{
@@ -8,8 +7,8 @@ namespace TZ{
 
     // the standard constructor
     template<typename T>
-    Tensor<T>::Tensor(const int &newDimenson, const std::vector<int> &newShape, const std::vector<T> &newData){
-        set(newDimenson, newShape, newData);
+    Tensor<T>::Tensor(const std::vector<int> &newShape, const std::vector<T> &newData){
+        set(newShape, newData);
     }
 
     // using nested std::vectors
@@ -19,30 +18,33 @@ namespace TZ{
         set(newData);
     }
 
+    template<typename T>
+    Tensor<T>::Tensor(const std::vector<int> &newShape, const int &vall){
+        set(newShape, vall);
+    }
+
     // -------------------------------------------------------
     // setters
 
     // standard set implement
     template<typename T>
-    void Tensor<T>::set(const int &newDimenson, const std::vector<int> &newShape, const std::vector<T> &newData){
-        // check if input is correct
-        CHECK(newDimenson != newShape.size(), "missmach beetwen new dimension and new shape-array size");
+    void Tensor<T>::set(const std::vector<int> &newShape, const std::vector<T> &newData){
 
-        long long elementNumber = 1;
+        long long size = 1;
         for(const int& i : newShape)
-            elementNumber *= i;
+            size *= i;
         
-        CHECK(elementNumber != newData.size(), "missmach beetwen new data size and expected size");
+        CHECK(size != newData.size(), "missmach beetwen new data size and expected size");
 
         // sets the input
-        dimension = newDimenson;
+        dimension = newShape.size();
         shape = newShape;
         data = newData;
     }
 
 
     // -----
-    // set but with one std::vectors
+    //* set but with one std::vectors
     // unrolling nested std::vectors
 
     // base case
@@ -81,4 +83,15 @@ namespace TZ{
 
     // -----
 
+    template<typename T>
+    void Tensor<T>::set(const std::vector<int> &newShape, const int &vall){
+        dimension = newShape.size();
+        shape = newShape;
+        
+        long long size = 1;
+        for(int &i : shape)
+            size *= i;
+
+        data.assign(size, vall);
+    }
 };

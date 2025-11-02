@@ -1,5 +1,4 @@
 #pragma once
-#include "tensor.hpp"
 
 namespace TZ{
 
@@ -10,7 +9,7 @@ namespace TZ{
             return;
         }
 
-        std::cout << name << "Shape: \n{" << shape[0];
+        std::cout << name << " shape: \n{" << shape[0];
         for(int i = 1; i < shape.size(); i++)
             std::cout << ", " << shape[i];
         
