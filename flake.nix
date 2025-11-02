@@ -22,7 +22,7 @@
         automake
         libtool
         direnv
-        python3
+        linuxPackages_latest.perf
       ];
 
 
