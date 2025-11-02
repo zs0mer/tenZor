@@ -6,8 +6,9 @@ int main(){
     std::vector<std::vector<int>> v = {{3,2},{2,3},{1,4}};
     int n = 5000000;
     int a = 0;
-    for(int i = 0; i < n; i++){
-        a = v[0][1];
-    }
+    
+    for(int i = 0; i< n; i++)
+        t[{1,2}];
+    
     return 0;
 }

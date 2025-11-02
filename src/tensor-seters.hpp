@@ -40,6 +40,7 @@ namespace TZ{
         dimension = newShape.size();
         shape = newShape;
         data = newData;
+        calcLookup();
     }
 
 
@@ -49,11 +50,12 @@ namespace TZ{
 
     // base case
     template <typename T>
-    static void discover(const T &arr, std::vector<int> &shape) {}
+    void Tensor<T>::discover(const T &arr, std::vector<int> &shape) {}
 
     // recursive function
+    template <typename T>
     template <typename V>
-    static void discover(const std::vector<V> &v, std::vector<int> &shape) {
+    void Tensor<T>::discover(const std::vector<V> &v, std::vector<int> &shape) {
         CHECK(v.size() == 0, "nested std::vector size is 0");
         shape.push_back(v.size());
         discover(v[0], shape);
@@ -62,11 +64,12 @@ namespace TZ{
     
     // base case
     template <typename T>
-    static void unroll(const T &v, std::vector<T> &out, int depth, const std::vector<int> &shape){out.push_back(v);}
+    void Tensor<T>::unroll(const T &v, std::vector<T> &out, int depth, const std::vector<int> &shape){out.push_back(v);}
 
     // recursive function
-    template <typename V,typename T>
-    static void unroll(const std::vector<V> &v, std::vector<T> &out, int depth, const std::vector<int> &shape) {
+    template <typename T>
+    template <typename V>
+    void Tensor<T>::unroll(const std::vector<V> &v, std::vector<T> &out, int depth, const std::vector<int> &shape) {
         CHECK(shape[depth] != v.size(), "missmaching array size when seting up the tensor from nested std::vectors");
         for (const auto& i : v) unroll(i, out, depth+1, shape);
     }
@@ -79,6 +82,7 @@ namespace TZ{
         discover(newData, shape);
         unroll(newData, data, 0, shape);
         dimension = shape.size();
+        calcLookup();
     }
 
     // -----
@@ -93,7 +97,35 @@ namespace TZ{
             size *= i;
 
         data.assign(size, vall);
+        calcLookup();
     }
 
+
+    // when changing the tensor we have to recalculate the lookup vals
+    template<typename T>
+    void Tensor<T>::calcLookup(){
+        long long size = 0;
+        for(int i = dimension-2; i >= 0; i--)
+            size = (size + 1) * shape[i];
+
+        size++;
+        lookup.assign(size, 1);
+
+        long long t = 1;
+        long long k = 1;
+        for(int i = 0; i < dimension-2; i++){
+            for(int j = 0; j < shape[i]*k; j++)
+                lookup[t+j] = j*shape[i+1] + (t + k*shape[i]);
+            
+            t += k*shape[i];
+            k = k*shape[i];
+        }
+
+        // this is only for the last segment, to get the correct index
+        for(int j = 0; j < shape[dimension-2]*k; j++)
+                lookup[t+j] = j*shape[dimension-1];
+    }
+
+    
 
 };

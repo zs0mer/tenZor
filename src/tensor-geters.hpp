@@ -20,11 +20,13 @@ namespace TZ{
     template<typename T>
     T& Tensor<T>::get(const std::vector<int> &index){
         CHECK(index.size() != dimension, "missmaching get array dimenson");
-        long long idx = 0;
 
-        for(int i = 0; i < dimension; i++){
-            idx *= shape[i];
-            idx += index[i];
+        long long idx = 0;
+        int dim = 0;
+
+        while(dim != dimension){
+            idx = lookup[idx] + index[dim];
+            dim++;
         }
 
         CHECK(idx >= data.size(), "to large index");

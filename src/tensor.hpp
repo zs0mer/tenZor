@@ -37,6 +37,10 @@ namespace TZ {
         // data[i][j]...[k] = data[i * (shape[1] * shape[2] ... shape[n]) + j * (shape[2] * shape[3] ... shape[n]) ... + k]   (I think)
         std::vector<T> data;
 
+        // a way to get elements faster in the tensor
+        // the first one is not important
+        std::vector<long long> lookup;
+
         void calcLookup();
 
         public:
@@ -102,6 +106,19 @@ namespace TZ {
         // if the tensor scalar then prints:
         // {name} is scalar
         void printShape(const std::string &name = "tensor")const;
+
+
+        private:
+
+        void discover(const T &arr, std::vector<int> &shape);
+
+        template <typename V>
+        void discover(const std::vector<V> &v, std::vector<int> &shape);
+
+        void unroll(const T &v, std::vector<T> &out, int depth, const std::vector<int> &shape);
+
+        template <typename V>
+        void unroll(const std::vector<V> &v, std::vector<T> &out, int depth, const std::vector<int> &shape);
     };
     
 };
