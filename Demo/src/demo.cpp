@@ -3,13 +3,14 @@
 
 int main(){
     TZ::Tensor<int32_t> t(std::vector<std::vector<int>>{{3,2},{2,3},{1,4}});
-    std::vector<std::vector<int>> v = {{3,2},{2,3},{1,4}};
-    int n = 5000000;
+    std::vector<std::vector<int>> v = {{1,2},{3,4}};
+    long long n = 300000000;
     long long k = 1;
-    std::vector<int> a = {2,1};
+    std::vector<std::vector<int>> a = {{0,0},{1,1}};
     
     for(int i = 0; i< n; i++)
-        k += v[1][1];
+        //k += v[a[0]+i%2][a[1]+i%2];
+        k += t[a[i%2]];
     
     std::cout << k;
     return 0;

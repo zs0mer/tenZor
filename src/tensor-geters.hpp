@@ -24,7 +24,7 @@ namespace TZ{
         long long idx = 0;
         int dim = 0;
 
-        while(dim != dimension){
+        while(dim < dimension){
             idx = lookup[idx] + index[dim];
             dim++;
         }
