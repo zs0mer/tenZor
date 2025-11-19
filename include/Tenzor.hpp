@@ -1,11 +1,12 @@
 #pragma once
 
-#define ERRORS 0
+#define ERRORS 1
 
-
+#include <vector>
+#include <stdexcept>
+#include <sstream>
+#include <chrono>
+#include <iomanip>
 
 #include "../src/tenzor_utils.hpp"
 #include "../src/tensor.hpp"
-#include "../src/tensor-geters.hpp"
-#include "../src/tensor-printes.hpp"
-#include "../src/tensor-seters.hpp"
