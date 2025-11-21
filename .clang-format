@@ -1,0 +1,17 @@
+ColumnLimit: 100
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+SpaceBeforeParens: ControlStatements
+MaxEmptyLinesToKeep: 2
+NamespaceIndentation: None
+
+PointerAlignment: Left
+
+SortIncludes: true
+IncludeBlocks: Preserve
+

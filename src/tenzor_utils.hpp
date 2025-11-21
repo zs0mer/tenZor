@@ -1,9 +1,11 @@
 #pragma once
 
+namespace TZ
+{
+
 #if ERRORS
 #define CHECK(expresson, error) _check((expresson), (error), __FILE__, __LINE__, __func__)
 #define CHECK_(expresson) _check((expresson), "unexpected", __FILE__, __LINE__, __func__)
-
 
 // a function to make error handleing easier
 inline void _check(const bool expresson, const char* error, const char* file, int line, const char* func){
@@ -27,3 +29,5 @@ inline void _check(const bool expresson, const char* error, const char* file, in
 #define CHECK(expresson, error) 
 #define CHECK_(expresson) 
 #endif
+    
+} 

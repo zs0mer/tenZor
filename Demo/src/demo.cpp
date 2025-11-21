@@ -2,6 +2,6 @@
 
 
 int main(){
-    CHECK_(true);
+    TZ::CHECK_(true);
     return 0;
 }
