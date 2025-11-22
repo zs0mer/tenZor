@@ -17,12 +17,17 @@ class Allocator {
     virtual ~Allocator() = default;
 };
 
+class MediumAllocator;
 
 //     - 4KB (end is inclusive)
 class SmallAllocator {
   private:
+    const static constexpr uint16_t TOTALPOOLSIZE = 10;
+    const static constexpr uint32_t POOLSIZE[TOTALPOOLSIZE] = // the possible bite pools
+        {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+
     struct SmallSlab {
-        void* start;
+        void* blocks;
         uint16_t size;
         uint16_t blockSize;
         uint16_t freeBlocks;
@@ -33,20 +38,45 @@ class SmallAllocator {
     };
 
     struct SizeClass {
-        uint32_t block_size;
-        FreeBlock* free_list;
-        std::vector<SmallSlab*> slabs;
+        uint32_t blockSize;
+        FreeBlock* blocks;
+        std::vector<SmallSlab*> usedSlabs;
     };
+
+    struct ThreadLocalCache {
+        FreeBlock* freeLists[TOTALPOOLSIZE] = {nullptr};
+        int usable[TOTALPOOLSIZE] = {0};
+    };
+
+    thread_local static ThreadLocalCache tlc_;
 
     std::vector<SizeClass> sizeType_;
     MediumAllocator& midAlloc_;
 };
 
 // 4KB - 1Mb (end is inclusive)
-class MediumAllocator {};
+class MediumAllocator {
+  private:
+    const static constexpr uint32_t SLABSIZE = 4 * 1024 * 1024;
+
+    struct MediumSlab {
+        uint8_t* start;
+        uint8_t* currentFree;
+        size_t size;
+    };
+
+    std::vector<MediumSlab*> slabs;
+    uint16_t activeSlab;
+};
 
 // 1MB -
-class LargeAllocator {};
+class LargeAllocator {
+  private:
+    struct LargeBlock {
+        size_t size;
+        LargeBlock* next;
+    };
+};
 
 
 // the standard CPU allocater
