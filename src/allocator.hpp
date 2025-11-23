@@ -27,6 +27,7 @@ class LargeAllocator;
 class SmallAllocator {
   private:
 	//~ 16KB
+	const static constexpr uint16_t REFILLSIZE = 2;
 	const inline static constexpr uint16_t SLABSIZE = 16 * 1024;
 	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
 	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
@@ -67,13 +68,45 @@ class SmallAllocator {
 		fillTLC();
 	}
 
+	inline void* alloc(const size_t bytes) {
+
+		uint16_t sizeType = POOLTYPENUMBER;
+		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
+			if (bytes <= POOLSIZE[i]) {
+				sizeType = i;
+				break;
+			}
+		}
+
+
+		CHECK_(sizeType == POOLTYPENUMBER);
+
+		FreeBlock* block = tlc_.bin[sizeType];
+		if (block) [[likely]] {
+			tlc_.bin[sizeType] = static_cast<FreeBlock*>(block->next);
+			tlc_.blockNum[sizeType]--;
+			return static_cast<void*>(block);
+		}
+
+
+		fillTLC(sizeType);
+
+
+		if (tlc_.bin[sizeType]) {
+			fillPool(REFILLSIZE, sizeType);
+			fillTLC(sizeType);
+		}
+
+		return alloc(bytes);
+	}
+
   private:
-	void fillTLC() {
+	inline void fillTLC() {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
 			fillTLC(i);
 	}
 
-	void fillTLC(const uint16_t sizeType) {
+	inline void fillTLC(const uint16_t sizeType) {
 		//* can be much faster
 		for (uint32_t i = 0; i < tlc_.MAX_PER_BIN; ++i) {
 			FreeBlock* block = globalBin_[sizeType];
@@ -86,12 +119,12 @@ class SmallAllocator {
 		}
 	}
 
-	void fillPool(const uint32_t bites) {
+	inline void fillPool(const uint32_t bites) {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
 			fillPool((bites * POOLWEIGHT[i]) / 100, i);
 	}
 
-	void fillPool(uint32_t bites, const uint16_t sizeType) {
+	inline void fillPool(uint32_t bites, const uint16_t sizeType) {
 		//* can be much faster
 		// if the allocated space is to small for a slab round it up to 1
 		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
@@ -124,6 +157,7 @@ class SmallAllocator {
 class MediumAllocator {
   private:
 	const static constexpr uint32_t SLABSIZE = 4 * 1024 * 1024;
+	const static constexpr uint16_t REFILLSIZE = 2;
 
 	struct MediumSlab {
 		uint8_t* start;
@@ -139,9 +173,45 @@ class MediumAllocator {
 		if (startPoolSize == 0)
 			return;
 
-		uint32_t numSlabs = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
+		uint16_t slabNum = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
 
-		for (uint32_t i = 0; i < numSlabs; ++i) {
+		fillSlabs(slabNum);
+
+		activeSlab = 0;
+	}
+
+
+	inline void* alloc(const size_t bytes, const size_t alignment) {
+		if (slabs.size() <= activeSlab)
+			fillSlabs(REFILLSIZE);
+
+
+		MediumSlab* slab = slabs[activeSlab];
+
+		// align the current pointer
+		// some wizard magic
+		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
+		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
+
+
+		if (alignedAddr + bytes <= reinterpret_cast<uintptr_t>(slab->start + slab->size))
+		    [[likely]] {
+
+			slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+			void* ptr = reinterpret_cast<void*>(alignedAddr);
+			return ptr;
+		}
+
+		activeSlab++;
+		if (slabs.size() <= activeSlab) [[likely]]
+			fillSlabs(REFILLSIZE);
+
+		return alloc(bytes, alignment);
+	}
+
+  private:
+	inline void fillSlabs(uint16_t slabNum) {
+		for (uint32_t i = 0; i < slabNum; ++i) {
 			uint8_t* mem = static_cast<uint8_t*>(std::aligned_alloc(64, SLABSIZE));
 			CHECK_(!mem);
 
@@ -149,12 +219,7 @@ class MediumAllocator {
 
 			slabs.push_back(slab);
 		}
-
-		activeSlab = 0;
 	}
-
-
-	void* alloc(const size_t bytes, const size_t alignment) {}
 };
 
 //~ 1MB ->
@@ -162,6 +227,7 @@ class LargeAllocator {
   private:
 	struct LargeBlock {
 		size_t size;
+		uint16_t alignment;
 		LargeBlock* next;
 	};
 
@@ -170,6 +236,31 @@ class LargeAllocator {
   public:
 	LargeAllocator(const uint32_t startPoolSize) {
 		CHECK(startPoolSize != 0, "can't allocate pool in large allocator");
+	}
+
+	void* alloc(const size_t bytes, const size_t alignment) {
+		LargeBlock* ptr = block;
+		LargeBlock* last = nullptr;
+
+		while (ptr) {
+			uintptr_t raw = reinterpret_cast<uintptr_t>(ptr + 1); // +1 to keep the header
+			uintptr_t aligned = (raw + alignment - 1) & ~(alignment - 1);
+
+			if (aligned + bytes < raw + ptr->size) {
+				if (last)
+					last->next = ptr->next;
+				else
+					block = ptr->next;
+
+				return reinterpret_cast<void*>(aligned);
+			}
+			last = ptr;
+			ptr = ptr->next;
+		}
+
+		uint32_t size = ((bytes + alignment - 1) / alignment) * alignment;
+
+		return std::aligned_alloc(alignment, size);
 	}
 };
 
@@ -194,13 +285,21 @@ class salloc : Allocator {
 	      la_(bitesToPool * initRatio[2]) {}
 
 
-	Device device() {
+	inline Device device() {
 		return Device::CPU;
 	};
 
-	void* allocate(const size_t bytes, const size_t alignment = 64) {};
+	inline void* allocate(const size_t bytes, const size_t alignment = 64) {
+		if (bytes <= 4 * 1024) {                //~ 0b
+			return sa_.alloc(bytes);            //~
+		} else if (bytes <= 1024 * 1024) {      //~ 4KB
+			return ma_.alloc(bytes, alignment); //~
+		} else {                                //~ 1Mb
+			return la_.alloc(bytes, alignment); //~
+		}
+	};
 
-	void* deallocate(void* ptr, const size_t bytes) {};
+	inline void* deallocate(void* ptr, const size_t bytes) {};
 
 	~salloc() = default;
 };
