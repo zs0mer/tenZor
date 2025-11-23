@@ -10,18 +10,83 @@ enum Device { CPU, CUDA };
 // an abstract class
 class Allocator {
   public:
-	virtual Device device() const = 0;
+	virtual inline Device device() const = 0;
 
-	virtual void* allocate(const size_t bytes, const size_t alignment) = 0;
+	virtual inline void* allocate(const size_t bytes, const size_t alignment) = 0;
 
-	virtual void* deallocate(void* ptr, const size_t bytes) = 0;
+	virtual inline void* deallocate(void* ptr, const size_t bytes) = 0;
 
 	virtual ~Allocator() = default;
 };
 
-class SmallAllocator;
-class MediumAllocator;
-class LargeAllocator;
+//~ 4KB - 1Mb (end is inclusive)
+class MediumAllocator {
+  private:
+	const static constexpr uint32_t SLABSIZE = 4 * 1024 * 1024;
+	const static constexpr uint16_t REFILLSIZE = 2;
+
+	struct MediumSlab {
+		uint8_t* start;
+		uint8_t* currentFree;
+		size_t size;
+	};
+
+	std::vector<MediumSlab*> slabs;
+	uint16_t activeSlab = 0; // index pointing to the next active slab
+
+  public:
+	MediumAllocator(const uint32_t startPoolSize) {
+		if (startPoolSize == 0)
+			return;
+
+		uint16_t slabNum = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
+
+		fillSlabs(slabNum);
+
+		activeSlab = 0;
+	}
+
+
+	inline void* alloc(const size_t bytes, const size_t alignment) {
+		if (slabs.size() <= activeSlab)
+			fillSlabs(REFILLSIZE);
+
+
+		MediumSlab* slab = slabs[activeSlab];
+
+		// align the current pointer
+		// some wizard magic
+		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
+		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
+
+
+		if (alignedAddr + bytes <= reinterpret_cast<uintptr_t>(slab->start + slab->size))
+		    [[likely]] {
+
+			slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+			void* ptr = reinterpret_cast<void*>(alignedAddr);
+			return ptr;
+		}
+
+		activeSlab++;
+		if (slabs.size() <= activeSlab) [[likely]]
+			fillSlabs(REFILLSIZE);
+
+		return alloc(bytes, alignment);
+	}
+
+  private:
+	inline void fillSlabs(uint16_t slabNum) {
+		for (uint32_t i = 0; i < slabNum; ++i) {
+			uint8_t* mem = static_cast<uint8_t*>(std::aligned_alloc(64, SLABSIZE));
+			CHECK_(!mem);
+
+			MediumSlab* slab = new MediumSlab{.start = mem, .currentFree = mem, .size = SLABSIZE};
+
+			slabs.push_back(slab);
+		}
+	}
+};
 
 //~    <- 4KB (end is inclusive)
 class SmallAllocator {
@@ -152,75 +217,7 @@ class SmallAllocator {
 		}
 	}
 };
-
-//~ 4KB - 1Mb (end is inclusive)
-class MediumAllocator {
-  private:
-	const static constexpr uint32_t SLABSIZE = 4 * 1024 * 1024;
-	const static constexpr uint16_t REFILLSIZE = 2;
-
-	struct MediumSlab {
-		uint8_t* start;
-		uint8_t* currentFree;
-		size_t size;
-	};
-
-	std::vector<MediumSlab*> slabs;
-	uint16_t activeSlab = 0; // index pointing to the next active slab
-
-  public:
-	MediumAllocator(const uint32_t startPoolSize) {
-		if (startPoolSize == 0)
-			return;
-
-		uint16_t slabNum = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
-
-		fillSlabs(slabNum);
-
-		activeSlab = 0;
-	}
-
-
-	inline void* alloc(const size_t bytes, const size_t alignment) {
-		if (slabs.size() <= activeSlab)
-			fillSlabs(REFILLSIZE);
-
-
-		MediumSlab* slab = slabs[activeSlab];
-
-		// align the current pointer
-		// some wizard magic
-		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
-		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-
-
-		if (alignedAddr + bytes <= reinterpret_cast<uintptr_t>(slab->start + slab->size))
-		    [[likely]] {
-
-			slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
-			void* ptr = reinterpret_cast<void*>(alignedAddr);
-			return ptr;
-		}
-
-		activeSlab++;
-		if (slabs.size() <= activeSlab) [[likely]]
-			fillSlabs(REFILLSIZE);
-
-		return alloc(bytes, alignment);
-	}
-
-  private:
-	inline void fillSlabs(uint16_t slabNum) {
-		for (uint32_t i = 0; i < slabNum; ++i) {
-			uint8_t* mem = static_cast<uint8_t*>(std::aligned_alloc(64, SLABSIZE));
-			CHECK_(!mem);
-
-			MediumSlab* slab = new MediumSlab{.start = mem, .currentFree = mem, .size = SLABSIZE};
-
-			slabs.push_back(slab);
-		}
-	}
-};
+thread_local SmallAllocator::ThreadLocalCache SmallAllocator::tlc_;
 
 //~ 1MB ->
 class LargeAllocator {
@@ -246,7 +243,7 @@ class LargeAllocator {
 			uintptr_t raw = reinterpret_cast<uintptr_t>(ptr + 1); // +1 to keep the header
 			uintptr_t aligned = (raw + alignment - 1) & ~(alignment - 1);
 
-			if (aligned + bytes < raw + ptr->size) {
+			if (aligned + bytes <= raw + ptr->size) {
 				if (last)
 					last->next = ptr->next;
 				else
@@ -285,11 +282,11 @@ class salloc : Allocator {
 	      la_(bitesToPool * initRatio[2]) {}
 
 
-	inline Device device() {
+	inline Device device() const {
 		return Device::CPU;
 	};
 
-	inline void* allocate(const size_t bytes, const size_t alignment = 64) {
+	inline void* allocate(const size_t bytes, const size_t alignment = 64) override {
 		if (bytes <= 4 * 1024) {                //~ 0b
 			return sa_.alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {      //~ 4KB
@@ -299,7 +296,9 @@ class salloc : Allocator {
 		}
 	};
 
-	inline void* deallocate(void* ptr, const size_t bytes) {};
+	inline void* deallocate(void* ptr, const size_t bytes) override {
+		return nullptr;
+	};
 
 	~salloc() = default;
 };

@@ -4,7 +4,8 @@ CXX = g++
 # Flags
 APP_INCLUDE = -Iinclude
 # using c++17
-APP_FLAGS = -Ofast -ffast-math $(APP_INCLUDE) # -Ofast -ffast-math -pthread   -O0 -g -fsanitize=address
+APP_FLAGS = -pthread -O0 -g $(APP_INCLUDE) # -fsanitize=address
+_APP_FLAGS = -pthread -Ofast -ffast-math $(APP_INCLUDE)
 
 # Paths and files
 APPNAME = Demo/targets/out
