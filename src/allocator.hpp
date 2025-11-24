@@ -101,15 +101,22 @@ class SmallAllocator {
 	    {10, 13, 15, 15, 13, 10, 8, 8, 4, 4};                           // the memory when refilling
 	                                                                    // (adds up to 100)
 
+
+	struct FreeBlock;
+
 	struct SmallSlab {
-		void* blocks;
-		uint16_t size;
+		void* block;
 		uint16_t blockSize;
-		uint16_t freeBlocks;
+		SmallSlab* next;
+
+		uint16_t used;
+		FreeBlock* freeList;
+		uint8_t* data;
 	};
 
 	struct FreeBlock {
-		void* next;
+		SmallSlab* slab;
+		FreeBlock* next;
 	};
 
 	//~ 1MB memory
@@ -202,9 +209,9 @@ class SmallAllocator {
 			CHECK(!slab, "out of memory");
 
 			void* ptr = static_cast<void*>(slab);
-			void* end = ptr + SLABSIZE;
+			void* end = static_cast<uint8_t*>(ptr) + SLABSIZE;
 
-			while (ptr + blockSize <= end) {
+			while (static_cast<uint8_t*>(ptr) + blockSize <= end) {
 				FreeBlock* block = static_cast<FreeBlock*>(ptr);
 
 				block->next = globalBin_[sizeType];
@@ -212,7 +219,7 @@ class SmallAllocator {
 
 				blockNum_[sizeType]++;
 
-				ptr += blockSize;
+				ptr = static_cast<uint8_t*>(ptr) + blockSize;
 			}
 		}
 	}
@@ -269,7 +276,8 @@ class salloc : Allocator {
   private:
 	// percentiges of the allocators
 	// (adds up to 100)
-	const inline static constexpr uint16_t initRatio[3] = {50, 50, 0};
+	// the third number is 0
+	const inline static constexpr uint16_t INITRATIO[3] = {50, 50, 0};
 
 	SmallAllocator sa_;  //~        < 4KB (end is inclusive)
 	MediumAllocator ma_; //~ 4KB <  < 1Mb (end is inclusive)
@@ -278,9 +286,8 @@ class salloc : Allocator {
 
   public:
 	salloc(const uint32_t bitesToPool)
-	    : ma_(bitesToPool * initRatio[1]), sa_(bitesToPool * initRatio[0], ma_),
-	      la_(bitesToPool * initRatio[2]) {}
-
+	    : ma_(bitesToPool * INITRATIO[1]), sa_(bitesToPool * INITRATIO[0], ma_),
+	      la_(bitesToPool * INITRATIO[2]) {}
 
 	inline Device device() const {
 		return Device::CPU;
