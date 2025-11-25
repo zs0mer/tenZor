@@ -93,6 +93,7 @@ class SmallAllocator {
   private:
 	//~ 16KB
 	const static constexpr uint16_t REFILLSIZE = 2;
+	const static constexpr uint16_t SLABHEADERSIZE = 64;
 	const inline static constexpr uint16_t SLABSIZE = 16 * 1024;
 	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
 	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
@@ -105,30 +106,24 @@ class SmallAllocator {
 	struct FreeBlock;
 
 	struct SmallSlab {
-		void* block;
+		uint8_t* data;
 		uint16_t blockSize;
 		SmallSlab* next;
-
-		uint16_t used;
 		FreeBlock* freeList;
-		uint8_t* data;
 	};
 
 	struct FreeBlock {
-		SmallSlab* slab;
 		FreeBlock* next;
 	};
 
 	//~ 1MB memory
 	struct ThreadLocalCache {
-		FreeBlock* bin[POOLTYPENUMBER] = {nullptr};
-		uint16_t blockNum[POOLTYPENUMBER] = {0};
-		const static constexpr uint16_t MAX_PER_BIN = 32;
+		const static constexpr uint16_t SLABREFILL = 2;
+		SmallSlab* bin[POOLTYPENUMBER] = {nullptr};
 	};
 
 	thread_local static ThreadLocalCache tlc_;
-	FreeBlock* globalBin_[POOLTYPENUMBER] = {nullptr};
-	uint16_t blockNum_[POOLTYPENUMBER] = {0};
+	SmallSlab* globalBin_[POOLTYPENUMBER] = {nullptr};
 	MediumAllocator& midAlloc_;
 
   public:
@@ -142,6 +137,7 @@ class SmallAllocator {
 
 	inline void* alloc(const size_t bytes) {
 
+		// determening the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
 		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
 			if (bytes <= POOLSIZE[i]) {
@@ -150,26 +146,39 @@ class SmallAllocator {
 			}
 		}
 
-
 		CHECK_(sizeType == POOLTYPENUMBER);
 
-		FreeBlock* block = tlc_.bin[sizeType];
-		if (block) [[likely]] {
-			tlc_.bin[sizeType] = static_cast<FreeBlock*>(block->next);
-			tlc_.blockNum[sizeType]--;
-			return static_cast<void*>(block);
+
+		SmallSlab* slab = tlc_.bin[sizeType];
+		if (slab) [[likely]] {
+			CHECK_(!slab->freeList);
+
+			void* block = slab->freeList;
+			slab->freeList = static_cast<FreeBlock*>(block)->next;
+			if (!slab->freeList->next) {
+				tlc_.bin[sizeType] = slab->next;
+			}
+
+			return block;
 		}
 
 
 		fillTLC(sizeType);
 
+		SmallSlab* slab = tlc_.bin[sizeType];
+		if (slab) [[likely]] {
+			CHECK_(!slab->freeList);
 
-		if (tlc_.bin[sizeType]) {
-			fillPool(REFILLSIZE, sizeType);
-			fillTLC(sizeType);
+			void* block = slab->freeList;
+			slab->freeList = static_cast<FreeBlock*>(block)->next;
+			if (!slab->freeList->next) {
+				tlc_.bin[sizeType] = slab->next;
+			}
+
+			return block;
 		}
 
-		return alloc(bytes);
+		return midAlloc_.alloc(sizeType, std::min<uint32_t>(sizeType, 64));
 	}
 
   private:
@@ -180,14 +189,17 @@ class SmallAllocator {
 
 	inline void fillTLC(const uint16_t sizeType) {
 		//* can be much faster
-		for (uint32_t i = 0; i < tlc_.MAX_PER_BIN; ++i) {
-			FreeBlock* block = globalBin_[sizeType];
-			if (!block)
-				break;
-			globalBin_[sizeType] = static_cast<FreeBlock*>(block->next);
-			block->next = tlc_.bin[sizeType];
-			tlc_.bin[sizeType] = block;
-			tlc_.blockNum[sizeType]++;
+
+		for (uint16_t i = 0; i < tlc_.SLABREFILL; i++) {
+			if (!globalBin_[sizeType])
+				fillPool(SLABSIZE, sizeType);
+			CHECK_(!globalBin_[sizeType] || !globalBin_[sizeType]->data);
+
+			SmallSlab* slab = globalBin_[sizeType];
+
+			globalBin_[sizeType] = slab->next;
+			slab->next = tlc_.bin[sizeType];
+			tlc_.bin[sizeType] = slab;
 		}
 	}
 
@@ -203,27 +215,27 @@ class SmallAllocator {
 
 
 		for (uint32_t i = 0; i < numSlabs; i++) {
-			const uint32_t blockSize = POOLSIZE[sizeType];
+			const uint32_t blockSize = std::max<uint32_t>(POOLSIZE[sizeType], sizeof(FreeBlock));
+			SmallSlab* slab = static_cast<SmallSlab*>(midAlloc_.alloc(SLABSIZE, SLABSIZE));
 
-			void* slab = midAlloc_.alloc(SLABSIZE, 64);
+			slab->data = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 			CHECK(!slab, "out of memory");
+			slab->next = globalBin_[sizeType];
+			globalBin_[sizeType] = slab;
 
-			void* ptr = static_cast<void*>(slab);
-			void* end = static_cast<uint8_t*>(ptr) + SLABSIZE;
+			uint8_t* ptr = slab->data;
+			uint8_t* end = ptr + SLABSIZE - SLABHEADERSIZE;
 
-			while (static_cast<uint8_t*>(ptr) + blockSize <= end) {
-				FreeBlock* block = static_cast<FreeBlock*>(ptr);
+			while (ptr + blockSize <= end) {
+				reinterpret_cast<FreeBlock*>(ptr)->next = slab->freeList;
+				slab->freeList = reinterpret_cast<FreeBlock*>(ptr);
 
-				block->next = globalBin_[sizeType];
-				globalBin_[sizeType] = block;
-
-				blockNum_[sizeType]++;
-
-				ptr = static_cast<uint8_t*>(ptr) + blockSize;
+				ptr = ptr + blockSize;
 			}
 		}
 	}
 };
+//! NEED TO HEANDLE CLEEN UP
 thread_local SmallAllocator::ThreadLocalCache SmallAllocator::tlc_;
 
 //~ 1MB ->
