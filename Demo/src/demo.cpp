@@ -1,3 +1,4 @@
+#include "Catch2/catch.hpp"
 #include "Tenzor.hpp"
 #include <iostream>
 

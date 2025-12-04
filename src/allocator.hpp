@@ -23,7 +23,7 @@ class Allocator {
 //~ 4KB - 1Mb (end is inclusive)
 class MediumAllocator {
   private:
-	const static constexpr uint32_t SLABSIZE = 4 * 1024 * 1024;
+	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
 	const static constexpr uint16_t REFILLSIZE = 2;
 
 	struct MediumSlab {
@@ -88,9 +88,9 @@ class MediumAllocator {
 		return ptr;
 	}
 
-	inline void dealloc(void* ptr, const size_t bytes) {
+	inline void dealloc(void* ptr) {
 		MediumSlab* slab =
-		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) % SLABSIZE);
+		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
 		slab->allocatedBlocks--;
 
@@ -127,13 +127,13 @@ class SmallAllocator {
 	//~ 16KB
 	const static constexpr uint16_t REFILLSIZE = 2;
 	const static constexpr uint16_t SLABHEADERSIZE = 64;
-	const inline static constexpr uint16_t SLABSIZE = 16 * 1024;
+	const inline static constexpr uintptr_t SLABSIZE = 16 * 1024; //! must be a power of two
 	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
 	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
 	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 	const inline static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
 	    {10, 13, 15, 15, 13, 10, 8, 8, 4, 4};                           // the memory when refilling
-	                                                                    // (adds up to 100)
+	                                                                    //* adds up to 100
 
 
 	struct FreeBlock {
@@ -142,22 +142,42 @@ class SmallAllocator {
 
 	struct SmallSlab {
 		uint8_t* start;
-		uint16_t blockSize;
+		uint16_t blockSizeType;
 		SmallSlab* next = nullptr;
 		FreeBlock* freeList;
 		uint32_t allocatedBlocks = 0;
 	};
 
+	SmallSlab* globalBin_[POOLTYPENUMBER] = {nullptr};
+	MediumAllocator& midAlloc_;
 
 	//~ 1MB memory
 	struct ThreadLocalCache {
 		const static constexpr uint16_t SLABREFILL = 2;
 		SmallSlab* bin[POOLTYPENUMBER] = {nullptr};
+		SmallAllocator* allocator;
+
+		void init(SmallAllocator& sAllocator) {
+			allocator = &sAllocator;
+		}
+
+		~ThreadLocalCache() {
+			for (int i = 0; i < POOLTYPENUMBER; i++) {
+				SmallSlab* slab = allocator->globalBin_[i];
+				while (slab) {
+					SmallSlab* next = slab->next;
+					if (slab->allocatedBlocks == 0) {
+						slab->next = allocator->globalBin_[i];
+						allocator->globalBin_[i] = slab;
+					}
+					slab = next;
+				}
+			}
+		}
 	};
 
 	thread_local static ThreadLocalCache tlc_;
-	SmallSlab* globalBin_[POOLTYPENUMBER] = {nullptr};
-	MediumAllocator& midAlloc_;
+
 
   public:
 	SmallAllocator(const uint32_t startPoolSize, MediumAllocator& midAlloc) : midAlloc_(midAlloc) {
@@ -199,6 +219,8 @@ class SmallAllocator {
 
 		fillTLC(sizeType);
 
+		slab = tlc_.bin[sizeType];
+
 		if (slab) [[likely]] {
 			CHECK_(!slab->freeList);
 
@@ -215,8 +237,14 @@ class SmallAllocator {
 		return midAlloc_.alloc(sizeType, std::min<uint32_t>(sizeType, 64));
 	}
 
-	inline void dealloc(void* ptr, const size_t bytes) {
-		SmallSlab* slab = reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) % SLABSIZE);
+	inline void dealloc(void* ptr) {
+		CHECK(!ptr, "double free");
+		SmallSlab* slab =
+		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
+
+		FreeBlock* fb = reinterpret_cast<FreeBlock*>(ptr);
+		fb->next = slab->freeList;
+		slab->freeList = fb;
 
 		slab->allocatedBlocks--;
 
@@ -224,22 +252,24 @@ class SmallAllocator {
 			return;
 
 
-		slab->freeList = reinterpret_cast<FreeBlock*>(slab->start);
-		slab->next = globalBin_[slab->blockSize];
-		globalBin_[slab->blockSize] = slab;
+		slab->next = globalBin_[slab->blockSizeType];
+		globalBin_[slab->blockSizeType] = slab;
 	}
+
 
 	~SmallAllocator() {
 		for (int i = 0; i < POOLTYPENUMBER; i++) {
 			while (globalBin_[i]) {
 				SmallSlab* slab = globalBin_[i];
 				globalBin_[i] = slab->next;
-				free(slab);
+				midAlloc_.dealloc(slab);
 			}
 		}
 	}
 
   private:
+	friend class salloc;
+
 	inline void fillTLC() {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
 			fillTLC(i);
@@ -293,7 +323,6 @@ class SmallAllocator {
 		}
 	}
 };
-//! NEED TO HEANDLE CLEEN UP
 thread_local SmallAllocator::ThreadLocalCache SmallAllocator::tlc_;
 
 //& ================================================================================
@@ -354,12 +383,11 @@ class LargeAllocator {
 //& ================================================================================
 // the standard CPU allocater
 // do not does the "dirty" work (allocating)
-// splits the work in to small, medium, large
+// splits the up the work
 class salloc : Allocator {
   private:
 	// percentiges of the allocators
-	//* has to add up to 100%
-	//* the third number is alwais 0!
+	//! has to add up to 100%
 	const inline static constexpr uint16_t INITRATIO[2] = {50, 50};
 
 	SmallAllocator sa_;  //~        < 4KB (end is inclusive)
@@ -376,6 +404,8 @@ class salloc : Allocator {
 	};
 
 	inline void* allocate(const size_t bytes, const size_t alignment = 64) override {
+		// give the small alocater to SmallAllocator::tlc_
+		sa_.tlc_.init(sa_);
 		if (bytes <= 4 * 1024) {                //~ 0b
 			return sa_.alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {      //~ 4KB
@@ -387,9 +417,9 @@ class salloc : Allocator {
 
 	inline void deallocate(void*& ptr, const size_t bytes) override {
 		if (bytes <= 4 * 1024) {            //~ 0b
-			return sa_.dealloc(ptr, bytes); //~
+			return sa_.dealloc(ptr);        //~
 		} else if (bytes <= 1024 * 1024) {  //~ 4KB
-			return ma_.dealloc(ptr, bytes); //~
+			return ma_.dealloc(ptr);        //~
 		} else {                            //~ 1Mb
 			return la_.dealloc(ptr, bytes); //~
 		}
