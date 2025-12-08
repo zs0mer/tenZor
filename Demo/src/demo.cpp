@@ -1,11 +1,15 @@
+#define CATCH_CONFIG_NO_MACRO_CHECK
 #include "Catch2/catch.hpp"
+
+
 #include "Tenzor.hpp"
 #include <iostream>
 
 TZ::mem::salloc saloc(5 * 1024 * 1024);
 
 int main() {
-	char* a = (char*)saloc.allocate(2 * 1024);
+	// char* a = (char*)saloc.allocate(2 * 1024);
 	// int* b = new int;
-	std::cout << a[1];
+	// std::cout << a[1] << std::endl;
+	// int a = 0;
 }
