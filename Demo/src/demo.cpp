@@ -8,8 +8,8 @@
 TZ::mem::salloc saloc(5 * 1024 * 1024);
 
 int main() {
-	// char* a = (char*)saloc.allocate(2 * 1024);
+	char* a = (char*)saloc.allocate(2 * 1024);
 	// int* b = new int;
-	// std::cout << a[1] << std::endl;
+	std::cout << a[1] << std::endl;
 	// int a = 0;
 }

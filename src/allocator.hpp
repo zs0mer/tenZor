@@ -218,7 +218,7 @@ class SmallAllocator {
 			if (!allocator)
 				return;
 			for (int i = 0; i < POOLTYPENUMBER; i++) {
-				SmallSlab* slab = allocator->globalBin_[i];
+				SmallSlab* slab = bin[i];
 				while (slab) {
 					SmallSlab* next = slab->next;
 					if (slab->allocatedBlocks == 0) {
