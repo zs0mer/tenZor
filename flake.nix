@@ -22,7 +22,8 @@
         automake
         libtool
         direnv
-        linuxPackages_latest.perf
+        catch2
+        cmake
       ];
 
 

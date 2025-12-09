@@ -1,6 +1,4 @@
 #pragma once
-#include "../src/tenzor_utils.hpp"
-//^ not needed, will remove this
 
 namespace TZ {
 namespace mem {
@@ -210,7 +208,7 @@ class SmallAllocator {
 		SmallSlab* bin[POOLTYPENUMBER] = {nullptr};
 		SmallAllocator* allocator;
 
-		void init(SmallAllocator& sAllocator) {
+		void setAllocater(SmallAllocator& sAllocator) {
 			allocator = &sAllocator;
 		}
 
@@ -408,7 +406,7 @@ class salloc : Allocator {
 
 	inline void* allocate(const size_t bytes, const size_t alignment = 64) override {
 		// give the small alocater to SmallAllocator::tlc_
-		sa_.tlc_.init(sa_);
+		sa_.tlc_.setAllocater(sa_);
 		if (bytes <= 4 * 1024) {                //~ 0b
 			return sa_.alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {      //~ 4KB

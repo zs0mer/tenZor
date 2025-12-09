@@ -1,7 +1,3 @@
-#define CATCH_CONFIG_NO_MACRO_CHECK
-#include "Catch2/catch.hpp"
-
-
 #include "Tenzor.hpp"
 #include <iostream>
 

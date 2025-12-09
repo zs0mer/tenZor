@@ -9,5 +9,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../src/allocator.hpp"
-#include "../src/tenzor_utils.hpp"
+#include "tenzor_utils.hpp"
+
+#include "allocator.hpp"
