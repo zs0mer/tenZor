@@ -7,6 +7,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 ###
+# Sanitizers
+###
+
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+
+
+
+###
 # Paths
 ###
 set(SRC_DIR   "${CMAKE_SOURCE_DIR}/Demo/src")
@@ -26,7 +36,6 @@ target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 ###
 # Testing
 ###
-enable_testing()
 
 find_package(doctest REQUIRED)
 
@@ -44,26 +53,12 @@ target_link_libraries(tests
 )
 
 
+
+enable_testing()
+
 add_test(
     NAME tenzor_test
     COMMAND tests --color=yes
     )
-
-
-###
-# Optional: sanitizers if you want them
-###
-option(ENABLE_ASAN "Compile with AddressSanitizer" OFF)
-
-if(ENABLE_ASAN)
-    target_compile_options(demo  PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-    target_link_options(demo     PRIVATE -fsanitize=address)
-    target_compile_options(tests PRIVATE -fsanitize=address -fno-omit-frame-pointer)
-    target_link_options(tests    PRIVATE -fsanitize=address)
-endif()
-
-
-
-
 
 

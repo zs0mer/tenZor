@@ -1,6 +1,6 @@
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include <Tenzor.hpp>
+// #include <Tenzor.hpp>
 #include <doctest/doctest.h>
 
 int add(int a, int b) {
@@ -8,5 +8,7 @@ int add(int a, int b) {
 }
 
 TEST_CASE("basic math") {
+	uint8_t* a = reinterpret_cast<uint8_t*>(malloc(66));
+	a[100] = 1;
 	CHECK(add(2, 3) == 5);
 }
