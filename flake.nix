@@ -22,8 +22,8 @@
         automake
         libtool
         direnv
-        catch2
         cmake
+        doctest
       ];
 
 

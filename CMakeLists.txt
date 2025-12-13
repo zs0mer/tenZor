@@ -5,6 +5,7 @@ project(Tenzor LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 ###
 # Paths
 ###
@@ -23,25 +24,31 @@ add_executable(demo ${APP_SOURCES})
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 
 ###
-# Catch2 tests
+# Testing
 ###
 enable_testing()
 
-find_package(Catch2 2 REQUIRED)
+find_package(doctest REQUIRED)
 
 file(GLOB TEST_SOURCES
     "${TEST_DIR}/*.cpp"
 )
 
-add_executable(tests
-    ${TEST_SOURCES}
+add_executable(tests ${TEST_SOURCES})
+
+target_include_directories(tests PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(tests
+    PRIVATE
+        doctest::doctest
 )
 
-target_include_directories(tests PRIVATE ${INCLUDE_DIR})
 
-# Allow automatic test discovery via CTest
-include(Catch)
-catch_discover_tests(tests)
+add_test(
+    NAME tenzor_test
+    COMMAND tests --color=yes
+    )
+
 
 ###
 # Optional: sanitizers if you want them
@@ -54,3 +61,9 @@ if(ENABLE_ASAN)
     target_compile_options(tests PRIVATE -fsanitize=address -fno-omit-frame-pointer)
     target_link_options(tests    PRIVATE -fsanitize=address)
 endif()
+
+
+
+
+
+

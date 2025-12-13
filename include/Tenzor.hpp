@@ -10,5 +10,4 @@
 #include <vector>
 
 #include "tenzor_utils.hpp"
-
 #include "allocator.hpp"

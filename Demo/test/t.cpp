@@ -1,12 +1,12 @@
-/*#define CATCH_CONFIG_MAIN
-#include <catch2/catch_test_macros.hpp>
+#define DOCTEST_CONFIG_COLORS
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <Tenzor.hpp>
+#include <doctest/doctest.h>
 
 int add(int a, int b) {
-    return a + b;
+	return a + b;
 }
 
-TEST_CASE("Addition works", "[math]") {
-    REQUIRE(add(2, 2) == 4);
-    REQUIRE(add(-1, 1) == 0);
-}*/
-int main() {}
+TEST_CASE("basic math") {
+	CHECK(add(2, 3) == 5);
+}
