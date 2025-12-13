@@ -57,7 +57,7 @@ target_link_libraries(tests
 enable_testing()
 
 add_test(
-    NAME tenzor_test
+    NAME allocater_basic
     COMMAND tests --color=yes
     )
 

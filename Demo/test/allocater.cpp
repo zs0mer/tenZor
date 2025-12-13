@@ -1,14 +1,22 @@
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-// #include <Tenzor.hpp>
+#include <Tenzor.hpp>
 #include <doctest/doctest.h>
 
-int add(int a, int b) {
-	return a + b;
+TEST_CASE("alloc constructor") {
+	int n = 15;
+	for (int i = 0; i < n; i++) {
+		TZ::mem::salloc s(std::pow(2, i));
+	}
 }
 
-TEST_CASE("basic math") {
-	uint8_t* a = reinterpret_cast<uint8_t*>(malloc(66));
-	a[100] = 1;
-	CHECK(add(2, 3) == 5);
-}
+/*TEST_CASE("alloc using") {
+    TZ::mem::salloc s(1024 * 1024); // 1MB
+    int n = 1000;
+    for (int i = 0; i < n; i++) {
+        int p = rand() % 1024;
+        uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
+        a[p - 1] = 255;
+        s.deallocate((void*&)a, p);
+    }
+}*/
