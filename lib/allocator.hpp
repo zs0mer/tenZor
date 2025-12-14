@@ -76,15 +76,17 @@ class LargeAllocator {
 //~ 4KB - 1Mb (end is inclusive)
 class MediumAllocator {
   private:
-	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
-	const static constexpr uint16_t REFILLSIZE = 2;
-
 	struct MediumSlab {
 		uint8_t* start;
 		uint8_t* currentFree;
 		size_t size;
-		uint32_t allocatedBlocks = 0;
+		uint32_t allocatedBlocks;
+		size_t indexInSlabs;
 	};
+	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
+	const static constexpr uint16_t REFILLSIZE = 2;
+	const static constexpr uint16_t SLABHEADERSIZE = sizeof(MediumSlab);
+
 
 	std::vector<MediumSlab*> slabs;
 	uint16_t activeSlab = 0; // index pointing to the next active slab
@@ -108,13 +110,13 @@ class MediumAllocator {
 		MediumSlab* slab = slabs[activeSlab];
 
 		// align the current pointer
-		// some wizard magic
 		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
+		// some wizard magic
+		// (is just masking)
 		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
+		uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab->start) + slab->size;
 
-
-		if (alignedAddr + bytes <= reinterpret_cast<uintptr_t>(slab->start + slab->size))
-		    [[likely]] {
+		if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
 			slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 			void* ptr = reinterpret_cast<void*>(alignedAddr);
@@ -148,25 +150,35 @@ class MediumAllocator {
 		if (slab->allocatedBlocks != 0)
 			return;
 
+		_CHECK_(activeSlab == 0);
 		slab->currentFree = slab->start;
-		std::swap(slabs[activeSlab - 1], slab);
+		std::swap(slabs[activeSlab - 1], slabs[slab->indexInSlabs]);
+
+		slabs[activeSlab - 1]->indexInSlabs = activeSlab - 1;
+		slabs[slab->indexInSlabs]->indexInSlabs = slab->indexInSlabs;
 		activeSlab--;
 	}
 
 	~MediumAllocator() {
-		for (MediumSlab* i : slabs)
-			free(i->start);
+		for (MediumSlab* i : slabs) {
+			free(i->start - SLABHEADERSIZE);
+		}
 	}
 
   private:
 	inline void fillSlabs(uint16_t slabNum) {
+		slabs.reserve(slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
-			uint8_t* mem = static_cast<uint8_t*>(std::aligned_alloc(64, SLABSIZE));
+			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 			_CHECK_(!mem);
 
-			MediumSlab* slab = new MediumSlab{.start = mem, .currentFree = mem, .size = SLABSIZE};
+			mem->start = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
+			mem->currentFree = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
+			mem->size = SLABSIZE - SLABHEADERSIZE;
+			mem->allocatedBlocks = 0;
+			mem->indexInSlabs = slabs.size();
 
-			slabs.push_back(slab);
+			slabs.push_back(mem);
 		}
 	}
 };
@@ -175,18 +187,6 @@ class MediumAllocator {
 //~    <- 4KB (end is inclusive)
 class SmallAllocator {
   private:
-	//~ 16KB
-	const inline static constexpr uint16_t REFILLSIZE = 2;
-	const inline static constexpr uint16_t SLABHEADERSIZE = 64;
-	const inline static constexpr uintptr_t SLABSIZE = 16 * 1024; //! must be a power of two
-	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
-	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
-	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
-	const inline static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
-	    {10, 13, 15, 15, 13, 10, 8, 8, 4, 4};                           // the memory when refilling
-	                                                                    //* adds up to 100
-
-
 	struct FreeBlock {
 		FreeBlock* next;
 	};
@@ -198,6 +198,18 @@ class SmallAllocator {
 		FreeBlock* freeList;
 		uint32_t allocatedBlocks = 0;
 	};
+
+	//~ 16KB
+	const inline static constexpr uint16_t REFILLSIZE = 2;
+	const inline static constexpr uint16_t SLABHEADERSIZE = sizeof(SmallSlab);
+	const inline static constexpr uintptr_t SLABSIZE = 16 * 1024; //! must be a power of two
+	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
+	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
+	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
+	const inline static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
+	    {10, 13, 15, 15, 13, 10, 8, 8, 4, 4};                           // the memory when refilling
+	                                                                    //* adds up to 100
+
 
 	SmallSlab* globalBin_[POOLTYPENUMBER] = {nullptr};
 	MediumAllocator& midAlloc_;
