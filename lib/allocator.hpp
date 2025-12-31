@@ -150,7 +150,8 @@ class MediumAllocator {
 		if (slab->allocatedBlocks != 0)
 			return;
 
-		_CHECK_(activeSlab == 0);
+		if (activeSlab == 0)
+			return;
 		slab->currentFree = slab->start;
 		std::swap(slabs[activeSlab - 1], slabs[slab->indexInSlabs]);
 
