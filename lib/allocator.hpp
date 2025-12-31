@@ -15,6 +15,17 @@ class Allocator {
 	virtual inline void deallocate(void*& ptr, const size_t bytes) = 0;
 
 	virtual ~Allocator() = default;
+
+	Allocator() = default;
+
+
+	Allocator(const Allocator&) = delete;
+
+	Allocator& operator=(const Allocator&) = delete;
+
+	Allocator(Allocator&&) = delete;
+
+	Allocator& operator=(Allocator&&) = delete;
 };
 
 //& ================================================================================

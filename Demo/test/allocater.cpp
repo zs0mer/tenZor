@@ -3,10 +3,10 @@
 #include <Tenzor.hpp>
 #include <doctest/doctest.h>
 
-TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
-TZ::mem::salloc s = *a;
 
 TEST_CASE("allocater constructor/destruction") {
+	TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
+	TZ::mem::salloc& s = *a;
 	int n = 17;
 	for (int i = 0; i < n; i++) {
 		TZ::mem::salloc l(std::pow(2, i));
@@ -14,7 +14,9 @@ TEST_CASE("allocater constructor/destruction") {
 }
 
 TEST_CASE("allocating_little1") {
-	int n = 5000;
+	TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
+	TZ::mem::salloc& s = *a;
+	int n = 10000;
 	for (int i = 0; i < n; i++) {
 		int p = (rand() % 1024) + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
@@ -24,7 +26,9 @@ TEST_CASE("allocating_little1") {
 }
 
 TEST_CASE("allocating_little2") {
-	int n = 5000;
+	TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
+	TZ::mem::salloc& s = *a;
+	int n = 10000;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
