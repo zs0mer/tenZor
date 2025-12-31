@@ -85,7 +85,7 @@ class MediumAllocator {
 	};
 	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
 	const static constexpr uint16_t REFILLSIZE = 2;
-	const static constexpr uint16_t SLABHEADERSIZE = sizeof(MediumSlab);
+	const static constexpr uint16_t SLABHEADERSIZE = 64; // sizeof(MediumSlab);
 
 
 	std::vector<MediumSlab*> slabs;
@@ -198,11 +198,12 @@ class SmallAllocator {
 		SmallSlab* next = nullptr;
 		FreeBlock* freeList;
 		uint32_t allocatedBlocks = 0;
+		bool wasFull = false;
 	};
 
 	//~ 16KB
 	const inline static constexpr uint16_t REFILLSIZE = 2;
-	const inline static constexpr uint16_t SLABHEADERSIZE = sizeof(SmallSlab);
+	const inline static constexpr uint16_t SLABHEADERSIZE = 64;   // sizeof(SmallSlab)
 	const inline static constexpr uintptr_t SLABSIZE = 16 * 1024; //! must be a power of two
 	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
 	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
@@ -256,6 +257,9 @@ class SmallAllocator {
 
 	inline void* alloc(const size_t bytes) {
 
+		if (bytes == 0)
+			return nullptr;
+
 		// determening the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
 		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
@@ -276,6 +280,7 @@ class SmallAllocator {
 			slab->freeList = static_cast<FreeBlock*>(block)->next;
 			slab->allocatedBlocks++;
 			if (!slab->freeList) {
+				slab->wasFull = true;
 				tlc_.bin[sizeType] = slab->next;
 			}
 
@@ -314,10 +319,10 @@ class SmallAllocator {
 
 		slab->allocatedBlocks--;
 
-		if (slab->allocatedBlocks != 0)
+		if (slab->allocatedBlocks != 0 || !slab->wasFull)
 			return;
 
-
+		slab->wasFull = true;
 		slab->next = globalBin_[slab->blockSizeType];
 		globalBin_[slab->blockSizeType] = slab;
 	}
@@ -394,7 +399,7 @@ thread_local SmallAllocator::ThreadLocalCache SmallAllocator::tlc_;
 
 //& ================================================================================
 // the standard CPU allocater
-// do not does the "dirty" work (allocating)
+// do the allocating
 // splits the up the work
 class salloc : Allocator {
   private:

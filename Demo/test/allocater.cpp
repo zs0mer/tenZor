@@ -3,20 +3,37 @@
 #include <Tenzor.hpp>
 #include <doctest/doctest.h>
 
+TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
+TZ::mem::salloc s = *a;
+
 TEST_CASE("allocater constructor/destruction") {
 	int n = 17;
 	for (int i = 0; i < n; i++) {
-		TZ::mem::salloc s(std::pow(2, i));
+		TZ::mem::salloc l(std::pow(2, i));
 	}
 }
 
-TEST_CASE("allocating") {
-	TZ::mem::salloc s(1024 * 1024); // 1MB
-	int n = 1000;
+TEST_CASE("allocating_little1") {
+	int n = 5000;
 	for (int i = 0; i < n; i++) {
-		int p = rand() % 1024;
+		int p = (rand() % 1024) + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
-		a[0] = 255;
+		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);
+	}
+}
+
+TEST_CASE("allocating_little2") {
+	int n = 5000;
+	std::vector<uint8_t*> v(n);
+	std::vector<int> sizee(n);
+	for (int i = 0; i < n; i++) {
+		int p = rand() % 1024 + 1;
+		v[i] = static_cast<uint8_t*>(s.allocate(p));
+		*(v[i] + p - 1) = 255;
+		sizee[i] = p;
+	}
+	for (int i = 0; i < n; i++) {
+		s.deallocate((void*&)v[i], sizee[i]);
 	}
 }
