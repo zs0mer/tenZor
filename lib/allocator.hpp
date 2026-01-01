@@ -231,26 +231,9 @@ class SmallAllocator {
 	struct ThreadLocalCache {
 		const static constexpr uint16_t SLABREFILL = 2;
 		SmallSlab* bin[POOLTYPENUMBER] = {nullptr};
-		SmallAllocator* allocator;
-
-		void setAllocater(SmallAllocator& sAllocator) {
-			allocator = &sAllocator;
-		}
-
 		~ThreadLocalCache() {
-			if (!allocator)
-				return;
-			for (int i = 0; i < POOLTYPENUMBER; i++) {
-				SmallSlab* slab = bin[i];
-				while (slab) {
-					SmallSlab* next = slab->next;
-					if (slab->allocatedBlocks == 0) {
-						slab->next = allocator->globalBin_[i];
-						allocator->globalBin_[i] = slab;
-					}
-					slab = next;
-				}
-			}
+			//* we leak some memory but its axceptable
+			return;
 		}
 	};
 
@@ -434,8 +417,6 @@ class salloc : Allocator {
 	};
 
 	inline void* allocate(const size_t bytes, const size_t alignment = 64) override {
-		// give the small alocater to SmallAllocator::tlc_
-		sa_.tlc_.setAllocater(sa_);
 		if (bytes <= 4 * 1024) {                //~ 0b
 			return sa_.alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {      //~ 4KB
@@ -458,6 +439,15 @@ class salloc : Allocator {
 	};
 
 	~salloc() = default;
+
+
+	salloc(const salloc&) = delete;
+
+	salloc& operator=(const salloc&) = delete;
+
+	salloc(salloc&&) = delete;
+
+	salloc& operator=(salloc&&) = delete;
 };
 
 class Buffer {

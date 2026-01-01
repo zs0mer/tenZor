@@ -1,7 +1,7 @@
 #include "Tenzor.hpp"
 #include <iostream>
 TZ::mem::salloc* a = new TZ::mem::salloc(1024 * 1024 * 10); // 10MB
-TZ::mem::salloc s = *a;
+TZ::mem::salloc& s = *a;
 
 int main() {
 	// int n = 1000;
