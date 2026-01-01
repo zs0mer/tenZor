@@ -39,9 +39,11 @@ class LargeAllocator {
 
 	LargeBlock* blocks = nullptr;
 
-  public:
+	friend class salloc;
+
 	LargeAllocator() {}
 
+  public:
 	inline void* alloc(const size_t bytes, const size_t alignment) {
 		LargeBlock* ptr = blocks;
 		LargeBlock* last = nullptr;
@@ -73,14 +75,6 @@ class LargeAllocator {
 		currBlock->next = blocks;
 		blocks = currBlock;
 	}
-
-	~LargeAllocator() {
-		while (blocks) {
-			void* block = blocks;
-			blocks = blocks->next;
-			free(block);
-		}
-	}
 };
 
 //& ================================================================================
@@ -102,7 +96,6 @@ class MediumAllocator {
 	std::vector<MediumSlab*> slabs;
 	uint16_t activeSlab = 0; // index pointing to the next active slab
 
-  public:
 	MediumAllocator(const uint32_t startPoolSize) {
 		if (startPoolSize == 0)
 			return;
@@ -113,6 +106,7 @@ class MediumAllocator {
 	}
 
 
+  public:
 	inline void* alloc(const size_t bytes, const size_t alignment) {
 		if (slabs.size() <= activeSlab)
 			fillSlabs(REFILLSIZE);
@@ -171,13 +165,9 @@ class MediumAllocator {
 		activeSlab--;
 	}
 
-	~MediumAllocator() {
-		for (MediumSlab* i : slabs) {
-			free(i->start - SLABHEADERSIZE);
-		}
-	}
-
   private:
+	friend class salloc;
+
 	inline void fillSlabs(uint16_t slabNum) {
 		slabs.reserve(slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
@@ -239,8 +229,6 @@ class SmallAllocator {
 
 	thread_local static ThreadLocalCache tlc_;
 
-
-  public:
 	SmallAllocator(const uint32_t startPoolSize, MediumAllocator& midAlloc) : midAlloc_(midAlloc) {
 		if (startPoolSize == 0)
 			return;
@@ -249,6 +237,7 @@ class SmallAllocator {
 		fillTLC();
 	}
 
+  public:
 	inline void* alloc(const size_t bytes) {
 
 		if (bytes == 0)
@@ -271,7 +260,7 @@ class SmallAllocator {
 			_CHECK_(!slab->freeList);
 
 			void* block = slab->freeList;
-			slab->freeList = static_cast<FreeBlock*>(block)->next;
+			slab->freeList = slab->freeList->next;
 			slab->allocatedBlocks++;
 			if (!slab->freeList) {
 				slab->wasFull = true;
@@ -321,17 +310,6 @@ class SmallAllocator {
 		globalBin_[slab->blockSizeType] = slab;
 	}
 
-
-	~SmallAllocator() {
-		for (int i = 0; i < POOLTYPENUMBER; i++) {
-			while (globalBin_[i]) {
-				SmallSlab* slab = globalBin_[i];
-				globalBin_[i] = slab->next;
-				midAlloc_.dealloc(slab);
-			}
-		}
-	}
-
   private:
 	friend class salloc;
 
@@ -375,6 +353,7 @@ class SmallAllocator {
 
 			slab->start = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 			slab->next = globalBin_[sizeType];
+			slab->blockSizeType = sizeType;
 			globalBin_[sizeType] = slab;
 
 			uint8_t* ptr = slab->start;
@@ -393,8 +372,9 @@ thread_local SmallAllocator::ThreadLocalCache SmallAllocator::tlc_;
 
 //& ================================================================================
 // the standard CPU allocater
-// do the allocating
+// does the allocating
 // splits the up the work
+//! singelton
 class salloc : Allocator {
   private:
 	// percentiges of the allocators
@@ -405,11 +385,14 @@ class salloc : Allocator {
 	MediumAllocator ma_; //~ 4KB <  < 1Mb (end is inclusive)
 	SmallAllocator sa_;  //~        < 4KB (end is inclusive)
 
+	salloc(const uint32_t bitesToPool)
+	    : la_(), ma_(bitesToPool * INITRATIO[1] / 100), sa_(bitesToPool * INITRATIO[0] / 100, ma_) {
+	}
 
   public:
-	// first the medium then the small
-	salloc(const uint32_t bitesToPool)
-	    : ma_(bitesToPool * INITRATIO[1] / 100), sa_(bitesToPool * INITRATIO[0] / 100, ma_), la_() {
+	static salloc& instance() {
+		static salloc* alloc = new salloc(START_MEM_SIZE);
+		return *alloc;
 	}
 
 	inline Device device() const override {

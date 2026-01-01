@@ -2,6 +2,8 @@
 
 #define ERRORS 1
 
+#define START_MEM_SIZE 10 * 1024 * 1024
+
 #include <atomic>
 #include <chrono>
 #include <iomanip>
