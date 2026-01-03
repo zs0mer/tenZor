@@ -205,12 +205,12 @@ class SmallAllocator {
 	//~ 16KB
 	const inline static constexpr uint16_t REFILLSIZE = 2;
 	const inline static constexpr uint16_t SLABHEADERSIZE = 64;   // sizeof(SmallSlab)
-	const inline static constexpr uintptr_t SLABSIZE = 16 * 1024; //! must be a power of two
+	const inline static constexpr uintptr_t SLABSIZE = 32 * 1024; //! must be a power of two
 	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
 	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
 	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 	const inline static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
-	    {10, 13, 15, 15, 13, 10, 8, 8, 4, 4};                           // the memory when refilling
+	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                         // the memory when refilling
 	                                                                    //* adds up to 100
 
 
@@ -273,6 +273,7 @@ class SmallAllocator {
 
 		fillTLC(sizeType);
 
+
 		slab = tlc_.bin[sizeType];
 
 		if (slab) [[likely]] {
@@ -282,13 +283,14 @@ class SmallAllocator {
 			slab->freeList = static_cast<FreeBlock*>(block)->next;
 			slab->allocatedBlocks++;
 			if (!slab->freeList) {
+				slab->wasFull = true;
 				tlc_.bin[sizeType] = slab->next;
 			}
 
 			return block;
 		}
 
-		return midAlloc_.alloc(sizeType, std::min<uint32_t>(sizeType, 64));
+		return nullptr;
 	}
 
 	inline void dealloc(void* ptr) {
@@ -305,7 +307,7 @@ class SmallAllocator {
 		if (slab->allocatedBlocks != 0 || !slab->wasFull)
 			return;
 
-		slab->wasFull = true;
+		slab->wasFull = false;
 		slab->next = globalBin_[slab->blockSizeType];
 		globalBin_[slab->blockSizeType] = slab;
 	}
