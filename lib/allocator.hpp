@@ -37,7 +37,7 @@ class LargeAllocator {
 		LargeBlock* next = nullptr;
 	};
 
-	LargeBlock* blocks = nullptr;
+	LargeBlock* blocks_ = nullptr;
 
 	friend class salloc;
 
@@ -45,7 +45,7 @@ class LargeAllocator {
 
   public:
 	inline void* alloc(const size_t bytes, const size_t alignment) {
-		LargeBlock* ptr = blocks;
+		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
 
 		while (ptr) {
@@ -56,7 +56,7 @@ class LargeAllocator {
 				if (last)
 					last->next = ptr->next;
 				else
-					blocks = ptr->next;
+					blocks_ = ptr->next;
 
 				return reinterpret_cast<void*>(aligned);
 			}
@@ -72,8 +72,8 @@ class LargeAllocator {
 	inline void dealloc(void* ptr, const size_t bytes) {
 		LargeBlock* currBlock = static_cast<LargeBlock*>(ptr);
 		currBlock->size = bytes;
-		currBlock->next = blocks;
-		blocks = currBlock;
+		currBlock->next = blocks_;
+		blocks_ = currBlock;
 	}
 };
 
@@ -93,8 +93,8 @@ class MediumAllocator {
 	const static constexpr uint16_t SLABHEADERSIZE = 64; // sizeof(MediumSlab);
 
 
-	std::vector<MediumSlab*> slabs;
-	uint16_t activeSlab = 0; // index pointing to the next active slab
+	std::vector<MediumSlab*> slabs_;
+	uint16_t activeSlab_ = 0; // index pointing to the next active slab
 
 	MediumAllocator(const uint32_t startPoolSize) {
 		if (startPoolSize == 0)
@@ -108,11 +108,11 @@ class MediumAllocator {
 
   public:
 	inline void* alloc(const size_t bytes, const size_t alignment) {
-		if (slabs.size() <= activeSlab)
+		if (slabs_.size() <= activeSlab_)
 			fillSlabs(REFILLSIZE);
 
 
-		MediumSlab* slab = slabs[activeSlab];
+		MediumSlab* slab = slabs_[activeSlab_];
 
 		// align the current pointer
 		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
@@ -129,12 +129,12 @@ class MediumAllocator {
 			return ptr;
 		}
 
-		activeSlab++;
-		if (slabs.size() <= activeSlab)
+		activeSlab_++;
+		if (slabs_.size() <= activeSlab_)
 			fillSlabs(REFILLSIZE);
 
 
-		slab = slabs[activeSlab];
+		slab = slabs_[activeSlab_];
 
 		currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
 		alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
@@ -155,21 +155,21 @@ class MediumAllocator {
 		if (slab->allocatedBlocks != 0)
 			return;
 
-		if (activeSlab == 0)
+		if (activeSlab_ == 0)
 			return;
 		slab->currentFree = slab->start;
-		std::swap(slabs[activeSlab - 1], slabs[slab->indexInSlabs]);
+		std::swap(slabs_[activeSlab_ - 1], slabs_[slab->indexInSlabs]);
 
-		slabs[activeSlab - 1]->indexInSlabs = activeSlab - 1;
-		slabs[slab->indexInSlabs]->indexInSlabs = slab->indexInSlabs;
-		activeSlab--;
+		slabs_[activeSlab_ - 1]->indexInSlabs = activeSlab_ - 1;
+		slabs_[slab->indexInSlabs]->indexInSlabs = slab->indexInSlabs;
+		activeSlab_--;
 	}
 
   private:
 	friend class salloc;
 
 	inline void fillSlabs(uint16_t slabNum) {
-		slabs.reserve(slabNum);
+		slabs_.reserve(slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 			_CHECK_(!mem);
@@ -178,9 +178,9 @@ class MediumAllocator {
 			mem->currentFree = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->size = SLABSIZE - SLABHEADERSIZE;
 			mem->allocatedBlocks = 0;
-			mem->indexInSlabs = slabs.size();
+			mem->indexInSlabs = slabs_.size();
 
-			slabs.push_back(mem);
+			slabs_.push_back(mem);
 		}
 	}
 };
