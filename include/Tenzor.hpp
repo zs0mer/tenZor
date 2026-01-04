@@ -10,6 +10,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <mutex>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"
