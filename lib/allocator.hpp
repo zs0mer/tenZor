@@ -117,10 +117,7 @@ class MediumAllocator {
 
 		MediumSlab* slab = slabs_[activeSlab_];
 
-		// align the current pointer
 		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
-		// some wizard magic
-		// (is just masking)
 		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
 		uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab->start) + slab->size;
 
@@ -408,7 +405,6 @@ class salloc : Allocator {
 
 	salloc& operator=(salloc&&) = delete;
 };
-
 class Buffer {
   private:
 	void* data_;

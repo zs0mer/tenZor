@@ -60,7 +60,7 @@ target_link_libraries(tests
 enable_testing()
 
 add_test(
-    NAME allocater_basic
+    NAME allocater
     COMMAND tests --color=yes
     )
 
