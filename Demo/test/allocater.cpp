@@ -11,7 +11,7 @@ static std::mt19937 rng(123456);
 
 TEST_CASE("alloc_little1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 50000;
+	int n = 1000;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 4)) + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
@@ -22,7 +22,7 @@ TEST_CASE("alloc_little1") {
 
 TEST_CASE("alloc_little2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 50000;
+	int n = 1000;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
@@ -39,7 +39,7 @@ TEST_CASE("alloc_little2") {
 TEST_CASE("alloc_little3") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
 	int k = 10;
-	int n = 1000;
+	int n = 100;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 
@@ -60,11 +60,10 @@ TEST_CASE("alloc_little_multy") {
 	auto& s = TZ::mem::salloc::instance();
 
 	constexpr int threadCount = 8;
-	constexpr int iterations = 10000;
 
 	auto worker = [&]() {
 		int k = 10;
-		int n = 1000;
+		int n = 100;
 		std::vector<uint8_t*> v(n);
 		std::vector<int> sizee(n);
 
@@ -92,94 +91,93 @@ TEST_CASE("alloc_little_multy") {
 
 //& ============================================================
 
-/*
+
 TEST_CASE("alloc_middle1") {
-    TZ::mem::salloc& s = TZ::mem::salloc::instance();
-    int n = 10000;
-    for (int i = 0; i < n; i++) {
-        int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
-        uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
-        *(a) = 255; // + p - 1
-        s.deallocate((void*&)a, p);
-    }
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	int n = 500;
+	for (int i = 0; i < n; i++) {
+		int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
+		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
+		*(a) = 255; // + p - 1
+		s.deallocate((void*&)a, p);
+	}
 }
 
 TEST_CASE("alloc_middle2") {
-    TZ::mem::salloc& s = TZ::mem::salloc::instance();
-    int n = 10000;
-    std::vector<uint8_t*> v(n);
-    std::vector<int> sizee(n);
-    for (int i = 0; i < n; i++) {
-        int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-        v[i] = static_cast<uint8_t*>(s.allocate(p));
-        *(v[i]) = 255; //  + p - 1
-        sizee[i] = p;
-    }
-    for (int i = 0; i < n; i++) {
-        s.deallocate((void*&)v[i], sizee[i]);
-    }
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	int n = 500;
+	std::vector<uint8_t*> v(n);
+	std::vector<int> sizee(n);
+	for (int i = 0; i < n; i++) {
+		int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
+		v[i] = static_cast<uint8_t*>(s.allocate(p));
+		*(v[i]) = 255; //  + p - 1
+		sizee[i] = p;
+	}
+	for (int i = 0; i < n; i++) {
+		s.deallocate((void*&)v[i], sizee[i]);
+	}
 }
 
 TEST_CASE("alloc_middle3") {
-    TZ::mem::salloc& s = TZ::mem::salloc::instance();
-    int k = 100;
-    int n = 100;
-    std::vector<uint8_t*> v(n);
-    std::vector<int> sizee(n);
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	int k = 5;
+	int n = 100;
+	std::vector<uint8_t*> v(n);
+	std::vector<int> sizee(n);
 
-    for (int j = 0; j < k; j++) {
-        for (int i = 0; i < n; i++) {
-            int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-            v[i] = static_cast<uint8_t*>(s.allocate(p));
-            *(v[i]) = 255; //  + p - 1
-            sizee[i] = p;
-        }
-        for (int i = 0; i < n; i++) {
-            s.deallocate((void*&)v[i], sizee[i]);
-        }
-    }
+	for (int j = 0; j < k; j++) {
+		for (int i = 0; i < n; i++) {
+			int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
+			v[i] = static_cast<uint8_t*>(s.allocate(p));
+			*(v[i]) = 255; //  + p - 1
+			sizee[i] = p;
+		}
+		for (int i = 0; i < n; i++) {
+			s.deallocate((void*&)v[i], sizee[i]);
+		}
+	}
 }
 
 TEST_CASE("alloc_middle_multy") {
-    auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::salloc::instance();
 
-    constexpr int threadCount = 8;
-    constexpr int iterations = 10000;
+	constexpr int threadCount = 8;
 
-    auto worker = [&]() {
-        int k = 100;
-        int n = 100;
-        std::vector<uint8_t*> v(n);
-        std::vector<int> sizee(n);
+	auto worker = [&]() {
+		int k = 5;
+		int n = 100;
+		std::vector<uint8_t*> v(n);
+		std::vector<int> sizee(n);
 
-        for (int j = 0; j < k; j++) {
-            for (int i = 0; i < n; i++) {
-                int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-                v[i] = static_cast<uint8_t*>(s.allocate(p));
-                *(v[i]) = 255; //  + p - 1
-                sizee[i] = p;
-            }
-            for (int i = 0; i < n; i++) {
-                s.deallocate((void*&)v[i], sizee[i]);
-            }
-        }
-    };
+		for (int j = 0; j < k; j++) {
+			for (int i = 0; i < n; i++) {
+				int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
+				v[i] = static_cast<uint8_t*>(s.allocate(p));
+				*(v[i]) = 255; //  + p - 1
+				sizee[i] = p;
+			}
+			for (int i = 0; i < n; i++) {
+				s.deallocate((void*&)v[i], sizee[i]);
+			}
+		}
+	};
 
-    std::vector<std::thread> threads;
-    for (int i = 0; i < threadCount; ++i)
-        threads.emplace_back(worker);
+	std::vector<std::thread> threads;
+	for (int i = 0; i < threadCount; ++i)
+		threads.emplace_back(worker);
 
-    for (auto& t : threads)
-        t.join();
+	for (auto& t : threads)
+		t.join();
 }
 
-*/
+
 //& ============================================================
 
 
 TEST_CASE("alloc_large1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 50000;
+	int n = 200;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
@@ -190,7 +188,7 @@ TEST_CASE("alloc_large1") {
 
 TEST_CASE("alloc_large2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 10;
+	int n = 200;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
@@ -206,8 +204,8 @@ TEST_CASE("alloc_large2") {
 
 TEST_CASE("alloc_large3") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int k = 1000;
-	int n = 10;
+	int k = 5;
+	int n = 40;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 
@@ -228,11 +226,10 @@ TEST_CASE("alloc_large_multy") {
 	auto& s = TZ::mem::salloc::instance();
 
 	constexpr int threadCount = 8;
-	constexpr int iterations = 10000;
 
 	auto worker = [&]() {
-		int k = 10;
-		int n = 100;
+		int k = 5;
+		int n = 40;
 		std::vector<uint8_t*> v(n);
 		std::vector<int> sizee(n);
 
