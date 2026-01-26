@@ -8,11 +8,11 @@ enum Device { CPU, CUDA };
 // an abstract class
 class Allocator {
   public:
-	virtual inline Device device() const = 0;
+	virtual Device device() const = 0;
 
-	virtual inline void* allocate(const size_t bytes, const size_t alignment) = 0;
+	virtual void* allocate(const size_t bytes, const size_t alignment) = 0;
 
-	virtual inline void deallocate(void*& ptr, const size_t bytes) = 0;
+	virtual void deallocate(void*& ptr, const size_t bytes) = 0;
 
 	virtual ~Allocator() = default;
 
@@ -33,7 +33,7 @@ class Allocator {
 class LargeAllocator {
   private:
 	struct LargeBlock {
-		size_t size;
+		size_t size = 0;
 		LargeBlock* next = nullptr;
 	};
 
@@ -94,19 +94,18 @@ class LargeAllocator {
 class MediumAllocator {
   private:
 	struct MediumSlab {
-		uint8_t* start;
-		uint8_t* currentFree;
-		size_t size;
-		uint32_t allocatedBlocks;
-		size_t indexInSlabs;
+		uint8_t* start = nullptr;
+		uint8_t* freeMem = nullptr;
+		uint32_t allocatedBlocks = -1;
+		size_t indexInBin = -1;
 	};
 
-	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
-	const static constexpr uint16_t REFILLSIZE = 2;
-	const static constexpr uint16_t SLABHEADERSIZE = 64; // sizeof(MediumSlab);
+	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
+	const static uint16_t REFILLSIZE = 2;
+	const static uint16_t SLABHEADERSIZE = 64;
 
 
-	std::vector<MediumSlab*> slabs_;
+	std::vector<MediumSlab*> bin_;
 	std::atomic<uint16_t> activeSlab_ = 0; // index pointing to the next active slab
 
 	MediumAllocator(const uint32_t startPoolSize) {
@@ -120,21 +119,22 @@ class MediumAllocator {
 
 
   public:
-	inline void* alloc(const size_t bytes, const size_t alignment) {
+	void* alloc(const size_t bytes, const size_t alignment) {
 		while (true) {
-			if (slabs_.size() <= activeSlab_)
+			if (bin_.size() <= activeSlab_)
 				fillSlabs(REFILLSIZE);
 
 
-			MediumSlab* slab = slabs_[activeSlab_];
+			MediumSlab* slab = bin_[activeSlab_];
 
-			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
+			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->freeMem);
 			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab->start) + slab->size;
+			uintptr_t slabEnd =
+			    reinterpret_cast<uintptr_t>(slab->start) + (SLABSIZE - SLABHEADERSIZE);
 
 			if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
-				slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+				slab->freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 				void* ptr = reinterpret_cast<void*>(alignedAddr);
 				slab->allocatedBlocks++;
 				return ptr;
@@ -145,7 +145,7 @@ class MediumAllocator {
 		return nullptr;
 	}
 
-	inline void dealloc(void* ptr) {
+	void dealloc(void* ptr) {
 		MediumSlab* slab =
 		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
@@ -156,16 +156,16 @@ class MediumAllocator {
 
 		if (activeSlab_ == 0)
 			return;
-		slab->currentFree = slab->start;
-		std::swap(slabs_[activeSlab_ - 1], slabs_[slab->indexInSlabs]);
+		slab->freeMem = slab->start;
+		std::swap(bin_[activeSlab_ - 1], bin_[slab->indexInBin]);
 
-		slabs_[activeSlab_ - 1]->indexInSlabs = activeSlab_ - 1;
-		slabs_[slab->indexInSlabs]->indexInSlabs = slab->indexInSlabs;
+		bin_[activeSlab_ - 1]->indexInBin = activeSlab_ - 1;
+		bin_[slab->indexInBin]->indexInBin = slab->indexInBin;
 		activeSlab_--;
 	}
 
 	~MediumAllocator() {
-		for (auto* i : slabs_) {
+		for (auto* i : bin_) {
 			if (i->allocatedBlocks == 0)
 				free(i);
 		}
@@ -174,19 +174,18 @@ class MediumAllocator {
   private:
 	friend class salloc;
 
-	inline void fillSlabs(uint16_t slabNum) {
-		slabs_.reserve(slabNum);
+	void fillSlabs(uint16_t slabNum) {
+		bin_.reserve(slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 			_CHECK_(!mem);
 
 			mem->start = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
-			mem->currentFree = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
-			mem->size = SLABSIZE - SLABHEADERSIZE;
+			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->allocatedBlocks = 0;
-			mem->indexInSlabs = slabs_.size();
+			mem->indexInBin = bin_.size();
 
-			slabs_.push_back(mem);
+			bin_.push_back(mem);
 		}
 	}
 };
@@ -196,31 +195,31 @@ class MediumAllocator {
 class SmallAllocator {
   private:
 	struct FreeBlock {
-		FreeBlock* next;
+		FreeBlock* next = nullptr;
 	};
 
 	struct SmallSlab {
-		uint8_t* start;
-		uint16_t blockSizeType;
+		uint8_t* start = nullptr;
+		uint16_t blockSizeType = -1;
 		SmallSlab* next = nullptr;
-		FreeBlock* freeList;
+		FreeBlock* nextFreeBlock = nullptr;
 		uint32_t allocatedBlocks = 0;
-		bool wasFull = false;
+		bool notAvailable = false;
 	};
 
 	//~ 16KB
-	const inline static constexpr uint16_t REFILLSIZE = 2;
-	const inline static constexpr uint16_t SLABHEADERSIZE = 64;   // sizeof(SmallSlab)
-	const inline static constexpr uintptr_t SLABSIZE = 32 * 1024; //! must be a power of two
-	const inline static constexpr uint16_t POOLTYPENUMBER = 10;
-	const inline static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
+	const static uint16_t REFILLSIZE = 2;
+	const static uint16_t SLABHEADERSIZE = 64;   // sizeof(SmallSlab)
+	const static uintptr_t SLABSIZE = 32 * 1024; //! must be a power of two
+	const static uint16_t POOLTYPENUMBER = 10;
+	const static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
 	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
-	const inline static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
-	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                         // the memory when refilling
-	                                                                    //* adds up to 100
+	const static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
+	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                  // the memory when refilling
+	                                                             //* adds up to 100
 
 
-	SmallSlab* globalBin_[POOLTYPENUMBER] = {nullptr};
+	SmallSlab* bin_[POOLTYPENUMBER] = {nullptr};
 	MediumAllocator& midAlloc_;
 
 	SmallAllocator(const uint32_t startPoolSize, MediumAllocator& midAlloc) : midAlloc_(midAlloc) {
@@ -231,7 +230,7 @@ class SmallAllocator {
 	}
 
   public:
-	inline void* alloc(const size_t bytes) {
+	void* alloc(const size_t bytes) {
 
 		if (bytes == 0)
 			return nullptr;
@@ -248,16 +247,16 @@ class SmallAllocator {
 		_CHECK_(sizeType == POOLTYPENUMBER);
 
 		while (true) {
-			SmallSlab* slab = globalBin_[sizeType];
+			SmallSlab* slab = bin_[sizeType];
 			if (slab) [[likely]] {
-				_CHECK_(!slab->freeList);
+				_CHECK_(!slab->nextFreeBlock);
 
-				void* block = slab->freeList;
-				slab->freeList = slab->freeList->next;
+				void* block = slab->nextFreeBlock;
+				slab->nextFreeBlock = slab->nextFreeBlock->next;
 				slab->allocatedBlocks++;
-				if (!slab->freeList) {
-					slab->wasFull = true;
-					globalBin_[sizeType] = slab->next;
+				if (!slab->nextFreeBlock) {
+					slab->notAvailable = true;
+					bin_[sizeType] = slab->next;
 				}
 
 				return block;
@@ -267,33 +266,33 @@ class SmallAllocator {
 		return nullptr;
 	}
 
-	inline void dealloc(void* ptr) {
+	void dealloc(void* ptr) {
 		_CHECK(!ptr, "double free");
 		SmallSlab* slab =
 		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
-		FreeBlock* fb = reinterpret_cast<FreeBlock*>(ptr);
-		fb->next = slab->freeList;
-		slab->freeList = fb;
+		FreeBlock* block = reinterpret_cast<FreeBlock*>(ptr);
+		block->next = slab->nextFreeBlock;
+		slab->nextFreeBlock = block;
 
 		slab->allocatedBlocks--;
 
-		if (slab->allocatedBlocks != 0 || !slab->wasFull)
+		if (slab->allocatedBlocks != 0 || !slab->notAvailable)
 			return;
 
-		slab->wasFull = false;
-		slab->next = globalBin_[slab->blockSizeType];
-		globalBin_[slab->blockSizeType] = slab;
+		slab->notAvailable = false;
+		slab->next = bin_[slab->blockSizeType];
+		bin_[slab->blockSizeType] = slab;
 	}
 
 	~SmallAllocator() {
 		for (int t = 0; t < POOLTYPENUMBER; t++) {
-			SmallSlab* s = globalBin_[t];
-			while (s) {
-				SmallSlab* d = s->next;
-				if (s->allocatedBlocks == 0)
-					midAlloc_.dealloc(s);
-				s = d;
+			SmallSlab* slab = bin_[t];
+			while (slab) {
+				SmallSlab* next = slab->next;
+				if (slab->allocatedBlocks == 0)
+					midAlloc_.dealloc(slab);
+				slab = next;
 			}
 		}
 	}
@@ -301,12 +300,12 @@ class SmallAllocator {
   private:
 	friend class salloc;
 
-	inline void fillPool(const uint32_t bites) {
+	void fillPool(const uint32_t bites) {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
 			fillPool((bites * POOLWEIGHT[i]) / 100, i);
 	}
 
-	inline void fillPool(uint32_t bites, const uint16_t sizeType) {
+	void fillPool(uint32_t bites, const uint16_t sizeType) {
 		//* can be much faster
 		// if the allocated space is to small for a slab round it up to 1
 		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
@@ -319,16 +318,16 @@ class SmallAllocator {
 			_CHECK(!slab, "out of memory");
 
 			slab->start = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
-			slab->next = globalBin_[sizeType];
+			slab->next = bin_[sizeType];
 			slab->blockSizeType = sizeType;
-			globalBin_[sizeType] = slab;
+			bin_[sizeType] = slab;
 
 			uint8_t* ptr = slab->start;
 			uint8_t* end = ptr + SLABSIZE - SLABHEADERSIZE;
 
 			while (ptr + blockSize <= end) {
-				reinterpret_cast<FreeBlock*>(ptr)->next = slab->freeList;
-				slab->freeList = reinterpret_cast<FreeBlock*>(ptr);
+				reinterpret_cast<FreeBlock*>(ptr)->next = slab->nextFreeBlock;
+				slab->nextFreeBlock = reinterpret_cast<FreeBlock*>(ptr);
 
 				ptr = ptr + blockSize;
 			}
@@ -343,7 +342,7 @@ class salloc : Allocator {
   private:
 	// percentiges of the allocators
 	//! has to add up to 100%
-	const inline static constexpr uint16_t INITRATIO[2] = {50, 50};
+	const static constexpr uint16_t INITRATIO[2] = {50, 50};
 
 	LargeAllocator la_; //~ 1MB >
 
@@ -366,11 +365,11 @@ class salloc : Allocator {
 		return *alloc;
 	}
 
-	inline Device device() const override {
+	Device device() const override {
 		return Device::CPU;
 	};
 
-	inline void* allocate(const size_t bytes, const size_t alignment = 64) override {
+	void* allocate(const size_t bytes, const size_t alignment = 64) override {
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
@@ -380,7 +379,7 @@ class salloc : Allocator {
 		}
 	};
 
-	inline void deallocate(void*& ptr, const size_t bytes) override {
+	void deallocate(void*& ptr, const size_t bytes) override {
 		if (bytes <= 4 * 1024) {            //~ 0b
 			return sa_().dealloc(ptr);      //~
 		} else if (bytes <= 1024 * 1024) {  //~ 4KB
@@ -409,7 +408,7 @@ class Buffer {
   private:
 	void* data_;
 	const size_t size_;
-	const uint32_t alignment_;
+	const uint8_t alignment_;
 	Allocator* allocator_;
 	std::atomic<uint32_t> refCount_{1};
 

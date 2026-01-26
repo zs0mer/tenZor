@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 
-static std::mt19937 rng(123456);
+static std::mt19937 rng(123455);
 
 
 TEST_CASE("alloc_little1") {
@@ -98,7 +98,7 @@ TEST_CASE("alloc_middle1") {
 	for (int i = 0; i < n; i++) {
 		int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
-		*(a) = 255; // + p - 1
+		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);
 	}
 }
@@ -111,7 +111,7 @@ TEST_CASE("alloc_middle2") {
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
 		v[i] = static_cast<uint8_t*>(s.allocate(p));
-		*(v[i]) = 255; //  + p - 1
+		*(v[i] + p - 1) = 255;
 		sizee[i] = p;
 	}
 	for (int i = 0; i < n; i++) {
@@ -130,7 +130,7 @@ TEST_CASE("alloc_middle3") {
 		for (int i = 0; i < n; i++) {
 			int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
 			v[i] = static_cast<uint8_t*>(s.allocate(p));
-			*(v[i]) = 255; //  + p - 1
+			*(v[i] + p - 1) = 255;
 			sizee[i] = p;
 		}
 		for (int i = 0; i < n; i++) {
@@ -154,7 +154,7 @@ TEST_CASE("alloc_middle_multy") {
 			for (int i = 0; i < n; i++) {
 				int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
 				v[i] = static_cast<uint8_t*>(s.allocate(p));
-				*(v[i]) = 255; //  + p - 1
+				*(v[i] + p - 1) = 255;
 				sizee[i] = p;
 			}
 			for (int i = 0; i < n; i++) {
