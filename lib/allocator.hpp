@@ -45,7 +45,7 @@ class LargeAllocator {
 	LargeAllocator() = default;
 
   public:
-	inline void* alloc(const size_t bytes, const size_t alignment) {
+	void* alloc(const size_t bytes, const size_t alignment) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
@@ -71,12 +71,21 @@ class LargeAllocator {
 		return std::aligned_alloc(alignment, size);
 	}
 
-	inline void dealloc(void* ptr, const size_t bytes) {
+	void dealloc(void* ptr, const size_t bytes) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* currBlock = reinterpret_cast<LargeBlock*>(ptr);
 		currBlock->size = bytes;
 		currBlock->next = blocks_;
 		blocks_ = currBlock;
+	}
+
+	~LargeAllocator() {
+		LargeBlock* block = blocks_;
+		while (block) {
+			LargeBlock* next = block->next;
+			free(block);
+			block = next;
+		}
 	}
 };
 
@@ -91,6 +100,7 @@ class MediumAllocator {
 		uint32_t allocatedBlocks;
 		size_t indexInSlabs;
 	};
+
 	const static constexpr uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
 	const static constexpr uint16_t REFILLSIZE = 2;
 	const static constexpr uint16_t SLABHEADERSIZE = 64; // sizeof(MediumSlab);
@@ -152,6 +162,13 @@ class MediumAllocator {
 		slabs_[activeSlab_ - 1]->indexInSlabs = activeSlab_ - 1;
 		slabs_[slab->indexInSlabs]->indexInSlabs = slab->indexInSlabs;
 		activeSlab_--;
+	}
+
+	~MediumAllocator() {
+		for (auto* i : slabs_) {
+			if (i->allocatedBlocks == 0)
+				free(i);
+		}
 	}
 
   private:
@@ -230,42 +247,23 @@ class SmallAllocator {
 
 		_CHECK_(sizeType == POOLTYPENUMBER);
 
+		while (true) {
+			SmallSlab* slab = globalBin_[sizeType];
+			if (slab) [[likely]] {
+				_CHECK_(!slab->freeList);
 
-		SmallSlab* slab = globalBin_[sizeType];
-		if (slab) [[likely]] {
-			_CHECK_(!slab->freeList);
+				void* block = slab->freeList;
+				slab->freeList = slab->freeList->next;
+				slab->allocatedBlocks++;
+				if (!slab->freeList) {
+					slab->wasFull = true;
+					globalBin_[sizeType] = slab->next;
+				}
 
-			void* block = slab->freeList;
-			slab->freeList = slab->freeList->next;
-			slab->allocatedBlocks++;
-			if (!slab->freeList) {
-				slab->wasFull = true;
-				globalBin_[sizeType] = slab->next;
+				return block;
 			}
-
-			return block;
+			fillPool(REFILLSIZE * SLABSIZE, sizeType);
 		}
-
-
-		fillPool(REFILLSIZE * SLABSIZE, sizeType);
-
-
-		slab = globalBin_[sizeType];
-
-		if (slab) [[likely]] {
-			_CHECK_(!slab->freeList);
-
-			void* block = slab->freeList;
-			slab->freeList = static_cast<FreeBlock*>(block)->next;
-			slab->allocatedBlocks++;
-			if (!slab->freeList) {
-				slab->wasFull = true;
-				globalBin_[sizeType] = slab->next;
-			}
-
-			return block;
-		}
-
 		return nullptr;
 	}
 
@@ -286,6 +284,18 @@ class SmallAllocator {
 		slab->wasFull = false;
 		slab->next = globalBin_[slab->blockSizeType];
 		globalBin_[slab->blockSizeType] = slab;
+	}
+
+	~SmallAllocator() {
+		for (int t = 0; t < POOLTYPENUMBER; t++) {
+			SmallSlab* s = globalBin_[t];
+			while (s) {
+				SmallSlab* d = s->next;
+				if (s->allocatedBlocks == 0)
+					midAlloc_.dealloc(s);
+				s = d;
+			}
+		}
 	}
 
   private:
