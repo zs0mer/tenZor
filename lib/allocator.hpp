@@ -94,7 +94,6 @@ class LargeAllocator {
 class MediumAllocator {
   private:
 	struct MediumSlab {
-		uint8_t* start = nullptr;
 		uint8_t* freeMem = nullptr;
 		uint32_t allocatedBlocks = -1;
 		size_t indexInBin = -1;
@@ -129,8 +128,7 @@ class MediumAllocator {
 
 			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->freeMem);
 			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-			uintptr_t slabEnd =
-			    reinterpret_cast<uintptr_t>(slab->start) + (SLABSIZE - SLABHEADERSIZE);
+			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab) + SLABSIZE;
 
 			if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
@@ -156,7 +154,8 @@ class MediumAllocator {
 
 		if (activeSlab_ == 0)
 			return;
-		slab->freeMem = slab->start;
+
+		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 		std::swap(bin_[activeSlab_ - 1], bin_[slab->indexInBin]);
 
 		bin_[activeSlab_ - 1]->indexInBin = activeSlab_ - 1;
@@ -180,7 +179,6 @@ class MediumAllocator {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 			_CHECK_(!mem);
 
-			mem->start = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->allocatedBlocks = 0;
 			mem->indexInBin = bin_.size();
@@ -199,9 +197,8 @@ class SmallAllocator {
 	};
 
 	struct SmallSlab {
-		uint8_t* start = nullptr;
 		uint16_t blockSizeType = -1;
-		SmallSlab* next = nullptr;
+		SmallSlab* nextSlab = nullptr;
 		FreeBlock* nextFreeBlock = nullptr;
 		uint32_t allocatedBlocks = 0;
 		bool notAvailable = false;
@@ -256,7 +253,7 @@ class SmallAllocator {
 				slab->allocatedBlocks++;
 				if (!slab->nextFreeBlock) {
 					slab->notAvailable = true;
-					bin_[sizeType] = slab->next;
+					bin_[sizeType] = slab->nextSlab;
 				}
 
 				return block;
@@ -281,7 +278,7 @@ class SmallAllocator {
 			return;
 
 		slab->notAvailable = false;
-		slab->next = bin_[slab->blockSizeType];
+		slab->nextSlab = bin_[slab->blockSizeType];
 		bin_[slab->blockSizeType] = slab;
 	}
 
@@ -289,7 +286,7 @@ class SmallAllocator {
 		for (int t = 0; t < POOLTYPENUMBER; t++) {
 			SmallSlab* slab = bin_[t];
 			while (slab) {
-				SmallSlab* next = slab->next;
+				SmallSlab* next = slab->nextSlab;
 				if (slab->allocatedBlocks == 0)
 					midAlloc_.dealloc(slab);
 				slab = next;
@@ -317,12 +314,11 @@ class SmallAllocator {
 
 			_CHECK(!slab, "out of memory");
 
-			slab->start = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
-			slab->next = bin_[sizeType];
+			slab->nextSlab = bin_[sizeType];
 			slab->blockSizeType = sizeType;
 			bin_[sizeType] = slab;
 
-			uint8_t* ptr = slab->start;
+			uint8_t* ptr = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 			uint8_t* end = ptr + SLABSIZE - SLABHEADERSIZE;
 
 			while (ptr + blockSize <= end) {

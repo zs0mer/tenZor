@@ -303,6 +303,6 @@ TEST_CASE("alloc_size_boundaries") {
 		void* p = s.allocate(sz);
 		CHECK(p != nullptr);
 		reinterpret_cast<uint8_t*>(p)[sz - 1] = 0xAA;
-		s.deallocate(p, 64);
+		s.deallocate(p, sz);
 	}
 }
