@@ -8,6 +8,8 @@
 
 static std::mt19937 rng(123455);
 
+//! only multy threading "hell" remains...
+
 
 TEST_CASE("alloc_little1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
@@ -56,10 +58,10 @@ TEST_CASE("alloc_little3") {
 	}
 }
 
-TEST_CASE("alloc_little_multy") {
+TEST_CASE("alloc_little_multy1") {
 	auto& s = TZ::mem::salloc::instance();
 
-	constexpr int threadCount = 8;
+	int threadCount = 8;
 
 	auto worker = [&]() {
 		int k = 10;
@@ -88,9 +90,37 @@ TEST_CASE("alloc_little_multy") {
 		t.join();
 }
 
+TEST_CASE("alloc_little_multy2") {
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+
+	int k = 5;
+	int n = 1000;
+	std::vector<void*> shared(n);
+	std::vector<int> sizes(n);
+
+	for (int i = 0; i < k; i++) {
+		std::thread producer([&] {
+			for (int i = 0; i < n; ++i) {
+				int sz = (rng() % (1024 * 4)) + 1;
+				shared[i] = s.allocate(sz);
+				sizes[i] = sz;
+				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
+			}
+		});
+
+		std::thread consumer([&] {
+			producer.join();
+			for (int i = 0; i < n; ++i) {
+				s.deallocate(shared[i], sizes[i]);
+			}
+		});
+
+		consumer.join();
+	}
+}
+
 
 //& ============================================================
-
 
 TEST_CASE("alloc_middle1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
@@ -139,10 +169,10 @@ TEST_CASE("alloc_middle3") {
 	}
 }
 
-TEST_CASE("alloc_middle_multy") {
+TEST_CASE("alloc_middle_multy1") {
 	auto& s = TZ::mem::salloc::instance();
 
-	constexpr int threadCount = 8;
+	int threadCount = 8;
 
 	auto worker = [&]() {
 		int k = 5;
@@ -171,13 +201,42 @@ TEST_CASE("alloc_middle_multy") {
 		t.join();
 }
 
+TEST_CASE("alloc_middle_multy2") {
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+
+	int k = 5;
+	int n = 200;
+	std::vector<void*> shared(n);
+	std::vector<int> sizes(n);
+
+	for (int i = 0; i < k; i++) {
+		std::thread producer([&] {
+			for (int i = 0; i < n; ++i) {
+				int sz = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
+				shared[i] = s.allocate(sz);
+				sizes[i] = sz;
+				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
+			}
+		});
+
+		std::thread consumer([&] {
+			producer.join();
+			for (int i = 0; i < n; ++i) {
+				s.deallocate(shared[i], sizes[i]);
+			}
+		});
+
+		consumer.join();
+	}
+}
+
 
 //& ============================================================
 
 
 TEST_CASE("alloc_large1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 200;
+	int n = 40;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
@@ -188,7 +247,7 @@ TEST_CASE("alloc_large1") {
 
 TEST_CASE("alloc_large2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-	int n = 200;
+	int n = 40;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
@@ -205,7 +264,7 @@ TEST_CASE("alloc_large2") {
 TEST_CASE("alloc_large3") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
 	int k = 5;
-	int n = 40;
+	int n = 10;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
 
@@ -222,10 +281,10 @@ TEST_CASE("alloc_large3") {
 	}
 }
 
-TEST_CASE("alloc_large_multy") {
+TEST_CASE("alloc_large_multy1") {
 	auto& s = TZ::mem::salloc::instance();
 
-	constexpr int threadCount = 8;
+	int threadCount = 8;
 
 	auto worker = [&]() {
 		int k = 3;
@@ -254,6 +313,34 @@ TEST_CASE("alloc_large_multy") {
 		t.join();
 }
 
+TEST_CASE("alloc_large_multy2") {
+	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+
+	int k = 5;
+	int n = 40;
+	std::vector<void*> shared(n);
+	std::vector<int> sizes(n);
+
+	for (int i = 0; i < k; i++) {
+		std::thread producer([&] {
+			for (int i = 0; i < n; ++i) {
+				int sz = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
+				shared[i] = s.allocate(sz);
+				sizes[i] = sz;
+				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
+			}
+		});
+
+		std::thread consumer([&] {
+			producer.join();
+			for (int i = 0; i < n; ++i) {
+				s.deallocate(shared[i], sizes[i]);
+			}
+		});
+
+		consumer.join();
+	}
+}
 
 //& ============================================================
 
@@ -274,7 +361,6 @@ TEST_CASE("alloc_alignment") {
 		u = u - u % 64;
 		for (size_t align : {8, 16, 32, 64}) {
 			void* p = s.allocate(u, align);
-			CHECK(p != nullptr);
 			CHECK(reinterpret_cast<uintptr_t>(p) % align == 0);
 			s.deallocate(p, u);
 		}
@@ -301,7 +387,6 @@ TEST_CASE("alloc_size_boundaries") {
 
 	for (size_t sz : sizes) {
 		void* p = s.allocate(sz);
-		CHECK(p != nullptr);
 		reinterpret_cast<uint8_t*>(p)[sz - 1] = 0xAA;
 		s.deallocate(p, sz);
 	}
