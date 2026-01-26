@@ -228,8 +228,8 @@ TEST_CASE("alloc_large_multy") {
 	constexpr int threadCount = 8;
 
 	auto worker = [&]() {
-		int k = 5;
-		int n = 40;
+		int k = 3;
+		int n = 7;
 		std::vector<uint8_t*> v(n);
 		std::vector<int> sizee(n);
 

@@ -111,39 +111,28 @@ class MediumAllocator {
 
   public:
 	inline void* alloc(const size_t bytes, const size_t alignment) {
-		if (slabs_.size() <= activeSlab_)
-			fillSlabs(REFILLSIZE);
+		while (true) {
+			if (slabs_.size() <= activeSlab_)
+				fillSlabs(REFILLSIZE);
 
 
-		MediumSlab* slab = slabs_[activeSlab_];
+			MediumSlab* slab = slabs_[activeSlab_];
 
-		uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
-		uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-		uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab->start) + slab->size;
+			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
+			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
+			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab->start) + slab->size;
 
-		if (alignedAddr + bytes <= slabEnd) [[likely]] {
+			if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
-			slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
-			void* ptr = reinterpret_cast<void*>(alignedAddr);
-			slab->allocatedBlocks++;
-			return ptr;
+				slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+				void* ptr = reinterpret_cast<void*>(alignedAddr);
+				slab->allocatedBlocks++;
+				return ptr;
+			}
+			activeSlab_++;
 		}
 
-		activeSlab_++;
-		if (slabs_.size() <= activeSlab_)
-			fillSlabs(REFILLSIZE);
-
-
-		slab = slabs_[activeSlab_];
-
-		currentAddr = reinterpret_cast<uintptr_t>(slab->currentFree);
-		alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-
-		slab->currentFree = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
-		void* ptr = reinterpret_cast<void*>(alignedAddr);
-		slab->allocatedBlocks++;
-
-		return ptr;
+		return nullptr;
 	}
 
 	inline void dealloc(void* ptr) {
@@ -336,10 +325,9 @@ class SmallAllocator {
 		}
 	}
 };
+
 //& ================================================================================
 // the standard CPU allocater
-// does the allocating
-// splits the up the work
 //! singelton
 class salloc : Allocator {
   private:
@@ -405,6 +393,8 @@ class salloc : Allocator {
 
 	salloc& operator=(salloc&&) = delete;
 };
+
+// standard memory buffer
 class Buffer {
   private:
 	void* data_;
