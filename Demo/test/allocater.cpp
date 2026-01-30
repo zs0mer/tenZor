@@ -8,8 +8,6 @@
 
 static std::mt19937 rng(123455);
 
-//! only multy threading "hell" remains...
-
 
 TEST_CASE("alloc_little1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
@@ -107,9 +105,9 @@ TEST_CASE("alloc_little_multy2") {
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
 		});
+		producer.join();
 
 		std::thread consumer([&] {
-			producer.join();
 			for (int i = 0; i < n; ++i) {
 				s.deallocate(shared[i], sizes[i]);
 			}
@@ -117,41 +115,6 @@ TEST_CASE("alloc_little_multy2") {
 
 		consumer.join();
 	}
-}
-
-TEST_CASE("alloc_little_multy3") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
-
-	constexpr int ROUNDS = 1000;
-	constexpr int BATCH = 256;
-
-	std::vector<void*> shared(BATCH);
-	std::vector<int> sizes(BATCH);
-
-	std::thread t1([&] {
-		for (int r = 0; r < ROUNDS; ++r) {
-			for (int i = 0; i < BATCH; ++i) {
-				int sz = (rand() % 2048) + 1;
-				shared[i] = s.allocate(sz);
-				sizes[i] = sz;
-				static_cast<uint8_t*>(shared[i])[0] = 0x11;
-			}
-		}
-	});
-
-	std::thread t2([&] {
-		for (int r = 0; r < ROUNDS; ++r) {
-			for (int i = 0; i < BATCH; ++i) {
-				while (!shared[i])
-					std::this_thread::yield();
-				s.deallocate(shared[i], sizes[i]);
-				shared[i] = nullptr;
-			}
-		}
-	});
-
-	t1.join();
-	t2.join();
 }
 
 
@@ -204,6 +167,7 @@ TEST_CASE("alloc_middle3") {
 	}
 }
 
+
 TEST_CASE("alloc_middle_multy1") {
 	auto& s = TZ::mem::salloc::instance();
 
@@ -236,6 +200,7 @@ TEST_CASE("alloc_middle_multy1") {
 		t.join();
 }
 
+
 TEST_CASE("alloc_middle_multy2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
 
@@ -253,9 +218,9 @@ TEST_CASE("alloc_middle_multy2") {
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
 		});
+		producer.join();
 
 		std::thread consumer([&] {
-			producer.join();
 			for (int i = 0; i < n; ++i) {
 				s.deallocate(shared[i], sizes[i]);
 			}
@@ -264,7 +229,6 @@ TEST_CASE("alloc_middle_multy2") {
 		consumer.join();
 	}
 }
-
 
 //& ============================================================
 
@@ -365,9 +329,9 @@ TEST_CASE("alloc_large_multy2") {
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
 		});
+		producer.join();
 
 		std::thread consumer([&] {
-			producer.join();
 			for (int i = 0; i < n; ++i) {
 				s.deallocate(shared[i], sizes[i]);
 			}

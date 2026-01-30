@@ -96,7 +96,7 @@ class MediumAllocator {
 	struct MediumSlab {
 		uint8_t* freeMem = nullptr;
 		uint32_t allocatedBlocks = -1;
-		size_t indexInBin = -1;
+		size_t idxInBin = -1;
 	};
 
 	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
@@ -105,7 +105,7 @@ class MediumAllocator {
 
 
 	std::vector<MediumSlab*> bin_;
-	std::atomic<uint16_t> activeSlab_ = 0; // index pointing to the next active slab
+	uint16_t activeSlabIdx_ = 0;
 
 	MediumAllocator(const uint32_t startPoolSize) {
 		if (startPoolSize == 0)
@@ -120,11 +120,12 @@ class MediumAllocator {
   public:
 	void* alloc(const size_t bytes, const size_t alignment) {
 		while (true) {
-			if (bin_.size() <= activeSlab_)
+			if (bin_.size() <= activeSlabIdx_)
 				fillSlabs(REFILLSIZE);
 
 
-			MediumSlab* slab = bin_[activeSlab_];
+			MediumSlab* slab = bin_[activeSlabIdx_];
+
 
 			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->freeMem);
 			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
@@ -137,7 +138,7 @@ class MediumAllocator {
 				slab->allocatedBlocks++;
 				return ptr;
 			}
-			activeSlab_++;
+			activeSlabIdx_++;
 		}
 
 		return nullptr;
@@ -152,15 +153,23 @@ class MediumAllocator {
 		if (slab->allocatedBlocks != 0)
 			return;
 
-		if (activeSlab_ == 0)
+		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
+
+		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
+			bin_.push_back(slab);
+			slab->idxInBin = activeSlabIdx_;
+			return;
+		}
+
+		if (activeSlabIdx_ == 0)
 			return;
 
-		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
-		std::swap(bin_[activeSlab_ - 1], bin_[slab->indexInBin]);
+		std::swap(bin_[activeSlabIdx_ - 1], bin_[slab->idxInBin]);
 
-		bin_[activeSlab_ - 1]->indexInBin = activeSlab_ - 1;
-		bin_[slab->indexInBin]->indexInBin = slab->indexInBin;
-		activeSlab_--;
+		bin_[slab->idxInBin]->idxInBin = slab->idxInBin;
+		bin_[activeSlabIdx_ - 1]->idxInBin = activeSlabIdx_ - 1;
+
+		activeSlabIdx_--;
 	}
 
 	~MediumAllocator() {
@@ -181,7 +190,7 @@ class MediumAllocator {
 
 			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->allocatedBlocks = 0;
-			mem->indexInBin = bin_.size();
+			mem->idxInBin = bin_.size();
 
 			bin_.push_back(mem);
 		}
