@@ -11,7 +11,7 @@ class Allocator {
   public:
 	virtual Device device() const = 0;
 
-	virtual void* allocate(const size_t bytes, const uint8_t alignment) = 0;
+	virtual void* allocate(const size_t bytes, const uint16_t alignment) = 0;
 
 	virtual void deallocate(void*& ptr, const size_t bytes) = 0;
 
@@ -32,7 +32,7 @@ class Allocator {
 //& ================================================================================
 
 //~ this is an allocator
-//~ can allocate bites in range of (1MB; INF]
+//~ can allocate bites in the range of (1MB; INF]
 class LargeAllocator {
   private:
 	struct LargeBlock {
@@ -43,12 +43,8 @@ class LargeAllocator {
 	std::mutex mtx_;
 	LargeBlock* blocks_ = nullptr;
 
-	friend class salloc;
-
-	LargeAllocator() = default;
-
   public:
-	void* alloc(const size_t bytes, const size_t alignment) {
+	void* alloc(const size_t bytes, const uint16_t alignment) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
@@ -90,12 +86,17 @@ class LargeAllocator {
 			block = next;
 		}
 	}
+
+  private:
+	friend class salloc;
+
+	LargeAllocator() = default;
 };
 
 //& ================================================================================
 
 //~ this is an allocator
-//~ can allocate bites in range of (4KB; 1MB]
+//~ can allocate bites in the range of (4KB; 1MB]
 class MediumAllocator {
   private:
 	struct MediumSlab {
@@ -108,22 +109,11 @@ class MediumAllocator {
 	const static uint16_t REFILLSIZE = 2;
 	const static uint16_t SLABHEADERSIZE = 64;
 
-
 	std::vector<MediumSlab*> bin_;
 	uint16_t activeSlabIdx_ = 0;
 
-	MediumAllocator(const uint32_t startPoolSize) {
-		if (startPoolSize == 0)
-			return;
-
-		uint16_t slabNum = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
-
-		fillSlabs(slabNum);
-	}
-
-
   public:
-	void* alloc(const size_t bytes, const size_t alignment) {
+	void* alloc(const size_t bytes, const uint16_t alignment) {
 		while (true) {
 			if (bin_.size() <= activeSlabIdx_)
 				fillSlabs(REFILLSIZE);
@@ -185,7 +175,14 @@ class MediumAllocator {
 	}
 
   private:
-	friend class salloc;
+	MediumAllocator(const uint32_t startPoolSize) {
+		if (startPoolSize == 0)
+			return;
+
+		uint16_t slabNum = (startPoolSize + SLABSIZE - 1) / SLABSIZE;
+
+		fillSlabs(slabNum);
+	}
 
 	void fillSlabs(uint16_t slabNum) {
 		bin_.reserve(slabNum);
@@ -200,12 +197,14 @@ class MediumAllocator {
 			bin_.push_back(mem);
 		}
 	}
+
+	friend class salloc;
 };
 
 //& ================================================================================
 
 //~ this is an allocator
-//~ can allocate bites in range of (0; 4KB]
+//~ can allocate bites in the range of (0; 4KB]
 class SmallAllocator {
   private:
 	struct FreeBlock {
@@ -220,27 +219,19 @@ class SmallAllocator {
 		bool notAvailable = false;
 	};
 
-	//~ 16KB
-	const static uint16_t REFILLSIZE = 2;
-	const static uint16_t SLABHEADERSIZE = 64;   // sizeof(SmallSlab)
-	const static uintptr_t SLABSIZE = 32 * 1024; //! must be a power of two
+
+	const static uint16_t REFILLSIZE = 2;          // 16KB
+	const static uint16_t SLABHEADERSIZE = 64 * 4; //! this is the size to preserve max alignment
+	const static uintptr_t SLABSIZE = 32 * 1024;   //! must be a power of two
 	const static uint16_t POOLTYPENUMBER = 10;
 	const static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
 	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 	const static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
-	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                  // the memory when refilling
+	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                  // the memory when creating
 	                                                             //* adds up to 100
-
 
 	SmallSlab* bin_[POOLTYPENUMBER] = {nullptr};
 	MediumAllocator& midAlloc_;
-
-	SmallAllocator(const uint32_t startPoolSize, MediumAllocator& midAlloc) : midAlloc_(midAlloc) {
-		if (startPoolSize == 0)
-			return;
-
-		fillPool(startPoolSize);
-	}
 
   public:
 	void* alloc(const size_t bytes) {
@@ -313,7 +304,12 @@ class SmallAllocator {
 	}
 
   private:
-	friend class salloc;
+	SmallAllocator(const uint32_t startPoolSize, MediumAllocator& midAlloc) : midAlloc_(midAlloc) {
+		if (startPoolSize == 0)
+			return;
+
+		fillPool(startPoolSize);
+	}
 
 	void fillPool(const uint32_t bites) {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
@@ -347,12 +343,16 @@ class SmallAllocator {
 			}
 		}
 	}
+
+	friend class salloc;
 };
 
 //& ================================================================================
 
 //~ a CPU allocater
 //! singelton
+//~ max alignment: 256
+//~ alignment can only be 2^n
 class salloc : public Allocator {
   private:
 	// percentiges of the allocators
@@ -384,7 +384,10 @@ class salloc : public Allocator {
 		return Device::CPU;
 	};
 
-	void* allocate(const size_t bytes, const uint8_t alignment = 64) override {
+	//~ if size < alignment, alignment will not be used
+	//~ for small size allocations alignment will be 256 in the range of (0; 4KB]
+	void* allocate(const size_t bytes, const uint16_t alignment = 64) override {
+		_CHECK_(alignment > 256 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
@@ -421,19 +424,57 @@ class salloc : public Allocator {
 //~ standard memory buffer
 class Buffer {
   private:
-	void* data_;
-	const size_t size_;
-	const uint8_t alignment_;
 	Allocator* allocator_;
+	const size_t size_;
+	const uint16_t alignment_;
 	std::atomic<uint32_t> refCount_{1};
+	void* data_;
 
   public:
-	Buffer(const size_t size, const uint32_t alignment, Allocator* allocator = &salloc::instance())
+	Buffer(const size_t size, const uint16_t alignment, Allocator* allocator = &salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
-	~Buffer() {
-		allocator_->deallocate(data_, size_);
+	~Buffer() noexcept {
+		// for safety
+		if (refCount_.load(std::memory_order_relaxed) > 0) {
+			allocator_->deallocate(data_, size_);
+		}
+	}
+
+	//& lifetime----
+
+	void retain() noexcept {
+		refCount_.fetch_add(1, std::memory_order_relaxed);
+	}
+
+	void release() noexcept {
+		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 0)
+			allocator_->deallocate(data_, size_);
+	}
+
+	//& data--------
+
+	void* data() noexcept {
+		return data_;
+	};
+
+	const void* data() const noexcept {
+		return data_;
+	};
+
+	//& metadata----
+
+	size_t size() const noexcept {
+		return size_;
+	};
+
+	Device device() const noexcept {
+		return allocator_->device();
+	};
+
+	Allocator* allocator() const {
+		return allocator_;
 	}
 };
 
