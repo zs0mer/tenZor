@@ -5,12 +5,13 @@ namespace mem {
 
 enum Device { CPU, CUDA };
 
-// an abstract class
+//~ an abstract class
+//~ this declears an interface for allocating
 class Allocator {
   public:
 	virtual Device device() const = 0;
 
-	virtual void* allocate(const size_t bytes, const size_t alignment) = 0;
+	virtual void* allocate(const size_t bytes, const uint8_t alignment) = 0;
 
 	virtual void deallocate(void*& ptr, const size_t bytes) = 0;
 
@@ -29,7 +30,9 @@ class Allocator {
 };
 
 //& ================================================================================
-//~ 1MB ->
+
+//~ this is an allocator
+//~ can allocate bites in range of (1MB; INF]
 class LargeAllocator {
   private:
 	struct LargeBlock {
@@ -90,7 +93,9 @@ class LargeAllocator {
 };
 
 //& ================================================================================
-//~ 4KB - 1Mb (end is inclusive)
+
+//~ this is an allocator
+//~ can allocate bites in range of (4KB; 1MB]
 class MediumAllocator {
   private:
 	struct MediumSlab {
@@ -198,7 +203,9 @@ class MediumAllocator {
 };
 
 //& ================================================================================
-//~    <- 4KB (end is inclusive)
+
+//~ this is an allocator
+//~ can allocate bites in range of (0; 4KB]
 class SmallAllocator {
   private:
 	struct FreeBlock {
@@ -343,9 +350,10 @@ class SmallAllocator {
 };
 
 //& ================================================================================
-// the standard CPU allocater
+
+//~ a CPU allocater
 //! singelton
-class salloc : Allocator {
+class salloc : public Allocator {
   private:
 	// percentiges of the allocators
 	//! has to add up to 100%
@@ -368,15 +376,15 @@ class salloc : Allocator {
 
   public:
 	static salloc& instance() {
-		static salloc* alloc = new salloc;
-		return *alloc;
+		static salloc* s = new salloc;
+		return *s;
 	}
 
 	Device device() const override {
 		return Device::CPU;
 	};
 
-	void* allocate(const size_t bytes, const size_t alignment = 64) override {
+	void* allocate(const size_t bytes, const uint8_t alignment = 64) override {
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
@@ -410,7 +418,7 @@ class salloc : Allocator {
 	salloc& operator=(salloc&&) = delete;
 };
 
-// standard memory buffer
+//~ standard memory buffer
 class Buffer {
   private:
 	void* data_;
@@ -420,7 +428,7 @@ class Buffer {
 	std::atomic<uint32_t> refCount_{1};
 
   public:
-	Buffer(const size_t size, const uint32_t alignment, Allocator* allocator)
+	Buffer(const size_t size, const uint32_t alignment, Allocator* allocator = &salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
