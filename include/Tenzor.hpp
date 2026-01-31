@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <vector>
 #include <mutex>
+#include <cstring>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"

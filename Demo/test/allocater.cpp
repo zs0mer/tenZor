@@ -8,6 +8,10 @@
 
 static std::mt19937 rng(123455);
 
+TEST_CASE("test") {
+	TZ::mem::Buffer b(10, 1);
+}
+
 
 TEST_CASE("alloc_little1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();

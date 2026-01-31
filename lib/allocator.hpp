@@ -33,6 +33,7 @@ class Allocator {
 
 //~ this is an allocator
 //~ can allocate bites in the range of (1MB; INF]
+//~ uses headers
 class LargeAllocator {
   private:
 	struct LargeBlock {
@@ -97,6 +98,7 @@ class LargeAllocator {
 
 //~ this is an allocator
 //~ can allocate bites in the range of (4KB; 1MB]
+//~ uses masking
 class MediumAllocator {
   private:
 	struct MediumSlab {
@@ -205,6 +207,7 @@ class MediumAllocator {
 
 //~ this is an allocator
 //~ can allocate bites in the range of (0; 4KB]
+//~ uses masking
 class SmallAllocator {
   private:
 	struct FreeBlock {
@@ -421,26 +424,22 @@ class salloc : public Allocator {
 	salloc& operator=(salloc&&) = delete;
 };
 
-//~ standard memory buffer
-class Buffer {
+//& ================================================================================
+
+//~ Buffer implementation
+class BufferIMPL {
   private:
-	Allocator* allocator_;
+	Allocator* const allocator_;
 	const size_t size_;
 	const uint16_t alignment_;
 	std::atomic<uint32_t> refCount_{1};
 	void* data_;
 
   public:
-	Buffer(const size_t size, const uint16_t alignment, Allocator* allocator = &salloc::instance())
+	BufferIMPL(const size_t size, const uint16_t alignment,
+	           Allocator* allocator = &salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
-
-	~Buffer() noexcept {
-		// for safety
-		if (refCount_.load(std::memory_order_relaxed) > 0) {
-			allocator_->deallocate(data_, size_);
-		}
-	}
 
 	//& lifetime----
 
@@ -449,7 +448,7 @@ class Buffer {
 	}
 
 	void release() noexcept {
-		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 0)
+		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1)
 			allocator_->deallocate(data_, size_);
 	}
 
@@ -473,8 +472,80 @@ class Buffer {
 		return allocator_->device();
 	};
 
-	Allocator* allocator() const {
+	Allocator* allocator() const noexcept {
 		return allocator_;
+	}
+
+	BufferIMPL(const BufferIMPL& other)
+	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
+	      data_(allocator_->allocate(size_, alignment_)) {
+		memcpy(data_, other.data_, size_);
+	}
+
+	BufferIMPL& operator=(const BufferIMPL&) = delete;
+
+	BufferIMPL(BufferIMPL&&) = delete;
+
+	BufferIMPL& operator=(BufferIMPL&&) = delete;
+};
+
+//~ standard memory buffer
+class Buffer {
+	BufferIMPL* ptr_;
+
+  public:
+	Buffer(BufferIMPL& buffer) : ptr_(&buffer) {}
+
+	Buffer(const size_t size = 0, const uint16_t alignment = 64,
+	       Allocator* allocator = &salloc::instance())
+	    : ptr_(&BufferIMPL(size, alignment, allocator)) {}
+
+	~Buffer() {
+		if (ptr_)
+			ptr_->release();
+	}
+
+	BufferIMPL* operator->() {
+		return ptr_;
+	}
+
+	Buffer(const Buffer& other) : ptr_(other.ptr_) {
+		if (ptr_)
+			ptr_->retain();
+	}
+
+	Buffer& operator=(const Buffer& other) {
+		if (this == &other)
+			return *this;
+
+		if (ptr_)
+			ptr_->release();
+		ptr_ = other.ptr_;
+		if (ptr_)
+			ptr_->retain();
+
+		return *this;
+	}
+
+	Buffer(Buffer&& other) : ptr_(other.ptr_) {
+		other.ptr_ = nullptr;
+	}
+
+	Buffer& operator=(Buffer&& other) noexcept {
+		if (this == &other)
+			return *this;
+
+		if (ptr_)
+			ptr_->release();
+		ptr_ = other.ptr_;
+		other.ptr_ = nullptr;
+
+		return *this;
+	}
+
+	Buffer clone() {
+		BufferIMPL b(*ptr_);
+		return Buffer(b);
 	}
 };
 
