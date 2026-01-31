@@ -298,6 +298,8 @@ class SmallAllocator {
 				SmallSlab* next = slab->nextSlab;
 				if (slab->allocatedBlocks == 0)
 					midAlloc_.dealloc(slab);
+				else
+					slab->notAvailable = true;
 				slab = next;
 			}
 		}

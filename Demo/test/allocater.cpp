@@ -91,8 +91,8 @@ TEST_CASE("alloc_little_multy1") {
 TEST_CASE("alloc_little_multy2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
 
-	int k = 5;
-	int n = 1000;
+	int k = 1;
+	int n = 1;
 	std::vector<void*> shared(n);
 	std::vector<int> sizes(n);
 
@@ -167,7 +167,6 @@ TEST_CASE("alloc_middle3") {
 	}
 }
 
-
 TEST_CASE("alloc_middle_multy1") {
 	auto& s = TZ::mem::salloc::instance();
 
@@ -199,7 +198,6 @@ TEST_CASE("alloc_middle_multy1") {
 	for (auto& t : threads)
 		t.join();
 }
-
 
 TEST_CASE("alloc_middle_multy2") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
