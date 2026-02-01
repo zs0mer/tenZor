@@ -8,10 +8,6 @@
 
 static std::mt19937 rng(123455);
 
-TEST_CASE("test") {
-	TZ::mem::Buffer b(10, 1);
-}
-
 
 TEST_CASE("alloc_little1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
@@ -356,24 +352,27 @@ TEST_CASE("alloc_zero") {
 TEST_CASE("alloc_alignment") {
 	auto& s = TZ::mem::salloc::instance();
 	int n = 100;
+	int m = 40;
+	std::vector<int> alignments = {8, 16, 32, 64};
 
 	for (int i = 0; i < n; i++) {
 		int u = rng() % (8 * 1024) + 64;
 		u = u - u % 64;
-		for (size_t align : {8, 16, 32, 64}) {
+		for (size_t align : alignments) {
 			void* p = s.allocate(u, align);
 			CHECK(reinterpret_cast<uintptr_t>(p) % align == 0);
 			s.deallocate(p, u);
 		}
 	}
 
-
-	int u = 50 * 1024 * 1024;
-	for (size_t align : {8, 16, 32, 64}) {
-		void* p = s.allocate(u, align);
-		CHECK(p != nullptr);
-		CHECK(reinterpret_cast<uintptr_t>(p) % align == 0);
-		s.deallocate(p, u);
+	for (int i = 0; i < m; i++) {
+		int u = (rng() % 50 + 1) * 1024 * 1024;
+		for (size_t align : alignments) {
+			void* p = s.allocate(u, align);
+			CHECK(p != nullptr);
+			CHECK(reinterpret_cast<uintptr_t>(p) % align == 0);
+			s.deallocate(p, u);
+		}
 	}
 }
 

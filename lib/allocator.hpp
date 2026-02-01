@@ -354,7 +354,7 @@ class SmallAllocator {
 
 //~ a CPU allocater
 //! singelton
-//~ max alignment: 256
+//~ max alignment: 64
 //~ alignment can only be 2^n
 class salloc : public Allocator {
   private:
@@ -388,9 +388,9 @@ class salloc : public Allocator {
 	};
 
 	//~ if size < alignment, alignment will not be used
-	//~ for small size allocations alignment will be 256 in the range of (0; 4KB]
+	//~ for small size allocations alignment will be 64 in the range of (0; 4KB]
 	void* allocate(const size_t bytes, const uint16_t alignment = 64) override {
-		_CHECK_(alignment > 256 || alignment == 0);
+		_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
