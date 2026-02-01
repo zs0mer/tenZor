@@ -441,15 +441,31 @@ class BufferIMPL {
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
+
+	BufferIMPL(const BufferIMPL& other)
+	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
+	      data_(allocator_->allocate(size_, alignment_)) {
+		memcpy(data_, other.data_, size_);
+	}
+
+	BufferIMPL& operator=(const BufferIMPL&) = delete;
+
+	BufferIMPL(BufferIMPL&&) = delete;
+
+	BufferIMPL& operator=(BufferIMPL&&) = delete;
+
 	//& lifetime----
 
 	void retain() noexcept {
 		refCount_.fetch_add(1, std::memory_order_relaxed);
 	}
 
-	void release() noexcept {
-		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1)
+	bool release() noexcept {
+		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
 			allocator_->deallocate(data_, size_);
+			return true;
+		}
+		return false;
 	}
 
 	//& data--------
@@ -475,34 +491,22 @@ class BufferIMPL {
 	Allocator* allocator() const noexcept {
 		return allocator_;
 	}
-
-	BufferIMPL(const BufferIMPL& other)
-	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
-	      data_(allocator_->allocate(size_, alignment_)) {
-		memcpy(data_, other.data_, size_);
-	}
-
-	BufferIMPL& operator=(const BufferIMPL&) = delete;
-
-	BufferIMPL(BufferIMPL&&) = delete;
-
-	BufferIMPL& operator=(BufferIMPL&&) = delete;
 };
 
 //~ standard memory buffer
+//~ holds the BufferIMPL
 class Buffer {
 	BufferIMPL* ptr_;
 
   public:
-	Buffer(BufferIMPL& buffer) : ptr_(&buffer) {}
+	Buffer(BufferIMPL* buffer) : ptr_(buffer) {}
 
 	Buffer(const size_t size = 0, const uint16_t alignment = 64,
 	       Allocator* allocator = &salloc::instance())
-	    : ptr_(&BufferIMPL(size, alignment, allocator)) {}
+	    : ptr_(size == 0 ? nullptr : new BufferIMPL(size, alignment, allocator)) {}
 
 	~Buffer() {
-		if (ptr_)
-			ptr_->release();
+		clear();
 	}
 
 	BufferIMPL* operator->() {
@@ -518,8 +522,8 @@ class Buffer {
 		if (this == &other)
 			return *this;
 
-		if (ptr_)
-			ptr_->release();
+		clear();
+
 		ptr_ = other.ptr_;
 		if (ptr_)
 			ptr_->retain();
@@ -531,12 +535,12 @@ class Buffer {
 		other.ptr_ = nullptr;
 	}
 
-	Buffer& operator=(Buffer&& other) noexcept {
+	Buffer& operator=(Buffer&& other) {
 		if (this == &other)
 			return *this;
 
-		if (ptr_)
-			ptr_->release();
+		clear();
+
 		ptr_ = other.ptr_;
 		other.ptr_ = nullptr;
 
@@ -544,8 +548,16 @@ class Buffer {
 	}
 
 	Buffer clone() {
-		BufferIMPL b(*ptr_);
-		return Buffer(b);
+		if (!ptr_)
+			return Buffer();
+		return Buffer(new BufferIMPL(*ptr_));
+	}
+
+  private:
+	void clear() {
+		if (ptr_)
+			if (ptr_->release())
+				delete ptr_;
 	}
 };
 
