@@ -25,6 +25,7 @@ TEST_CASE("BufferIMPL_basic_allocation") {
 	}
 }
 
+
 TEST_CASE("BufferIMPL_clone_deep_copy") {
 	auto& alloc = TZ::mem::salloc::instance();
 
@@ -47,6 +48,7 @@ TEST_CASE("BufferIMPL_clone_deep_copy") {
 	CHECK(pa[0] != pb[0]);
 }
 
+
 TEST_CASE("BufferIMPL_refcount_basic") {
 	auto& alloc = TZ::mem::salloc::instance();
 
@@ -59,6 +61,7 @@ TEST_CASE("BufferIMPL_refcount_basic") {
 	CHECK(impl->release() == false);
 	CHECK(impl->release() == true); // last owner frees memory
 }
+
 
 TEST_CASE("BufferIMPL_refcount_multithreaded") {
 	auto& alloc = TZ::mem::salloc::instance();
@@ -85,6 +88,9 @@ TEST_CASE("BufferIMPL_refcount_multithreaded") {
 	// final release
 	CHECK(impl->release() == true);
 }
+
+
+//& ============================================================
 
 
 TEST_CASE("Buffer_basic_lifetime") {
