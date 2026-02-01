@@ -13,10 +13,8 @@ set(CMAKE_CXX_FLAGS_DEBUG
 # Sanitizers
 ###
 
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
-
 
 
 ###
@@ -36,32 +34,47 @@ file(GLOB APP_SOURCES
 add_executable(demo ${APP_SOURCES})
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 
-###
-# Testing
-###
+
+### ============================================================================================================
+# Testing ======================================================================================================
+### ============================================================================================================
+
 
 find_package(doctest REQUIRED)
 
-file(GLOB TEST_SOURCES
-    "${TEST_DIR}/*.cpp"
-)
+# allocater ------------------------
 
-add_executable(tests ${TEST_SOURCES})
+add_executable(Tallocater "${TEST_DIR}/allocater.cpp")
 
-target_include_directories(tests PUBLIC ${INCLUDE_DIR})
+target_include_directories(Tallocater PUBLIC ${INCLUDE_DIR})
 
-target_link_libraries(tests
+target_link_libraries(Tallocater
     PRIVATE
         doctest::doctest
 )
 
+# buffer ----------------------------
 
+add_executable(Tbuffer "${TEST_DIR}/buffer.cpp")
+
+target_include_directories(Tbuffer PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(Tbuffer
+    PRIVATE
+        doctest::doctest
+)
+
+#  ---------------------------------
 
 enable_testing()
 
 add_test(
     NAME allocater
-    COMMAND tests --color=yes
+    COMMAND Tallocater --color=yes
     )
 
 
+add_test(
+    NAME buffer
+    COMMAND Tbuffer --color=yes
+    )
