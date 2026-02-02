@@ -8,12 +8,12 @@ class BufferIMPL {
   private:
 	Allocator* const allocator_;
 	const size_t size_;
-	const uint16_t alignment_;
+	const uint8_t alignment_;
 	std::atomic<uint32_t> refCount_{1};
 	void* data_;
 
   public:
-	BufferIMPL(const size_t size, const uint16_t alignment,
+	BufferIMPL(const size_t size, const uint8_t alignment,
 	           Allocator* allocator = &salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
@@ -80,7 +80,7 @@ class Buffer {
   public:
 	Buffer(BufferIMPL* buffer) : ptr_(buffer) {}
 
-	Buffer(const size_t size = 0, const uint16_t alignment = 64,
+	Buffer(const size_t size = 0, const uint8_t alignment = 64,
 	       Allocator* allocator = &salloc::instance())
 	    : ptr_(size == 0 ? nullptr : new BufferIMPL(size, alignment, allocator)) {}
 

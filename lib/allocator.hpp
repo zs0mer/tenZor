@@ -11,7 +11,7 @@ class Allocator {
   public:
 	virtual Device device() const = 0;
 
-	virtual void* allocate(const size_t bytes, const uint16_t alignment) = 0;
+	virtual void* allocate(const size_t bytes, const uint8_t alignment) = 0;
 
 	virtual void deallocate(void*& ptr, const size_t bytes) = 0;
 
@@ -389,7 +389,7 @@ class salloc : public Allocator {
 
 	//~ if size < alignment, alignment will not be used
 	//~ for small size allocations alignment will be 64 in the range of (0; 4KB]
-	void* allocate(const size_t bytes, const uint16_t alignment = 64) override {
+	void* allocate(const size_t bytes, const uint8_t alignment = 64) override {
 		_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
