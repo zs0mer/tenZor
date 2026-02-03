@@ -6,9 +6,9 @@
 #include <thread>
 #include <vector>
 
-// TODO ==============================================
-// TODO GO THROUG THIS, MAKE SURE EVERYTHING IS TESTED
-// TODO ==============================================
+// TODO //================================================\\
+// TODO || GO THROUG THIS, MAKE SURE EVERYTHING IS TESTED ||
+// TODO \\================================================//
 
 static std::mt19937 rng(123455);
 

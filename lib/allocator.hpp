@@ -186,7 +186,7 @@ class MediumAllocator {
 		fillSlabs(slabNum);
 	}
 
-	void fillSlabs(uint16_t slabNum) {
+	void fillSlabs(const uint16_t slabNum) {
 		bin_.reserve(slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
@@ -319,7 +319,7 @@ class SmallAllocator {
 			fillPool((bites * POOLWEIGHT[i]) / 100, i);
 	}
 
-	void fillPool(uint32_t bites, const uint16_t sizeType) {
+	void fillPool(const uint32_t bites, const uint16_t sizeType) {
 		//* can be much faster
 		// if the allocated space is to small for a slab round it up to 1
 		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
