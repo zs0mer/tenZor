@@ -2,7 +2,7 @@
 
 namespace TZ {
 
-template <typename T> class Tensor {
+template <class T> class Tensor {
   private:
 	std::vector<uint64_t> shape_;
 	std::vector<uint64_t> strides_;
@@ -15,16 +15,16 @@ template <typename T> class Tensor {
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
-	template <typename nestedVector>
-	Tensor(const std::vector<nestedVector>& nestedVector, const uint8_t alignment = 64,
-	       mem::Allocator& allocator = mem::salloc::instance());
+	// template <class nestedVector>
+	//	Tensor(const std::vector<nestedVector>& nestedVector, const uint8_t alignment = 64,
+	//	       mem::Allocator& allocator = mem::salloc::instance());
 
-	template <typename nestedList>
-	Tensor(const std::initializer_list<nestedList> nestedVector, const uint8_t alignment = 64,
-	       mem::Allocator& allocator = mem::salloc::instance());
+	//	template <class nestedList>
+	//	Tensor(const std::initializer_list<nestedList> nestedVector, const uint8_t alignment = 64,
+	//	       mem::Allocator& allocator = mem::salloc::instance());
 
 	Tensor(const std::vector<uint64_t>& shape_, const mem::Buffer data_,
-	       std::vector<uint64_t> strides_, const uint64_t offset_);
+	       const std::vector<uint64_t>& strides_, const uint64_t offset_);
 
 	Tensor(const Tensor& other);
 

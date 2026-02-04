@@ -17,3 +17,5 @@
 #include "allocator.hpp"
 #include "buffer.hpp"
 #include "tensor.hpp"
+#include "seters.hpp"
+#include "geters.hpp"
