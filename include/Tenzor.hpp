@@ -19,3 +19,4 @@
 #include "tensor.hpp"
 #include "seters.hpp"
 #include "geters.hpp"
+#include "metadata_geters.hpp"

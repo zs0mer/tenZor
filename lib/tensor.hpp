@@ -12,16 +12,18 @@ template <class T> class Tensor {
 	void compute_default_strides();
 
   public:
+	//& seters ===========================================================================
+
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
-	// template <class nestedVector>
-	//	Tensor(const std::vector<nestedVector>& nestedVector, const uint8_t alignment = 64,
-	//	       mem::Allocator& allocator = mem::salloc::instance());
+	template <class nestedVector>
+	Tensor(const std::vector<nestedVector>& vec, const uint8_t alignment = 64,
+	       mem::Allocator& allocator = mem::salloc::instance());
 
-	//	template <class nestedList>
-	//	Tensor(const std::initializer_list<nestedList> nestedVector, const uint8_t alignment = 64,
-	//	       mem::Allocator& allocator = mem::salloc::instance());
+	template <class nestedList>
+	Tensor(const std::initializer_list<nestedList> vec, const uint8_t alignment = 64,
+	       mem::Allocator& allocator = mem::salloc::instance());
 
 	Tensor(const std::vector<uint64_t>& shape_, const mem::Buffer data_,
 	       const std::vector<uint64_t>& strides_, const uint64_t offset_);
@@ -34,6 +36,7 @@ template <class T> class Tensor {
 
 	Tensor& operator=(Tensor&& other);
 
+	//& metadata geters ==================================================================
 
 	size_t dim() const;
 
@@ -49,6 +52,9 @@ template <class T> class Tensor {
 
 	bool isFullBuffer() const;
 
+	bool isScalar() const;
+
+	//& geters ===========================================================================
 
 	T& at(const std::vector<uint64_t>& idx);
 
@@ -56,8 +62,9 @@ template <class T> class Tensor {
 
 	Tensor<T> operator[](const uint64_t idx) const;
 
-
 	Tensor<T> clone() const;
+
+	T scalarVal() const;
 };
 
 } // namespace TZ
