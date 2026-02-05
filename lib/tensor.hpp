@@ -17,6 +17,9 @@ template <class T> class Tensor {
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
+	Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
+	       const std::vector<uint64_t>& strides, const uint64_t offset);
+
 	template <class nestedVector>
 	Tensor(const std::vector<nestedVector>& vec, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
@@ -25,16 +28,13 @@ template <class T> class Tensor {
 	Tensor(const std::initializer_list<nestedList> vec, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
-	Tensor(const std::vector<uint64_t>& shape_, const mem::Buffer data_,
-	       const std::vector<uint64_t>& strides_, const uint64_t offset_);
+	Tensor(const Tensor&) = default;
 
-	Tensor(const Tensor& other);
+	Tensor& operator=(const Tensor&) = default;
 
-	Tensor& operator=(const Tensor& other);
+	Tensor(Tensor&&) = default;
 
-	Tensor(Tensor&& other);
-
-	Tensor& operator=(Tensor&& other);
+	Tensor& operator=(Tensor&&) = default;
 
 	//& metadata geters ==================================================================
 
