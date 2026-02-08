@@ -29,4 +29,9 @@ inline void _check(const bool expresson, const char* error, const char* file, in
 #define _CHECK_(expresson)
 #endif
 
+
+template <class T> constexpr bool isSTDVector = false;
+
+template <class T, class A> constexpr bool isSTDVector<std::vector<T, A>> = true;
+
 } // namespace TZ

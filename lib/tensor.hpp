@@ -1,4 +1,5 @@
 #pragma once
+//~ only the declarations are in this file
 
 namespace TZ {
 
@@ -21,12 +22,22 @@ template <class T> class Tensor {
 	       const std::vector<uint64_t>& strides, const uint64_t offset);
 
 	template <class nestedVector>
-	Tensor(const std::vector<nestedVector>& vec, const uint8_t alignment = 64,
+	Tensor(const std::vector<nestedVector>& v, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	template <class nestedList>
-	Tensor(const std::initializer_list<nestedList> vec, const uint8_t alignment = 64,
+	Tensor(const std::initializer_list<nestedList> list, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
+
+	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
+	         mem::Allocator& allocator = mem::salloc::instance());
+
+	template <class nestedVector> //
+	Tensor& operator=(const std::vector<nestedVector>& v);
+
+	template <class nestedList> //
+	Tensor& operator=(const std::initializer_list<nestedList> list);
+
 
 	Tensor(const Tensor&) = default;
 
