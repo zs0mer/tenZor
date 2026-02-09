@@ -34,4 +34,9 @@ template <class T> constexpr bool isSTDVector = false;
 
 template <class T, class A> constexpr bool isSTDVector<std::vector<T, A>> = true;
 
+template <typename T> constexpr bool isIlist = false;
+
+template <typename T> constexpr bool isIlist<std::initializer_list<T>> = true;
+
+
 } // namespace TZ

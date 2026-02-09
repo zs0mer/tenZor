@@ -40,7 +40,6 @@ void falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset) {
 			dst[offset++] = x;
 }
 
-
 template <class T>
 template <class nestedVector>
 Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
@@ -60,12 +59,26 @@ Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
 	flatten(v, data(), offset);
 }
 
+
+template <typename T> auto ilistToSTDVector(std::initializer_list<T> list) {
+	if constexpr (!isIlist<T>)
+		return std::vector<T>(list);
+
+	_CHECK(list.size() == 0, "Tensor initializer_list cannot be empty");
+	std::vector<decltype(ilistToSTDVector(*list.begin()))> out;
+	out.reserve(list.size());
+
+	for (const auto& sub : list)
+		out.push_back(ilistToSTDVector(sub));
+
+	return out;
+}
+
 template <class T>
 template <class nestedList>
 Tensor<T>::Tensor(const std::initializer_list<nestedList> list, const uint8_t alignment,
                   mem::Allocator& allocator)
-    : offset_(0) {}
-// TODO make this work
+    : Tensor(ilistToSTDVector(list), alignment, allocator) {}
 
 
 template <class T>
