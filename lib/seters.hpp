@@ -14,8 +14,9 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
     : shape_(shape), data_(data), strides_(strides), offset_(offset) {}
 
 
-template <typename nestedVector>
-void getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape) {
+template <class T>
+template <class nestedVector>
+void Tensor<T>::getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape) {
 	shape.push_back(v.size());
 
 	if constexpr (!isSTDVector<typename nestedVector::value_type>)
@@ -27,11 +28,12 @@ void getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape) {
 	for (const auto& sub : v)
 		_CHECK(sub.size() != first.size(), "non-rectangular nested vector construction")
 
-	infer_shape(first, shape);
+	getSTDVecShape(first, shape);
 }
 
-template <typename nestedVector, typename T>
-void falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset) {
+template <class T>
+template <class nestedVector>
+void Tensor<T>::falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset) {
 	if constexpr (isSTDVector<typename nestedVector::value_type>)
 		for (const auto& sub : v)
 			falttenSTDVec(sub, dst, offset);
@@ -46,8 +48,8 @@ Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
                   mem::Allocator& allocator)
     : offset_(0) {
 
-	infer_shape(v, shape_);
-	compute_default_strides();
+	getSTDVecShape(v, shape_);
+	ComputeStrides();
 
 	uint64_t capacity = 1;
 	for (uint64_t s : shape_)
@@ -60,9 +62,11 @@ Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
 }
 
 
-template <typename T> auto ilistToSTDVector(std::initializer_list<T> list) {
-	if constexpr (!isIlist<T>)
-		return std::vector<T>(list);
+template <class T>
+template <class V>
+auto Tensor<T>::ilistToSTDVector(std::initializer_list<V> list) {
+	if constexpr (!isIlist<V>)
+		return std::vector<V>(list);
 
 	_CHECK(list.size() == 0, "Tensor initializer_list cannot be empty");
 	std::vector<decltype(ilistToSTDVector(*list.begin()))> out;
@@ -86,11 +90,18 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment 
                     mem::Allocator& allocator = mem::salloc::instance()) {
 	shape_ = shape;
 	offset_ = 0;
-	compute_default_strides();
+	ComputeStrides();
 
 	uint64_t capacity = 1;
-	for (uint64_t i : shape_)
+	for (uint64_t i : shape_) {
 		capacity *= i;
+		if (i == 0) {
+			shape_ = {};
+			strides_;
+			capacity = 1;
+			break;
+		}
+	}
 
 	buffer_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
 }

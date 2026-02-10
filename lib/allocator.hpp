@@ -115,6 +115,8 @@ class MediumAllocator {
 	uint16_t activeSlabIdx_ = 0;
 
   public:
+	MediumAllocator() = delete;
+
 	void* alloc(const size_t bytes, const uint16_t alignment) {
 		while (true) {
 			if (bin_.size() <= activeSlabIdx_)
@@ -237,6 +239,8 @@ class SmallAllocator {
 	MediumAllocator& midAlloc_;
 
   public:
+	SmallAllocator() = delete;
+
 	void* alloc(const size_t bytes) {
 
 		if (bytes == 0)

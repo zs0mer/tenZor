@@ -7,17 +7,18 @@ namespace mem {
 class BufferIMPL {
   private:
 	Allocator* const allocator_;
-	const size_t size_;
+	const uint64_t size_;
 	const uint8_t alignment_;
 	std::atomic<uint32_t> refCount_{1};
 	void* data_;
 
   public:
-	BufferIMPL(const size_t size, const uint8_t alignment,
+	BufferIMPL() = delete;
+
+	BufferIMPL(const uint64_t size, const uint8_t alignment,
 	           Allocator* allocator = &salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
-
 
 	BufferIMPL(const BufferIMPL& other)
 	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
@@ -57,7 +58,7 @@ class BufferIMPL {
 
 	//& metadata----
 
-	size_t size() const noexcept {
+	uint64_t size() const noexcept {
 		return size_;
 	};
 
@@ -80,7 +81,7 @@ class Buffer {
   public:
 	Buffer(BufferIMPL* buffer) : ptr_(buffer) {}
 
-	Buffer(const size_t size = 0, const uint8_t alignment = 64,
+	Buffer(const uint64_t size = 0, const uint8_t alignment = 64,
 	       Allocator* allocator = &salloc::instance())
 	    : ptr_(size == 0 ? nullptr : new BufferIMPL(size, alignment, allocator)) {}
 
@@ -127,8 +128,6 @@ class Buffer {
 	}
 
 	Buffer clone() {
-		if (!ptr_)
-			return Buffer();
 		return Buffer(new BufferIMPL(*ptr_));
 	}
 

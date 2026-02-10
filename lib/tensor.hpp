@@ -3,17 +3,18 @@
 
 namespace TZ {
 
-template <class T> class Tensor {
+template <class T>
+class Tensor {
   private:
 	std::vector<uint64_t> shape_;
 	std::vector<uint64_t> strides_;
-	uint64_t offset_ = 0;
+	uint64_t offset_;
 	mem::Buffer data_;
-
-	void compute_default_strides();
 
   public:
 	//& seters ===========================================================================
+
+	Tensor() = default;
 
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
@@ -49,9 +50,13 @@ template <class T> class Tensor {
 
 	//& metadata geters ==================================================================
 
-	size_t dim() const;
+	uint64_t dim() const;
 
 	const std::vector<uint64_t>& shape() const;
+
+	const uint64_t numel() const;
+
+	uint64_t offset() const;
 
 	T* data();
 
@@ -59,9 +64,7 @@ template <class T> class Tensor {
 
 	bool empty() const;
 
-	bool is_contiguous() const;
-
-	bool isFullBuffer() const;
+	bool isContiguous(bool softCheck = false) const;
 
 	bool isScalar() const;
 
@@ -76,6 +79,18 @@ template <class T> class Tensor {
 	Tensor<T> clone() const;
 
 	T scalarVal() const;
+
+  private:
+	void ComputeStrides();
+
+	template <class nestedVector>
+	void getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape);
+
+	template <class nestedVector>
+	void falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset);
+
+	template <class V>
+	auto ilistToSTDVector(std::initializer_list<V> list);
 };
 
 } // namespace TZ
