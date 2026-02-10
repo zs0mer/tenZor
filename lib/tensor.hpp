@@ -78,7 +78,9 @@ class Tensor {
 
 	Tensor<T> clone() const;
 
-	T scalarVal() const;
+	T& scalarVal();
+
+	const T& scalarVal() const;
 
   private:
 	void ComputeStrides();
