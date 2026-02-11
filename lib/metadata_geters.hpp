@@ -31,12 +31,12 @@ uint64_t Tensor<T>::offset() const {
 
 template <class T>
 T* Tensor<T>::data() {
-	return data_ ? static_cast<T*>(data_->data()) : nullptr;
+	return data_->data();
 }
 
 template <class T>
 const T* Tensor<T>::data() const {
-	return data_ ? static_cast<const T*>(data_->data()) : nullptr;
+	return static_cast<const T*>(data_->data());
 }
 
 template <class T>
@@ -45,7 +45,7 @@ bool Tensor<T>::empty() const {
 }
 
 template <class T>
-bool Tensor<T>::isContiguous(bool softCheck = false) const {
+bool Tensor<T>::isContiguous(bool softCheck) const {
 	if (offset_ != 0 && !softCheck)
 		return false;
 	if (shape_.empty())

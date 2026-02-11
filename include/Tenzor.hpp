@@ -20,3 +20,4 @@
 #include "seters.hpp"
 #include "geters.hpp"
 #include "metadata_geters.hpp"
+#include "tensor_private.hpp"

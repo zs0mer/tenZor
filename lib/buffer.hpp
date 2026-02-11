@@ -127,7 +127,12 @@ class Buffer {
 		return ptr_;
 	}
 
-	Buffer clone() {
+	const BufferIMPL* operator->() const {
+		return ptr_;
+	}
+
+
+	Buffer clone() const {
 		return Buffer(new BufferIMPL(*ptr_));
 	}
 
