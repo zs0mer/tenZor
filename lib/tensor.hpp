@@ -64,8 +64,8 @@ class Tensor {
 	uint64_t numel() const;
 
 	// get the pointer to the start of the tensor buffer
-	// not necessarily JUST the data for this tensor
-	T* data(const bool fullBuffer = false);
+	// not necessarily JUST the data for THIS tensor
+	T* data(const bool fullBuffer = true);
 
 	// get the pointer to the start of the tensor buffer
 	// not necessarily JUST the data for this tensor
@@ -82,6 +82,9 @@ class Tensor {
 
 	// returns true if the tensor has 0 dimensons, and 1 element
 	bool isScalar() const;
+
+	// true if its not a scalar and not empty
+	bool isIndexable() const;
 
 	//& geters ===========================================================================
 

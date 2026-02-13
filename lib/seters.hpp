@@ -9,11 +9,6 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
 }
 
 template <class T>
-Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
-                  const std::vector<uint64_t>& strides, const uint64_t offset)
-    : shape_(shape), data_(data), strides_(strides), offset_(offset) {}
-
-template <class T>
 template <class nestedVector>
 Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
                   mem::Allocator& allocator)

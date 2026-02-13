@@ -42,7 +42,7 @@ const T* Tensor<T>::data(const bool fullBuffer) const {
 
 template <class T>
 bool Tensor<T>::empty() const {
-	return numel() == 0;
+	return !data_->data();
 }
 
 template <class T>
@@ -53,7 +53,7 @@ bool Tensor<T>::isContiguous(const bool softCheck) const {
 		return true;
 
 	uint64_t expected = 1;
-	for (int64_t i = static_cast<int64_t>(shape_.size()) - 1; i >= 0; --i) {
+	for (int64_t i = static_cast<int64_t>(shape_.size()); i-- > 0;) {
 		if (strides_[i] != expected)
 			return false;
 		expected *= shape_[i];
@@ -67,5 +67,9 @@ bool Tensor<T>::isScalar() const {
 	return shape_.empty() && numel() == 1;
 }
 
+template <class T>
+bool Tensor<T>::isIndexable() const {
+	return !(shape_.size() == 0);
+}
 
 } // namespace TZ

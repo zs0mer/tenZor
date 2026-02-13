@@ -3,7 +3,20 @@
 namespace TZ {
 
 template <class T>
-void Tensor<T>::ComputeStrides() {}
+Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
+                  const std::vector<uint64_t>& strides, const uint64_t offset)
+    : shape_(shape), data_(data), strides_(strides), offset_(offset) {}
+
+template <class T>
+void Tensor<T>::ComputeStrides() {
+	uint64_t k = 1;
+	strides_.resize(shape_.size());
+
+	for (int64_t i = shape_.size(); i-- > 0;) {
+		strides_[i] = k;
+		k *= shape_[i];
+	}
+}
 
 template <class T>
 template <class nestedVector>
