@@ -5,8 +5,8 @@ namespace mem {
 
 enum Device { CPU, CUDA };
 
-//~ an abstract class
-//~ this declears an interface for allocating
+// an abstract class
+// this declears an interface for allocating
 class Allocator {
   public:
 	virtual Device device() const = 0;
@@ -31,9 +31,9 @@ class Allocator {
 
 //& ================================================================================
 
-//~ this is an allocator
-//~ can allocate bites in the range of (1MB; INF]
-//~ uses headers
+// this is an allocator
+// can allocate bites in the range of (1MB; INF]
+// uses headers
 class LargeAllocator {
   private:
 	struct LargeBlock {
@@ -96,9 +96,9 @@ class LargeAllocator {
 
 //& ================================================================================
 
-//~ this is an allocator
-//~ can allocate bites in the range of (4KB; 1MB]
-//~ uses masking
+// this is an allocator
+// can allocate bites in the range of (4KB; 1MB]
+// uses masking
 class MediumAllocator {
   private:
 	struct MediumSlab {
@@ -207,9 +207,9 @@ class MediumAllocator {
 
 //& ================================================================================
 
-//~ this is an allocator
-//~ can allocate bites in the range of (0; 4KB]
-//~ uses masking
+// this is an allocator
+// can allocate bites in the range of (0; 4KB]
+// uses masking
 class SmallAllocator {
   private:
 	struct FreeBlock {
@@ -356,17 +356,17 @@ class SmallAllocator {
 
 //& ================================================================================
 
-//~ a CPU allocater
+// a CPU allocater
 //! singelton
-//~ max alignment: 64
-//~ alignment can only be 2^n
+// max alignment: 64
+// alignment can only be 2^n
 class salloc : public Allocator {
   private:
 	// percentiges of the allocators
 	//! has to add up to 100%
 	const static constexpr uint16_t INITRATIO[2] = {50, 50};
 
-	LargeAllocator la_; //~ 1MB >
+	LargeAllocator la_;
 
 	MediumAllocator& ma_() {
 		static thread_local MediumAllocator ma_(START_MEM_SIZE * INITRATIO[1] / 100);
@@ -391,8 +391,9 @@ class salloc : public Allocator {
 		return Device::CPU;
 	};
 
-	//~ if size < alignment, alignment will not be used
-	//~ for small size allocations alignment will be 64 in the range of (0; 4KB]
+	// if size < alignment, alignment will not be used
+	// alignment can be maximum 64 bytes
+	// alignment can only be powers of 2
 	void* allocate(const size_t bytes, const uint8_t alignment = 64) override {
 		_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b

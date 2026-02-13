@@ -4,6 +4,7 @@
 namespace TZ {
 
 template <class T>
+// standard tensor class
 class Tensor {
   private:
 	std::vector<uint64_t> shape_;
@@ -16,27 +17,30 @@ class Tensor {
 
 	Tensor() = default;
 
+	// standard constructor
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
-	Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
-	       const std::vector<uint64_t>& strides, const uint64_t offset);
-
+	// un-nests a nested std::vector to a Tensor
 	template <class nestedVector>
 	Tensor(const std::vector<nestedVector>& v, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
+	// un-nests a nested std::initializer_list to a Tensor
 	template <class nestedList>
 	Tensor(const std::initializer_list<nestedList> list, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
+	// makes a new Tensor
 	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
 	         mem::Allocator& allocator = mem::salloc::instance());
 
-	template <class nestedVector> //
+	// un-nests a nested std::vector to a Tensor
+	template <class nestedVector>
 	Tensor& operator=(const std::vector<nestedVector>& v);
 
-	template <class nestedList> //
+	// un-nests a nested std::initializer_list to a Tensor
+	template <class nestedList>
 	Tensor& operator=(const std::initializer_list<nestedList> list);
 
 
@@ -50,39 +54,68 @@ class Tensor {
 
 	//& metadata geters ==================================================================
 
+	// get the dimenson of the tensor
 	uint64_t dim() const;
 
+	// get the shape of the tensor in a vector
 	const std::vector<uint64_t>& shape() const;
 
-	const uint64_t numel() const;
+	// get the number of elements in the tensor
+	uint64_t numel() const;
 
-	uint64_t offset() const;
+	// get the pointer to the start of the tensor buffer
+	// not necessarily JUST the data for this tensor
+	T* data(const bool fullBuffer = false);
 
-	T* data();
+	// get the pointer to the start of the tensor buffer
+	// not necessarily JUST the data for this tensor
+	const T* data(const bool fullBuffer = false) const;
 
-	const T* data() const;
-
+	// returns true if the the tensor has 0 elements in it
 	bool empty() const;
 
-	bool isContiguous(bool softCheck = false) const;
+	// returns true if this is not only a part of a bigger tensor
+	// it means that the tensor is layed out flat in memory
+	// if softCheck = true it can return true even if
+	// the data is not at the start of the memory pointer, it is offseted by offset()
+	bool isContiguous(const bool softCheck = false) const;
 
+	// returns true if the tensor has 0 dimensons, and 1 element
 	bool isScalar() const;
 
 	//& geters ===========================================================================
 
+	// returns a Tensor containing the data in the given index
+	// its just a view
+	// if the remaining tensor is a scalar then it will return a saclar Tensor
 	T& at(const std::vector<uint64_t>& idx);
 
+	// returns a Tensor containing the data in the given index
+	// its just a view
+	// if the remaining tensor is a scalar then it will return a saclar Tensor
 	const T& at(const std::vector<uint64_t>& idx) const;
 
+	// returns a Tensor containing the data in the given index
+	// its just a view
+	// if the remaining tensor is a scalar then it will return a saclar Tensor
 	Tensor<T> operator[](const uint64_t idx) const;
 
+	// makes a new tensor that has the same data as the old one
 	Tensor<T> clone() const;
 
-	T& scalarVal();
+	// IF the tensor is scalar
+	// returns that one element
+	T& get();
 
-	const T& scalarVal() const;
+	// IF the tensor is scalar
+	// returns that one element
+	const T& get() const;
 
+	//& private ==========================================================================
   private:
+	Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
+	       const std::vector<uint64_t>& strides, const uint64_t offset);
+
 	void ComputeStrides();
 
 	template <class nestedVector>

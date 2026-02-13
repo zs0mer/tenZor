@@ -13,7 +13,7 @@ const std::vector<uint64_t>& Tensor<T>::shape() const {
 }
 
 template <class T>
-const uint64_t Tensor<T>::numel() const {
+uint64_t Tensor<T>::numel() const {
 	if (!data_->data())
 		return 0;
 	uint64_t elements = 1;
@@ -25,18 +25,19 @@ const uint64_t Tensor<T>::numel() const {
 };
 
 template <class T>
-uint64_t Tensor<T>::offset() const {
-	return offset_;
+T* Tensor<T>::data(const bool fullBuffer) {
+	if (fullBuffer)
+		return static_cast<T*>(data_->data());
+	else
+		return static_cast<T*>(data_->data()) + offset_;
 }
 
 template <class T>
-T* Tensor<T>::data() {
-	return data_->data();
-}
-
-template <class T>
-const T* Tensor<T>::data() const {
-	return static_cast<const T*>(data_->data());
+const T* Tensor<T>::data(const bool fullBuffer) const {
+	if (fullBuffer)
+		return static_cast<const T*>(data_->data());
+	else
+		return static_cast<const T*>(data_->data()) + offset_;
 }
 
 template <class T>
@@ -45,7 +46,7 @@ bool Tensor<T>::empty() const {
 }
 
 template <class T>
-bool Tensor<T>::isContiguous(bool softCheck) const {
+bool Tensor<T>::isContiguous(const bool softCheck) const {
 	if (offset_ != 0 && !softCheck)
 		return false;
 	if (shape_.empty())

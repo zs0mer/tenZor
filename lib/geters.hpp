@@ -17,13 +17,13 @@ Tensor<T> Tensor<T>::clone() const {
 }
 
 template <class T>
-T& Tensor<T>::scalarVal() {
+T& Tensor<T>::get() {
 	_CHECK(!shape_.empty() && !data_->data(), "Not a scalar");
 	return *static_cast<T*>(data_->data());
 }
 
 template <class T>
-const T& Tensor<T>::scalarVal() const {
+const T& Tensor<T>::get() const {
 	_CHECK(!shape_.empty() && !data_->data(), "Not a scalar");
 	return *static_cast<T*>(data_->data());
 }
