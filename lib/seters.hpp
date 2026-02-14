@@ -9,8 +9,8 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
 }
 
 template <class T>
-template <class nestedVector>
-Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
+template <class NestedVector>
+Tensor<T>::Tensor(const std::vector<NestedVector>& v, const uint8_t alignment,
                   mem::Allocator& allocator)
     : offset_(0) {
 
@@ -24,12 +24,12 @@ Tensor<T>::Tensor(const std::vector<nestedVector>& v, const uint8_t alignment,
 	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
 
 	uint64_t offset = 0;
-	flatten(v, data(), offset);
+	falttenSTDVec(v, data(), offset);
 }
 
 template <class T>
-template <class nestedList>
-Tensor<T>::Tensor(const std::initializer_list<nestedList> list, const uint8_t alignment,
+template <class NestedList>
+Tensor<T>::Tensor(const std::initializer_list<NestedList> list, const uint8_t alignment,
                   mem::Allocator& allocator)
     : Tensor(ilistToSTDVector(list), alignment, allocator) {}
 
@@ -56,15 +56,15 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
 }
 
 template <class T>
-template <class nestedVector>
-Tensor<T>& Tensor<T>::operator=(const std::vector<nestedVector>& v) {
+template <class NestedVector>
+Tensor<T>& Tensor<T>::operator=(const std::vector<NestedVector>& v) {
 	*this = Tensor<T>(v);
 	return *this;
 }
 
 template <class T>
-template <class nestedList>
-Tensor<T>& Tensor<T>::operator=(const std::initializer_list<nestedList> list) {
+template <class NestedList>
+Tensor<T>& Tensor<T>::operator=(const std::initializer_list<NestedList> list) {
 	*this = Tensor<T>(list);
 	return *this;
 }

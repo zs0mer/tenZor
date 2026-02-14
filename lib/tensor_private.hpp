@@ -19,38 +19,39 @@ void Tensor<T>::ComputeStrides() {
 }
 
 template <class T>
-template <class nestedVector>
-void Tensor<T>::getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape) {
-	shape.push_back(v.size());
+template <class NestedVector>
+void Tensor<T>::getSTDVecShape(const NestedVector& v, std::vector<uint64_t>& shape) {
 
-	if constexpr (!isSTDVector<typename nestedVector::value_type>)
-		return;
-	if (v.empty())
-		return;
+	if constexpr (isSTDVector<NestedVector>::value) {
+		shape.push_back(v.size());
 
-	const auto& first = v.front();
-	for (const auto& sub : v)
-		_CHECK(sub.size() != first.size(), "non-rectangular nested vector construction");
+		if (v.empty())
+			return;
 
-	getSTDVecShape(first, shape);
+		using Inner = typename NestedVector::value_type;
+
+		if constexpr (isSTDVector<Inner>::value) {
+			const auto& first = v.front();
+			getSTDVecShape(first, shape);
+		}
+	}
 }
 
 template <class T>
-template <class nestedVector>
-void Tensor<T>::falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset) {
-	if constexpr (isSTDVector<typename nestedVector::value_type>)
+template <class NestedVector>
+void Tensor<T>::falttenSTDVec(const NestedVector& v, T* dst, uint64_t& offset) {
+	if constexpr (isSTDVector<NestedVector>::value)
 		for (const auto& sub : v)
 			falttenSTDVec(sub, dst, offset);
 	else
-		for (const auto& x : v)
-			dst[offset++] = x;
+		dst[offset++] = static_cast<T>(v);
 }
 
 template <class T>
-template <class V>
-auto Tensor<T>::ilistToSTDVector(std::initializer_list<V> list) {
-	if constexpr (!isIlist<V>)
-		return std::vector<V>(list);
+template <class L>
+auto Tensor<T>::ilistToSTDVector(std::initializer_list<L> list) {
+	if constexpr (!isIlist<L>::value)
+		return std::vector<L>(list);
 
 	_CHECK(list.size() == 0, "Tensor initializer_list cannot be empty");
 	std::vector<decltype(ilistToSTDVector(*list.begin()))> out;
@@ -61,4 +62,5 @@ auto Tensor<T>::ilistToSTDVector(std::initializer_list<V> list) {
 
 	return out;
 }
+
 }; // namespace TZ

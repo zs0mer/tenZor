@@ -22,13 +22,15 @@ class Tensor {
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// un-nests a nested std::vector to a Tensor
-	template <class nestedVector>
-	Tensor(const std::vector<nestedVector>& v, const uint8_t alignment = 64,
+	// has to be right shape
+	template <class NestedVector>
+	Tensor(const std::vector<NestedVector>& v, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// un-nests a nested std::initializer_list to a Tensor
-	template <class nestedList>
-	Tensor(const std::initializer_list<nestedList> list, const uint8_t alignment = 64,
+	// has to be right shape
+	template <class NestedList>
+	Tensor(const std::initializer_list<NestedList> list, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// makes a new Tensor
@@ -36,12 +38,14 @@ class Tensor {
 	         mem::Allocator& allocator = mem::salloc::instance());
 
 	// un-nests a nested std::vector to a Tensor
-	template <class nestedVector>
-	Tensor& operator=(const std::vector<nestedVector>& v);
+	// has to be right shape
+	template <class NestedVector>
+	Tensor& operator=(const std::vector<NestedVector>& v);
 
 	// un-nests a nested std::initializer_list to a Tensor
-	template <class nestedList>
-	Tensor& operator=(const std::initializer_list<nestedList> list);
+	// has to be right shape
+	template <class NestedList>
+	Tensor& operator=(const std::initializer_list<NestedList> list);
 
 
 	Tensor(const Tensor&) = default;
@@ -121,14 +125,14 @@ class Tensor {
 
 	void ComputeStrides();
 
-	template <class nestedVector>
-	void getSTDVecShape(const nestedVector& v, std::vector<uint64_t>& shape);
+	template <class NestedVector>
+	void getSTDVecShape(const NestedVector& v, std::vector<uint64_t>& shape);
 
-	template <class nestedVector>
-	void falttenSTDVec(const nestedVector& v, T* dst, uint64_t& offset);
+	template <class NestedVector>
+	void falttenSTDVec(const NestedVector& v, T* dst, uint64_t& offset);
 
-	template <class V>
-	auto ilistToSTDVector(std::initializer_list<V> list);
+	template <class L>
+	auto ilistToSTDVector(std::initializer_list<L> list);
 };
 
 } // namespace TZ

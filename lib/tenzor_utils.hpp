@@ -29,14 +29,16 @@ inline void _check(const bool expresson, const char* error, const char* file, in
 #define _CHECK_(expresson)
 #endif
 
+template <typename>
+struct isSTDVector : std::false_type {};
 
-template <class T> constexpr bool isSTDVector = false;
+template <typename T, typename A>
+struct isSTDVector<std::vector<T, A>> : std::true_type {};
 
-template <class T, class A> constexpr bool isSTDVector<std::vector<T, A>> = true;
+template <typename>
+struct isIlist : std::false_type {};
 
-template <typename T> constexpr bool isIlist = false;
-
-template <typename T> constexpr bool isIlist<std::initializer_list<T>> = true;
-
+template <typename T>
+struct isIlist<std::initializer_list<T>> : std::true_type {};
 
 } // namespace TZ
