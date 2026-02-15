@@ -1,5 +1,5 @@
 #pragma once
-//~ only the declarations are in this file
+// only the declarations are in this file
 
 namespace TZ {
 
@@ -11,6 +11,8 @@ class Tensor {
 	std::vector<uint64_t> strides_;
 	uint64_t offset_;
 	mem::Buffer data_;
+	// cant have nullptr as data ptr
+	// with a shape containing 0 its automaticly a scalar
 
   public:
 	//& seters ===========================================================================
@@ -30,7 +32,7 @@ class Tensor {
 	// un-nests a nested std::initializer_list to a Tensor
 	// has to be right shape
 	template <class NestedList>
-	Tensor(const std::initializer_list<NestedList> list, const uint8_t alignment = 64,
+	Tensor(const std::initializer_list<NestedList>& list, const uint8_t alignment = 64,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// makes a new Tensor
@@ -45,7 +47,7 @@ class Tensor {
 	// un-nests a nested std::initializer_list to a Tensor
 	// has to be right shape
 	template <class NestedList>
-	Tensor& operator=(const std::initializer_list<NestedList> list);
+	Tensor& operator=(const std::initializer_list<NestedList>& list);
 
 
 	Tensor(const Tensor&) = default;
@@ -125,14 +127,20 @@ class Tensor {
 
 	void ComputeStrides();
 
-	template <class NestedVector>
-	void getSTDVecShape(const NestedVector& v, std::vector<uint64_t>& shape);
 
-	template <class NestedVector>
-	void falttenSTDVec(const NestedVector& v, T* dst, uint64_t& offset);
+	// base case
+	template <class K>
+	void getSTDVecShape(const K& k, std::vector<uint64_t>& shape);
 
-	template <class L>
-	auto ilistToSTDVector(std::initializer_list<L> list);
+	template <class K>
+	void getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape);
+
+	// base case
+	template <class K>
+	void falttenSTDVec(const K& k, T* dst, uint64_t& offset);
+
+	template <class K>
+	void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset);
 };
 
 } // namespace TZ

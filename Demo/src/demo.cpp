@@ -2,6 +2,6 @@
 #include <iostream>
 
 int main() {
-	TZ::Tensor<int> t =
-	    std::vector<std::vector<int>>{{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}};
+	std::vector<std::vector<int>> h = {{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}};
+	TZ::Tensor<int> t(h);
 }

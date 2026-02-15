@@ -18,49 +18,34 @@ void Tensor<T>::ComputeStrides() {
 	}
 }
 
+
 template <class T>
-template <class NestedVector>
-void Tensor<T>::getSTDVecShape(const NestedVector& v, std::vector<uint64_t>& shape) {
-
-	if constexpr (isSTDVector<NestedVector>::value) {
-		shape.push_back(v.size());
-
-		if (v.empty())
-			return;
-
-		using Inner = typename NestedVector::value_type;
-
-		if constexpr (isSTDVector<Inner>::value) {
-			const auto& first = v.front();
-			getSTDVecShape(first, shape);
-		}
-	}
+template <class K>
+void Tensor<T>::getSTDVecShape(const K& k, std::vector<uint64_t>& shape) {
+	return;
 }
 
 template <class T>
-template <class NestedVector>
-void Tensor<T>::falttenSTDVec(const NestedVector& v, T* dst, uint64_t& offset) {
-	if constexpr (isSTDVector<NestedVector>::value)
-		for (const auto& sub : v)
-			falttenSTDVec(sub, dst, offset);
-	else
-		dst[offset++] = static_cast<T>(v);
+template <class K>
+void Tensor<T>::getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape) {
+	shape.push_back(v.size());
+	if (v.empty())
+		return;
+	getSTDVecShape(v[0], shape);
+}
+
+
+template <class T>
+template <class K>
+void Tensor<T>::falttenSTDVec(const K& k, T* dst, uint64_t& offset) {
+	dst[offset++] = static_cast<T>(k);
 }
 
 template <class T>
-template <class L>
-auto Tensor<T>::ilistToSTDVector(std::initializer_list<L> list) {
-	if constexpr (!isIlist<L>::value)
-		return std::vector<L>(list);
-
-	_CHECK(list.size() == 0, "Tensor initializer_list cannot be empty");
-	std::vector<decltype(ilistToSTDVector(*list.begin()))> out;
-	out.reserve(list.size());
-
-	for (const auto& sub : list)
-		out.push_back(ilistToSTDVector(sub));
-
-	return out;
+template <class K>
+void Tensor<T>::falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset) {
+	for (const auto& i : v)
+		falttenSTDVec(i, dst, offset);
 }
 
 }; // namespace TZ

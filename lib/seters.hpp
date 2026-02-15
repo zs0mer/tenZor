@@ -18,21 +18,21 @@ Tensor<T>::Tensor(const std::vector<NestedVector>& v, const uint8_t alignment,
 	ComputeStrides();
 
 	uint64_t capacity = 1;
-	for (uint64_t s : shape_)
-		capacity *= s;
+	for (uint64_t i : shape_) {
+		capacity *= i;
+		if (i == 0) {
+			shape_ = {};
+			strides_ = {};
+			capacity = 1;
+			break;
+		}
+	}
 
 	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
 
 	uint64_t offset = 0;
 	falttenSTDVec(v, data(), offset);
 }
-
-template <class T>
-template <class NestedList>
-Tensor<T>::Tensor(const std::initializer_list<NestedList> list, const uint8_t alignment,
-                  mem::Allocator& allocator)
-    : Tensor(ilistToSTDVector(list), alignment, allocator) {}
-
 
 template <class T>
 void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
@@ -46,7 +46,7 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
 		capacity *= i;
 		if (i == 0) {
 			shape_ = {};
-			strides_;
+			strides_ = {};
 			capacity = 1;
 			break;
 		}
@@ -61,12 +61,4 @@ Tensor<T>& Tensor<T>::operator=(const std::vector<NestedVector>& v) {
 	*this = Tensor<T>(v);
 	return *this;
 }
-
-template <class T>
-template <class NestedList>
-Tensor<T>& Tensor<T>::operator=(const std::initializer_list<NestedList> list) {
-	*this = Tensor<T>(list);
-	return *this;
-}
-
 } // namespace TZ
