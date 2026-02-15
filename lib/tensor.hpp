@@ -1,6 +1,7 @@
 #pragma once
 // only the declarations are in this file
 
+
 namespace TZ {
 
 template <class T>
@@ -13,41 +14,26 @@ class Tensor {
 	mem::Buffer data_;
 	// cant have nullptr as data ptr
 	// with a shape containing 0 its automaticly a scalar
+	// the default tensor will allways be a scalar
 
   public:
 	//& seters ===========================================================================
 
-	Tensor() = default;
+	Tensor();
 
 	// standard constructor
-	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
+	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
-	Tensor(const std::vector<NestedVector>& v, const uint8_t alignment = 64,
-	       mem::Allocator& allocator = mem::salloc::instance());
-
-	// un-nests a nested std::initializer_list to a Tensor
-	// has to be right shape
-	template <class NestedList>
-	Tensor(const std::initializer_list<NestedList>& list, const uint8_t alignment = 64,
+	Tensor(const std::vector<NestedVector>& v, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       mem::Allocator& allocator = mem::salloc::instance());
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = 64,
+	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	         mem::Allocator& allocator = mem::salloc::instance());
-
-	// un-nests a nested std::vector to a Tensor
-	// has to be right shape
-	template <class NestedVector>
-	Tensor& operator=(const std::vector<NestedVector>& v);
-
-	// un-nests a nested std::initializer_list to a Tensor
-	// has to be right shape
-	template <class NestedList>
-	Tensor& operator=(const std::initializer_list<NestedList>& list);
 
 
 	Tensor(const Tensor&) = default;
@@ -77,9 +63,6 @@ class Tensor {
 	// not necessarily JUST the data for this tensor
 	const T* data(const bool fullBuffer = false) const;
 
-	// returns true if the the tensor has 0 elements in it
-	bool empty() const;
-
 	// returns true if this is not only a part of a bigger tensor
 	// it means that the tensor is layed out flat in memory
 	// if softCheck = true it can return true even if
@@ -88,9 +71,6 @@ class Tensor {
 
 	// returns true if the tensor has 0 dimensons, and 1 element
 	bool isScalar() const;
-
-	// true if its not a scalar and not empty
-	bool isIndexable() const;
 
 	//& geters ===========================================================================
 

@@ -3,6 +3,10 @@
 namespace TZ {
 
 template <class T>
+Tensor<T>::Tensor()
+    : offset_(0), shape_({}), strides_({}), data_(mem::Buffer(sizeof(T), DEFAULT_ALIGNMENT)) {}
+
+template <class T>
 Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
                   mem::Allocator& allocator) {
 	set(shape, alignment, allocator);
@@ -53,12 +57,5 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
 	}
 
 	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
-}
-
-template <class T>
-template <class NestedVector>
-Tensor<T>& Tensor<T>::operator=(const std::vector<NestedVector>& v) {
-	*this = Tensor<T>(v);
-	return *this;
 }
 } // namespace TZ

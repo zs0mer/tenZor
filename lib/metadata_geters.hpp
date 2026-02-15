@@ -41,11 +41,6 @@ const T* Tensor<T>::data(const bool fullBuffer) const {
 }
 
 template <class T>
-bool Tensor<T>::empty() const {
-	return !data_->data();
-}
-
-template <class T>
 bool Tensor<T>::isContiguous(const bool softCheck) const {
 	if (offset_ != 0 && !softCheck)
 		return false;
@@ -65,11 +60,6 @@ bool Tensor<T>::isContiguous(const bool softCheck) const {
 template <class T>
 bool Tensor<T>::isScalar() const {
 	return shape_.empty() && numel() == 1;
-}
-
-template <class T>
-bool Tensor<T>::isIndexable() const {
-	return !(shape_.size() == 0);
 }
 
 } // namespace TZ

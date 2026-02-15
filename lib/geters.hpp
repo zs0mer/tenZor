@@ -32,7 +32,7 @@ const T& Tensor<T>::at(const std::vector<uint64_t>& idx) const {
 
 template <class T>
 Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
-	_CHECK(isIndexable(), "cannot index into 0-dim tensor");
+	_CHECK(isScalar(), "cannot index into a scalar");
 
 	_CHECK(idx >= shape_[0], "index out of bounds");
 

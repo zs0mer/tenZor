@@ -394,7 +394,7 @@ class salloc : public Allocator {
 	// if size < alignment, alignment will not be used
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
-	void* allocate(const size_t bytes, const uint8_t alignment = 64) override {
+	void* allocate(const size_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
 		_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~

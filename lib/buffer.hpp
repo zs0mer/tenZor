@@ -95,7 +95,7 @@ class Buffer {
 	Buffer(BufferIMPL* buffer) : ptr_(buffer) {}
 
 	// standard constructor
-	Buffer(const uint64_t size = 0, const uint8_t alignment = 64,
+	Buffer(const uint64_t size = 0, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       Allocator* allocator = &salloc::instance())
 	    : ptr_(size == 0 ? nullptr : new BufferIMPL(size, alignment, allocator)) {}
 

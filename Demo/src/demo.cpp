@@ -3,5 +3,6 @@
 
 int main() {
 	std::vector<std::vector<int>> h = {{1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}};
-	TZ::Tensor<int> t(h);
+	TZ::Tensor<int> t;
+	std::cout << t.isScalar() << std::endl;
 }
