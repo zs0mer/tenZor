@@ -12,9 +12,12 @@ class Tensor {
 	std::vector<uint64_t> strides_;
 	uint64_t offset_;
 	mem::Buffer data_;
-	// cant have nullptr as data ptr
-	// with a shape containing 0 its automaticly a scalar
-	// the default tensor will allways be a scalar
+
+	// the tensor can be:
+	// - Normal - shape: anything else               - data: anything
+	// - Scalar - shape: {}                          - data: sizeof(T)
+	// - Empty  - shape: has at least one 0 in it    - data: nullptr
+	// - Null   - shape: {}                          - data: nullptr
 
   public:
 	//& seters ===========================================================================
@@ -53,15 +56,21 @@ class Tensor {
 	const std::vector<uint64_t>& shape() const;
 
 	// get the number of elements in the tensor
-	uint64_t numel() const;
+	uint64_t size() const;
 
-	// get the pointer to the start of the tensor buffer
-	// not necessarily JUST the data for THIS tensor
-	T* data(const bool fullBuffer = true);
+	// pointer to the start of the data buffer to this tensor
+	T* data();
 
-	// get the pointer to the start of the tensor buffer
-	// not necessarily JUST the data for this tensor
-	const T* data(const bool fullBuffer = false) const;
+	// pointer to the start of the data buffer to this tensor
+	const T* data() const;
+
+	// get the pointer to the start of the whole tensor buffer
+	// this will not necessarily start where the data is located
+	T* rawData();
+
+	// get the pointer to the start of the whole tensor buffer
+	// this will not necessarily start where the data is located
+	const T* rawData() const;
 
 	// returns true if this is not only a part of a bigger tensor
 	// it means that the tensor is layed out flat in memory
@@ -69,8 +78,15 @@ class Tensor {
 	// the data is not at the start of the memory pointer, it is offseted by offset()
 	bool isContiguous(const bool softCheck = false) const;
 
-	// returns true if the tensor has 0 dimensons, and 1 element
-	bool isScalar() const;
+	// returns true if the tensor is a scalar
+	bool scalar() const;
+
+	// returns true if the tensor is Empty or Null
+	// returns size() == 0
+	bool empty() const;
+
+	// returns true if the tensor is normal
+	bool indexable() const;
 
 	//& geters ===========================================================================
 

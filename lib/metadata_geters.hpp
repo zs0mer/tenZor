@@ -13,7 +13,7 @@ const std::vector<uint64_t>& Tensor<T>::shape() const {
 }
 
 template <class T>
-uint64_t Tensor<T>::numel() const {
+uint64_t Tensor<T>::size() const {
 	if (!data_->data())
 		return 0;
 	uint64_t elements = 1;
@@ -25,19 +25,31 @@ uint64_t Tensor<T>::numel() const {
 };
 
 template <class T>
-T* Tensor<T>::data(const bool fullBuffer) {
-	if (fullBuffer)
-		return static_cast<T*>(data_->data());
-	else
-		return static_cast<T*>(data_->data()) + offset_;
+T* Tensor<T>::data() {
+	if (!data_->data())
+		return nullptr;
+	return static_cast<T*>(data_->data()) + offset_;
 }
 
 template <class T>
-const T* Tensor<T>::data(const bool fullBuffer) const {
-	if (fullBuffer)
-		return static_cast<const T*>(data_->data());
-	else
-		return static_cast<const T*>(data_->data()) + offset_;
+const T* Tensor<T>::data() const {
+	if (!data_->data())
+		return nullptr;
+	return static_cast<const T*>(data_->data()) + offset_;
+}
+
+template <class T>
+T* Tensor<T>::rawData() {
+	if (!data_->data())
+		return nullptr;
+	return static_cast<T*>(data_->data());
+}
+
+template <class T>
+const T* Tensor<T>::rawData() const {
+	if (!data_->data())
+		return nullptr;
+	return static_cast<const T*>(data_->data());
 }
 
 template <class T>
@@ -58,8 +70,18 @@ bool Tensor<T>::isContiguous(const bool softCheck) const {
 }
 
 template <class T>
-bool Tensor<T>::isScalar() const {
-	return shape_.empty() && numel() == 1;
+bool Tensor<T>::scalar() const {
+	return shape_.empty() && size() == 1;
+}
+
+template <class T>
+bool Tensor<T>::empty() const {
+	return size() == 0;
+}
+
+template <class T>
+bool Tensor<T>::indexable() const {
+	return !scalar() && !empty();
 }
 
 } // namespace TZ

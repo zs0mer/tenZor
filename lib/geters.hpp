@@ -4,6 +4,7 @@ namespace TZ {
 
 template <class T>
 T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
+	_CHECK(!indexable(), "not indexable");
 	_CHECK(idx.size() != shape_.size(), "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
@@ -18,6 +19,7 @@ T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
 
 template <class T>
 const T& Tensor<T>::at(const std::vector<uint64_t>& idx) const {
+	_CHECK(!indexable(), "not indexable");
 	_CHECK(idx.size() != shape_.size(), "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
@@ -32,8 +34,7 @@ const T& Tensor<T>::at(const std::vector<uint64_t>& idx) const {
 
 template <class T>
 Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
-	_CHECK(isScalar(), "cannot index into a scalar");
-
+	_CHECK(!indexable(), "not indexable");
 	_CHECK(idx >= shape_[0], "index out of bounds");
 
 	std::vector<uint64_t> newShape(shape_.begin() + 1, shape_.end());
@@ -52,13 +53,13 @@ Tensor<T> Tensor<T>::clone() const {
 
 template <class T>
 T& Tensor<T>::get() {
-	_CHECK(!shape_.empty() && !data_->data(), "Not a scalar");
+	_CHECK(!scalar(), "Not a scalar");
 	return *static_cast<T*>(data_->data());
 }
 
 template <class T>
 const T& Tensor<T>::get() const {
-	_CHECK(!shape_.empty() && !data_->data(), "Not a scalar");
+	_CHECK(!scalar(), "Not a scalar");
 	return *static_cast<const T*>(data_->data());
 }
 
