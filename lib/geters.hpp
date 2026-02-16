@@ -5,11 +5,11 @@ namespace TZ {
 template <class T>
 T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
 	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx.size() != shape_.size(), "incorrect number of indices");
+	_CHECK(idx.size() != dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < idx.size(); ++i) {
+	for (size_t i = 0; i < dim_; ++i) {
 		_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
@@ -20,11 +20,11 @@ T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
 template <class T>
 const T& Tensor<T>::at(const std::vector<uint64_t>& idx) const {
 	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx.size() != shape_.size(), "incorrect number of indices");
+	_CHECK(idx.size() != dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < idx.size(); ++i) {
+	for (size_t i = 0; i < dim_; ++i) {
 		_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}

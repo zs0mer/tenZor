@@ -10,9 +10,9 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
 template <class T>
 void Tensor<T>::ComputeStrides() {
 	uint64_t k = 1;
-	strides_.resize(shape_.size());
+	strides_.resize(dim_);
 
-	for (int64_t i = shape_.size(); i-- > 0;) {
+	for (int64_t i = dim_; i-- > 0;) {
 		strides_[i] = k;
 		k *= shape_[i];
 	}
@@ -21,17 +21,18 @@ void Tensor<T>::ComputeStrides() {
 
 template <class T>
 template <class K>
-void Tensor<T>::getSTDVecShape(const K& k, std::vector<uint64_t>& shape) {
+void Tensor<T>::getSTDVecShape(const K& k, std::vector<uint64_t>& shape, uint8_t& currDim) {
 	return;
 }
 
 template <class T>
 template <class K>
-void Tensor<T>::getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape) {
-	shape.push_back(v.size());
+void Tensor<T>::getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape,
+                               uint8_t& currDim) {
+	shape[currDim++] = v.size();
 	if (v.empty())
 		return;
-	getSTDVecShape(v[0], shape);
+	getSTDVecShape(v[0], shape, currDim);
 }
 
 

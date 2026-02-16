@@ -4,7 +4,7 @@ namespace TZ {
 
 template <class T>
 uint64_t Tensor<T>::dim() const {
-	return shape_.size();
+	return dim_;
 }
 
 template <class T>
@@ -18,8 +18,8 @@ uint64_t Tensor<T>::size() const {
 		return 0;
 	uint64_t elements = 1;
 
-	for (uint64_t i : shape_)
-		elements *= i;
+	for (uint8_t i = 0; i < dim_; i++)
+		elements *= shape_[i];
 
 	return elements;
 };
@@ -60,7 +60,7 @@ bool Tensor<T>::isContiguous(const bool softCheck) const {
 		return true;
 
 	uint64_t expected = 1;
-	for (int64_t i = static_cast<int64_t>(shape_.size()); i-- > 0;) {
+	for (int64_t i = dim_; i-- > 0;) {
 		if (strides_[i] != expected)
 			return false;
 		expected *= shape_[i];

@@ -4,6 +4,7 @@
 
 #define START_MEM_SIZE 10 * 1024 * 1024
 #define DEFAULT_ALIGNMENT 64
+#define MAX_DIM 64
 
 #include <atomic>
 #include <chrono>

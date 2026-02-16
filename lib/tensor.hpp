@@ -8,16 +8,17 @@ template <class T>
 // standard tensor class
 class Tensor {
   private:
-	std::vector<uint64_t> shape_;
-	std::vector<uint64_t> strides_;
+	uint8_t dim_;
+	std::array<uint64_t, MAX_DIM> shape_;
+	std::array<uint64_t, MAX_DIM> strides_;
 	uint64_t offset_;
 	mem::Buffer data_;
 
 	// the tensor can be:
-	// - Normal - shape: anything else               - data: anything
-	// - Scalar - shape: {}                          - data: sizeof(T)
-	// - Empty  - shape: has at least one 0 in it    - data: nullptr
-	// - Null   - shape: {}                          - data: nullptr
+	// - Normal - dimenson: anything   - shape: anything else               - data: anything
+	// - Scalar - dimenson: 0          - shape: {}                          - data: sizeof(T)
+	// - Empty  - dimenson: 0          - shape: has at least one 0 in it    - data: nullptr
+	// - Null   - dimenson: 0          - shape: {}                          - data: nullptr
 
   public:
 	//& seters ===========================================================================
@@ -126,10 +127,10 @@ class Tensor {
 
 	// base case
 	template <class K>
-	void getSTDVecShape(const K& k, std::vector<uint64_t>& shape);
+	void getSTDVecShape(const K& k, std::vector<uint64_t>& shape, uint8_t& currDim);
 
 	template <class K>
-	void getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape);
+	void getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape, uint8_t& currDim);
 
 	// base case
 	template <class K>
