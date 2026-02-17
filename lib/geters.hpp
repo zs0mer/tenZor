@@ -37,13 +37,18 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 	_CHECK(!indexable(), "not indexable");
 	_CHECK(idx >= shape_[0], "index out of bounds");
 
-	std::vector<uint64_t> newShape(shape_.begin() + 1, shape_.end());
+	Tensor<T> result = *this;
+	result.offset_ += offset_ + idx * strides_[0];
 
-	std::vector<uint64_t> newStrides(strides_.begin() + 1, strides_.end());
+	// shift metadata left
+	for (uint32_t i = 1; i < dim_; ++i) {
+		result.shape_[i - 1] = shape_[i];
+		result.strides_[i - 1] = strides_[i];
+	}
 
-	uint64_t newOffset = offset_ + idx * strides_[0];
+	result.dim_--;
 
-	return Tensor<T>(newShape, data_, newStrides, newOffset);
+	return result;
 }
 
 template <class T>

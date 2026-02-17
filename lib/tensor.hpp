@@ -119,18 +119,14 @@ class Tensor {
 
 	//& private ==========================================================================
   private:
-	Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
-	       const std::vector<uint64_t>& strides, const uint64_t offset);
-
 	void ComputeStrides();
-
 
 	// base case
 	template <class K>
-	void getSTDVecShape(const K& k, std::vector<uint64_t>& shape, uint8_t& currDim);
+	void getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim);
 
 	template <class K>
-	void getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape, uint8_t& currDim);
+	void getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim);
 
 	// base case
 	template <class K>

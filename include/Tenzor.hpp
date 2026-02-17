@@ -15,6 +15,7 @@
 #include <mutex>
 #include <cstring>
 #include <array>
+#include <span>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"

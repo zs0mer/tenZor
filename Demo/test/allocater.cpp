@@ -117,7 +117,6 @@ TEST_CASE("alloc_little_multy2") {
 	}
 }
 
-
 //& ============================================================
 
 TEST_CASE("alloc_middle1") {
@@ -230,7 +229,6 @@ TEST_CASE("alloc_middle_multy2") {
 
 //& ============================================================
 
-
 TEST_CASE("alloc_large1") {
 	TZ::mem::salloc& s = TZ::mem::salloc::instance();
 	int n = 40;
@@ -340,7 +338,6 @@ TEST_CASE("alloc_large_multy2") {
 }
 
 //& ============================================================
-
 
 TEST_CASE("alloc_zero") {
 	auto& s = TZ::mem::salloc::instance();

@@ -32,7 +32,7 @@ class Allocator {
 //& ================================================================================
 
 // this is an allocator
-// can allocate bites in the range of (1MB; INF]
+// can allocate bytes in the range of (1MB; INF)
 // uses headers
 class LargeAllocator {
   private:
@@ -97,7 +97,7 @@ class LargeAllocator {
 //& ================================================================================
 
 // this is an allocator
-// can allocate bites in the range of (4KB; 1MB]
+// can allocate bytes in the range of (4KB; 1MB]
 // uses masking
 class MediumAllocator {
   private:
@@ -208,7 +208,7 @@ class MediumAllocator {
 //& ================================================================================
 
 // this is an allocator
-// can allocate bites in the range of (0; 4KB]
+// can allocate bytes in the range of (0; 4KB]
 // uses masking
 class SmallAllocator {
   private:

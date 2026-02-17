@@ -17,9 +17,8 @@ Tensor<T>::Tensor(const std::vector<NestedVector>& v, const uint8_t alignment,
                   mem::Allocator& allocator)
     : offset_(0) {
 	uint8_t currDim = 0;
-	getSTDVecShape(v, shape_, currDim);
+	getSTDVecShape(v, shape_.begin(), currDim);
 
-	_CHECK(currDim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = static_cast<int8_t>(currDim);
 
 	ComputeStrides();

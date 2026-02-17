@@ -3,11 +3,6 @@
 namespace TZ {
 
 template <class T>
-Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
-                  const std::vector<uint64_t>& strides, const uint64_t offset)
-    : shape_(shape), data_(data), strides_(strides), offset_(offset) {}
-
-template <class T>
 void Tensor<T>::ComputeStrides() {
 	uint64_t k = 1;
 
@@ -20,15 +15,15 @@ void Tensor<T>::ComputeStrides() {
 
 template <class T>
 template <class K>
-void Tensor<T>::getSTDVecShape(const K& k, std::vector<uint64_t>& shape, uint8_t& currDim) {
+void Tensor<T>::getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim) {
 	return;
 }
 
 template <class T>
 template <class K>
-void Tensor<T>::getSTDVecShape(const std::vector<K>& v, std::vector<uint64_t>& shape,
-                               uint8_t& currDim) {
+void Tensor<T>::getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
 	shape[currDim++] = v.size();
+	_CHECK(currDim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	if (v.empty())
 		return;
 	getSTDVecShape(v[0], shape, currDim);
