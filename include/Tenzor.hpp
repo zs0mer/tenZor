@@ -14,6 +14,7 @@
 #include <vector>
 #include <mutex>
 #include <cstring>
+#include <array>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"

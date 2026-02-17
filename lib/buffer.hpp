@@ -47,7 +47,8 @@ class BufferIMPL {
 	// if 0 deallocate
 	bool release() noexcept {
 		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-			allocator_->deallocate(data_, size_);
+			if (data_)
+				allocator_->deallocate(data_, size_);
 			return true;
 		}
 		return false;
@@ -92,12 +93,13 @@ class Buffer {
 
   public:
 	// this buffer will become the new owner of the BufferIMPL
-	Buffer(BufferIMPL* buffer) : ptr_(buffer) {}
+	Buffer(BufferIMPL* buffer)
+	    : ptr_(buffer ? buffer : new BufferIMPL(0, DEFAULT_ALIGNMENT, &salloc::instance())) {}
 
 	// standard constructor
 	Buffer(const uint64_t size = 0, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       Allocator* allocator = &salloc::instance())
-	    : ptr_(size == 0 ? nullptr : new BufferIMPL(size, alignment, allocator)) {}
+	    : ptr_(new BufferIMPL(size, alignment, allocator)) {}
 
 	// this buffer will contain the same BufferIMPL
 	Buffer(const Buffer& other) : ptr_(other.ptr_) {

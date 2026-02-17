@@ -10,7 +10,6 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const mem::Buffer data,
 template <class T>
 void Tensor<T>::ComputeStrides() {
 	uint64_t k = 1;
-	strides_.resize(dim_);
 
 	for (int64_t i = dim_; i-- > 0;) {
 		strides_[i] = k;

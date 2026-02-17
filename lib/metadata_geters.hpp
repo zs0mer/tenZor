@@ -8,8 +8,8 @@ uint64_t Tensor<T>::dim() const {
 }
 
 template <class T>
-const std::vector<uint64_t>& Tensor<T>::shape() const {
-	return shape_;
+const uint64_t* Tensor<T>::shape() const {
+	return shape_.begin();
 }
 
 template <class T>

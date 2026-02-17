@@ -54,7 +54,7 @@ class Tensor {
 	uint64_t dim() const;
 
 	// get the shape of the tensor in a vector
-	const std::vector<uint64_t>& shape() const;
+	const uint64_t* shape() const;
 
 	// get the number of elements in the tensor
 	uint64_t size() const;
