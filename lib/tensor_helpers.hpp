@@ -43,4 +43,35 @@ void Tensor<T>::falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset)
 		falttenSTDVec(i, dst, offset);
 }
 
+
+template <class T>
+std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
+	if (t.empty()) {
+		os << "[]";
+		return os;
+	}
+
+	if (t.scalar()) {
+		os << t.get();
+		return os;
+	}
+
+	if (t.dim() == 1) {
+		os << "[";
+		for (int i = 0; i < t.size() - 1; i++)
+			os << t[i].get() << ", ";
+
+		os << t[t.size() - 1].get() << "]";
+		return os;
+	}
+
+	os << "[\n";
+	for (int i = 0; i < t.shape()[0] - 1; i++)
+		os << t[i] << ",\n";
+	os << t[t.shape()[0] - 1] << "\n]";
+	return os;
+
+	return os;
+}
+
 }; // namespace TZ

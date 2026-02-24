@@ -24,4 +24,4 @@
 #include "seters.hpp"
 #include "geters.hpp"
 #include "metadata_geters.hpp"
-#include "tensor_private.hpp"
+#include "tensor_helpers.hpp"

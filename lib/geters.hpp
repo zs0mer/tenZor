@@ -38,7 +38,7 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 	_CHECK(idx >= shape_[0], "index out of bounds");
 
 	Tensor<T> result = *this;
-	result.offset_ += offset_ + idx * strides_[0];
+	result.offset_ = offset_ + idx * strides_[0];
 
 	// shift metadata left
 	for (uint32_t i = 1; i < dim_; ++i) {
@@ -59,13 +59,13 @@ Tensor<T> Tensor<T>::clone() const {
 template <class T>
 T& Tensor<T>::get() {
 	_CHECK(!scalar(), "Not a scalar");
-	return *static_cast<T*>(data_->data());
+	return *(static_cast<T*>(data_->data()) + offset_);
 }
 
 template <class T>
 const T& Tensor<T>::get() const {
 	_CHECK(!scalar(), "Not a scalar");
-	return *static_cast<const T*>(data_->data());
+	return *(static_cast<const T*>(data_->data()) + offset_);
 }
 
 } // namespace TZ

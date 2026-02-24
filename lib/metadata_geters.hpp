@@ -71,7 +71,7 @@ bool Tensor<T>::isContiguous(const bool softCheck) const {
 
 template <class T>
 bool Tensor<T>::scalar() const {
-	return shape_.empty() && size() == 1;
+	return dim_ == 0 && size() == 1;
 }
 
 template <class T>
