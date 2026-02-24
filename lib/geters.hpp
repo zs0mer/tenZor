@@ -42,11 +42,13 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 
 	// shift metadata left
 	for (uint32_t i = 1; i < dim_; ++i) {
-		result.shape_[i - 1] = shape_[i];
-		result.strides_[i - 1] = strides_[i];
+		result.shape_[i - 1] = result.shape_[i];
+		result.strides_[i - 1] = result.strides_[i];
 	}
 
 	result.dim_--;
+	result.c_isDenseCached_ = false;
+	result.c_sizeCached_ = false;
 
 	return result;
 }

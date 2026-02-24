@@ -14,12 +14,22 @@ const uint64_t* Tensor<T>::shape() const {
 
 template <class T>
 uint64_t Tensor<T>::size() const {
-	if (!data_->data())
+	if (c_sizeCached_)
+		return c_sizeValue_;
+
+	if (dim_ == 0 && !data_->data()) {
+		c_sizeCached_ = true;
+		c_sizeValue_ = 0;
 		return 0;
+	}
+
 	uint64_t elements = 1;
 
 	for (uint8_t i = 0; i < dim_; i++)
 		elements *= shape_[i];
+
+	c_sizeCached_ = true;
+	c_sizeValue_ = elements;
 
 	return elements;
 };
@@ -53,18 +63,34 @@ const T* Tensor<T>::rawData() const {
 }
 
 template <class T>
-bool Tensor<T>::isContiguous(const bool softCheck) const {
-	if (offset_ != 0 && !softCheck)
-		return false;
-	if (shape_.empty())
+bool Tensor<T>::isContiguous() const {
+	return isDense() && offset_ == 0;
+}
+
+template <class T>
+bool Tensor<T>::isDense() const {
+	if (c_isDenseCached_)
+		return c_isDenseValue_;
+
+
+	if (empty()) {
+		c_isDenseCached_ = true;
+		c_isDenseValue_ = true;
 		return true;
+	}
 
 	uint64_t expected = 1;
 	for (int64_t i = dim_; i-- > 0;) {
-		if (strides_[i] != expected)
+		if (strides_[i] != expected) {
+			c_isDenseCached_ = true;
+			c_isDenseValue_ = false;
 			return false;
+		}
+
 		expected *= shape_[i];
 	}
+	c_isDenseCached_ = true;
+	c_isDenseValue_ = true;
 
 	return true;
 }

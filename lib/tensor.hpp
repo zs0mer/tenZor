@@ -73,11 +73,11 @@ class Tensor {
 	// this will not necessarily start where the data is located
 	const T* rawData() const;
 
-	// returns true if this is not only a part of a bigger tensor
-	// it means that the tensor is layed out flat in memory
-	// if softCheck = true it can return true even if
-	// the data is not at the start of the memory pointer, it is offseted by offset()
-	bool isContiguous(const bool softCheck = false) const;
+	// isDense() && offset == 0
+	bool isContiguous() const;
+
+	// the tensor is layed out flat in memory
+	bool isDense() const;
 
 	// returns true if the tensor is a scalar
 	bool scalar() const;
@@ -119,6 +119,16 @@ class Tensor {
 
 	//& private ==========================================================================
   private:
+	//& metadata cash
+
+	mutable bool c_sizeCached_ = false;
+	mutable uint64_t c_sizeValue_ = 0;
+
+	mutable bool c_isDenseCached_ = false;
+	mutable bool c_isDenseValue_ = false;
+
+	//& helper functions
+
 	void ComputeStrides();
 
 	// base case
