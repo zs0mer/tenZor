@@ -31,8 +31,18 @@ file(GLOB APP_SOURCES
     "${SRC_DIR}/*.cpp"
 )
 
-add_executable(demo ${APP_SOURCES})
+add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
+
+add_executable(bench "${SRC_DIR}/bench.cpp")
+target_include_directories(bench PRIVATE ${INCLUDE_DIR})
+target_compile_options(bench PRIVATE
+    -O3
+    -march=native
+    -mtune=native
+    -ffast-math
+    -funroll-loops
+)
 
 
 ### ============================================================================================================

@@ -29,4 +29,21 @@ inline void _check(const bool expresson, const char* error, const char* file, in
 #define _CHECK_(expresson)
 #endif
 
+class _Timer {
+  private:
+	std::chrono::_V2::system_clock::time_point start;
+	std::string s;
+
+  public:
+	_Timer(std::string s_ = "timer") : s(s_) {
+		start = std::chrono::high_resolution_clock::now();
+	}
+	~_Timer() {
+		std::chrono::_V2::system_clock::time_point end = std::chrono::high_resolution_clock::now();
+
+		std::chrono::duration duration = std::chrono::duration<double>(end - start);
+		std::cout << "> " << s << ": " << duration.count() << " seconds" << std::endl;
+	}
+};
+
 } // namespace TZ

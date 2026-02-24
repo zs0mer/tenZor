@@ -16,6 +16,7 @@
 #include <cstring>
 #include <array>
 #include <span>
+#include <iostream>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"
