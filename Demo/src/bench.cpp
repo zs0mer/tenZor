@@ -16,30 +16,38 @@ int main() {
 	}
 
 	TZ::Tensor<int> t(v);
+	std::array<uint64_t, 2> l;
 
 	{
 		TZ::_Timer timer("vector");
 
 		long long g = 0;
 		for (int i = 0; i < n; i++) {
+			l[1] = i;
+
 			for (int j = 0; j < m; j++) {
+				l[0] = j;
+
 				g += v[i][j];
 			}
 		}
 
-		std::cout << "sum: " << g;
+		std::cout << "sum: " << g << std::endl;
 	}
 
 	{
 		TZ::_Timer timer("tensor");
-
 		long long g = 0;
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < m; j++) {
-				g += t[i][j].get();
+		for (uint64_t i = 0; i < n; i++) {
+			l[1] = i;
+			for (uint64_t j = 0; j < m; j++) {
+				l[0] = j;
+				// g += *(t.data() + i * m + j);
+				//  g += t[i][j].get();
+				g += t.at(l.begin());
 			}
 		}
 
-		std::cout << "sum: " << g;
+		std::cout << "sum: " << g << std::endl;
 	}
 }

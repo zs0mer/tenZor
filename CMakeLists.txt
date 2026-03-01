@@ -5,16 +5,16 @@ project(Tenzor LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS_DEBUG
-    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-)
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+#)
 
 ###
 # Sanitizers
 ###
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
+#set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
 
 ###
@@ -38,10 +38,10 @@ add_executable(bench "${SRC_DIR}/bench.cpp")
 target_include_directories(bench PRIVATE ${INCLUDE_DIR})
 target_compile_options(bench PRIVATE
     -O3
-    -march=native
-    -mtune=native
+    -march=x86-64-v3
     -ffast-math
     -funroll-loops
+    -fopt-info-vec
 )
 
 

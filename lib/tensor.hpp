@@ -91,15 +91,19 @@ class Tensor {
 
 	//& geters ===========================================================================
 
-	// returns a Tensor containing the data in the given index
-	// its just a view
-	// if the remaining tensor is a scalar then it will return a saclar Tensor
+	// returns the data containing in the given index
 	T& at(const std::vector<uint64_t>& idx);
 
-	// returns a Tensor containing the data in the given index
-	// its just a view
-	// if the remaining tensor is a scalar then it will return a saclar Tensor
+	// returns the data containing in the given index
 	const T& at(const std::vector<uint64_t>& idx) const;
+
+	// returns the data containing in the given index
+	// it takes a list of indexes of size dim
+	T& at(const uint64_t* const idx);
+
+	// returns the data containing in the given index
+	// it takes a list of indexes of size dim
+	const T& at(const uint64_t* const idx) const;
 
 	// returns a Tensor containing the data in the given index
 	// its just a view
