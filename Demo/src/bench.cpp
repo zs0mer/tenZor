@@ -23,11 +23,7 @@ int main() {
 
 		long long g = 0;
 		for (int i = 0; i < n; i++) {
-			l[1] = i;
-
 			for (int j = 0; j < m; j++) {
-				l[0] = j;
-
 				g += v[i][j];
 			}
 		}
@@ -39,12 +35,9 @@ int main() {
 		TZ::_Timer timer("tensor");
 		long long g = 0;
 		for (uint64_t i = 0; i < n; i++) {
-			l[1] = i;
 			for (uint64_t j = 0; j < m; j++) {
-				l[0] = j;
-				// g += *(t.data() + i * m + j);
-				//  g += t[i][j].get();
-				g += t.at(l.begin());
+				g += *(t.data() + i * m + j);
+				// g += t[i][j].get();
 			}
 		}
 
