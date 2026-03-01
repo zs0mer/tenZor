@@ -22,7 +22,8 @@
         automake
         libtool
         direnv
-        python3
+        cmake
+        doctest
       ];
 
 

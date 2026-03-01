@@ -1,11 +1,28 @@
 #pragma once
 
-#define ERRORS = 1
+#define ERRORS 0
 
+#define START_MEM_SIZE 10 * 1024 * 1024
+#define DEFAULT_ALIGNMENT 64
+#define MAX_DIM 64
 
+#include <atomic>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
+#include <mutex>
+#include <cstring>
+#include <array>
+#include <span>
+#include <iostream>
 
-#include "../src/tenzor_utils.hpp"
-#include "../src/tensor.hpp"
-#include "../src/tensor-geters.hpp"
-#include "../src/tensor-printes.hpp"
-#include "../src/tensor-seters.hpp"
+#include "tenzor_utils.hpp"
+#include "allocator.hpp"
+#include "buffer.hpp"
+#include "tensor.hpp"
+#include "seters.hpp"
+#include "geters.hpp"
+#include "metadata_geters.hpp"
+#include "tensor_helpers.hpp"
