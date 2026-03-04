@@ -42,6 +42,7 @@ target_compile_options(bench PRIVATE
     -ffast-math
     -funroll-loops
     -fopt-info-vec
+    -fno-omit-frame-pointer
 )
 
 

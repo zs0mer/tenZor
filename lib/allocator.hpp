@@ -102,6 +102,7 @@ class LargeAllocator {
 class MediumAllocator {
   private:
 	struct MediumSlab {
+		MediumSlab** startMem = nullptr;
 		uint8_t* freeMem = nullptr;
 		uint32_t allocatedBlocks = -1;
 		size_t idxInBin = -1;
@@ -109,9 +110,9 @@ class MediumAllocator {
 
 	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
 	const static uint16_t REFILLSIZE = 2;
-	const static uint16_t SLABHEADERSIZE = 64;
+	const static uint16_t SLABPOINTERSIZE = 64;
 
-	std::vector<MediumSlab*> bin_;
+	std::vector<MediumSlab> bin_;
 	uint16_t activeSlabIdx_ = 0;
 
   public:
@@ -123,18 +124,18 @@ class MediumAllocator {
 				fillSlabs(REFILLSIZE);
 
 
-			MediumSlab* slab = bin_[activeSlabIdx_];
+			MediumSlab& slab = bin_[activeSlabIdx_];
 
 
-			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->freeMem);
+			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab.freeMem);
 			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab) + SLABSIZE;
+			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab.startMem) + SLABSIZE;
 
 			if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
-				slab->freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+				slab.freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 				void* ptr = reinterpret_cast<void*>(alignedAddr);
-				slab->allocatedBlocks++;
+				slab.allocatedBlocks++;
 				return ptr;
 			}
 			activeSlabIdx_++;
@@ -144,37 +145,37 @@ class MediumAllocator {
 	}
 
 	void dealloc(void* ptr) {
-		MediumSlab* slab =
-		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
+		MediumSlab& slab =
+		    *reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
-		slab->allocatedBlocks--;
+		slab.allocatedBlocks--;
 
-		if (slab->allocatedBlocks != 0)
+		if (slab.allocatedBlocks != 0)
 			return;
 
-		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
+		slab.freeMem = reinterpret_cast<uint8_t*>(slab.startMem) + SLABPOINTERSIZE;
 
-		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
+		if (bin_.size() <= slab.idxInBin || &bin_[slab.idxInBin] != &slab) {
 			bin_.push_back(slab);
-			slab->idxInBin = activeSlabIdx_;
+			slab.idxInBin = activeSlabIdx_;
 			return;
 		}
 
 		if (activeSlabIdx_ == 0)
 			return;
 
-		std::swap(bin_[activeSlabIdx_ - 1], bin_[slab->idxInBin]);
+		std::swap(bin_[activeSlabIdx_ - 1], bin_[slab.idxInBin]);
 
-		bin_[slab->idxInBin]->idxInBin = slab->idxInBin;
-		bin_[activeSlabIdx_ - 1]->idxInBin = activeSlabIdx_ - 1;
+		bin_[slab.idxInBin].idxInBin = slab.idxInBin;
+		bin_[activeSlabIdx_ - 1].idxInBin = activeSlabIdx_ - 1;
 
 		activeSlabIdx_--;
 	}
 
 	~MediumAllocator() {
-		for (auto* i : bin_) {
-			if (i->allocatedBlocks == 0)
-				free(i);
+		for (auto i : bin_) {
+			if (i.allocatedBlocks == 0)
+				free(i.startMem);
 		}
 	}
 
@@ -189,16 +190,20 @@ class MediumAllocator {
 	}
 
 	void fillSlabs(const uint16_t slabNum) {
-		bin_.reserve(slabNum);
+		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
-			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
-			_CHECK_(!mem);
 
-			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
-			mem->allocatedBlocks = 0;
-			mem->idxInBin = bin_.size();
+			MediumSlab slab;
+			slab.startMem = reinterpret_cast<MediumSlab**>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 
-			bin_.push_back(mem);
+			slab.freeMem = reinterpret_cast<u_int8_t*>(slab.startMem) + SLABPOINTERSIZE;
+			_CHECK_(!slab.freeMem);
+			slab.allocatedBlocks = 0;
+			slab.idxInBin = bin_.size();
+
+			bin_.push_back(slab);
+			MediumSlab& stored = bin_.back();
+			*stored.startMem = &stored;
 		}
 	}
 
