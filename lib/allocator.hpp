@@ -339,6 +339,7 @@ class SmallAllocator {
 			SmallSlab* slab = static_cast<SmallSlab*>(midAlloc_.alloc(SLABSIZE, SLABSIZE));
 
 			_CHECK(!slab, "out of memory");
+			new (slab) SmallSlab();
 
 			slab->nextSlab = bin_[sizeType];
 			slab->blockSizeType = sizeType;
