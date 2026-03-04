@@ -17,6 +17,7 @@
 #include <array>
 #include <span>
 #include <iostream>
+#include <deque>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"

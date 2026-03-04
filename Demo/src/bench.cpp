@@ -6,26 +6,14 @@ static std::mt19937 rng(345678);
 
 int main() {
 	const int n = 100000;
-	const int m = 100;
+	const int m = 20;
 	std::vector<int> v(n, 0);
 
 
 	for (int i = 0; i < n; i++) {
-		v[i] = (rng() % 1024) + 1;
+		v[i] = (rng() % 1024 * 300) + 1;
 	}
 
-	{
-		TZ::_Timer timer("malloc");
-		std::vector<void*> space(n);
-
-		for (int k = 0; k < m; k++) {
-			for (int i = 0; i < n; i++)
-				space[i] = malloc(v[i]);
-
-			for (int i = 0; i < n; i++)
-				free(space[i]);
-		}
-	}
 
 	TZ::mem::salloc& aalloc = TZ::mem::salloc::instance();
 	{

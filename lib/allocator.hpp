@@ -112,7 +112,7 @@ class MediumAllocator {
 	const static uint16_t REFILLSIZE = 2;
 	const static uint16_t SLABPOINTERSIZE = 64;
 
-	std::vector<MediumSlab> bin_;
+	std::deque<MediumSlab> bin_;
 	uint16_t activeSlabIdx_ = 0;
 
   public:
@@ -145,8 +145,9 @@ class MediumAllocator {
 	}
 
 	void dealloc(void* ptr) {
-		MediumSlab& slab =
-		    *reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
+		uintptr_t base = reinterpret_cast<uintptr_t>(ptr) & ~(SLABSIZE - 1);
+
+		MediumSlab& slab = **reinterpret_cast<MediumSlab**>(base);
 
 		slab.allocatedBlocks--;
 
@@ -173,7 +174,7 @@ class MediumAllocator {
 	}
 
 	~MediumAllocator() {
-		for (auto i : bin_) {
+		for (auto& i : bin_) {
 			if (i.allocatedBlocks == 0)
 				free(i.startMem);
 		}
@@ -190,13 +191,12 @@ class MediumAllocator {
 	}
 
 	void fillSlabs(const uint16_t slabNum) {
-		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 
 			MediumSlab slab;
 			slab.startMem = reinterpret_cast<MediumSlab**>(std::aligned_alloc(SLABSIZE, SLABSIZE));
-
-			slab.freeMem = reinterpret_cast<u_int8_t*>(slab.startMem) + SLABPOINTERSIZE;
+			*slab.startMem = &slab;
+			slab.freeMem = reinterpret_cast<uint8_t*>(slab.startMem) + SLABPOINTERSIZE;
 			_CHECK_(!slab.freeMem);
 			slab.allocatedBlocks = 0;
 			slab.idxInBin = bin_.size();
