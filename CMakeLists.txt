@@ -5,9 +5,9 @@ project(Tenzor LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS_DEBUG
-    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-)
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+#)
 
 ###
 # Sanitizers

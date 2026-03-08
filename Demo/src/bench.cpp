@@ -5,13 +5,13 @@
 static std::mt19937 rng(345678);
 
 int main() {
-	const int n = 10000000;
-	const int m = 1;
+	const int n = 10000;
+	const int m = 100;
 	std::vector<int> v(n, 0);
 
 
 	for (int i = 0; i < n; i++) {
-		v[i] = (rng() % 1024) + 1;
+		v[i] = (rng() % 1024 * 8) + 1;
 	}
 
 	{

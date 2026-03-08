@@ -102,7 +102,6 @@ class LargeAllocator {
 class MediumAllocator {
   private:
 	struct MediumSlab {
-		MediumSlab** startMem = nullptr;
 		uint8_t* freeMem = nullptr;
 		uint32_t allocatedBlocks = -1;
 		size_t idxInBin = -1;
@@ -110,34 +109,32 @@ class MediumAllocator {
 
 	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
 	const static uint16_t REFILLSIZE = 2;
-	const static uint16_t SLABPOINTERSIZE = 64;
+	const static uint16_t SLABHEADERSIZE = 64;
 
-	std::deque<MediumSlab> bin_;
+	std::vector<MediumSlab*> bin_;
 	uint16_t activeSlabIdx_ = 0;
 
   public:
 	MediumAllocator() = delete;
 
 	void* alloc(const size_t bytes, const uint16_t alignment) {
-		//_CHECK_(bin_[3].idxInBin != 3);
-
 		while (true) {
 			if (bin_.size() <= activeSlabIdx_)
 				fillSlabs(REFILLSIZE);
 
 
-			MediumSlab& slab = bin_[activeSlabIdx_];
+			MediumSlab* slab = bin_[activeSlabIdx_];
 
 
-			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab.freeMem);
+			uintptr_t currentAddr = reinterpret_cast<uintptr_t>(slab->freeMem);
 			uintptr_t alignedAddr = (currentAddr + alignment - 1) & ~(alignment - 1);
-			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab.startMem) + SLABSIZE;
+			uintptr_t slabEnd = reinterpret_cast<uintptr_t>(slab) + SLABSIZE;
 
 			if (alignedAddr + bytes <= slabEnd) [[likely]] {
 
-				slab.freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
+				slab->freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 				void* ptr = reinterpret_cast<void*>(alignedAddr);
-				slab.allocatedBlocks++;
+				slab->allocatedBlocks++;
 				return ptr;
 			}
 			activeSlabIdx_++;
@@ -147,20 +144,18 @@ class MediumAllocator {
 	}
 
 	void dealloc(void* ptr) {
-		uintptr_t base = reinterpret_cast<uintptr_t>(ptr) & ~(SLABSIZE - 1);
-
-		MediumSlab* slab = *reinterpret_cast<MediumSlab**>(base);
+		MediumSlab* slab =
+		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
 		slab->allocatedBlocks--;
 
 		if (slab->allocatedBlocks != 0)
 			return;
 
-		slab->freeMem = reinterpret_cast<uint8_t*>(slab->startMem) + SLABPOINTERSIZE;
+		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 
-
-		if (bin_.size() <= slab->idxInBin || &bin_[slab->idxInBin] != slab) {
-			bin_.push_back(*slab);
+		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
+			bin_.push_back(slab);
 			slab->idxInBin = activeSlabIdx_;
 			return;
 		}
@@ -168,21 +163,18 @@ class MediumAllocator {
 		if (activeSlabIdx_ == 0)
 			return;
 
+		std::swap(bin_[activeSlabIdx_ - 1], bin_[slab->idxInBin]);
 
-		uint64_t originalLocation = slab->idxInBin;
-
-		std::swap(bin_[activeSlabIdx_ - 1], bin_[originalLocation]);
-
-		bin_[originalLocation].idxInBin = originalLocation;
-		bin_[activeSlabIdx_ - 1].idxInBin = activeSlabIdx_ - 1;
+		bin_[slab->idxInBin]->idxInBin = slab->idxInBin;
+		bin_[activeSlabIdx_ - 1]->idxInBin = activeSlabIdx_ - 1;
 
 		activeSlabIdx_--;
 	}
 
 	~MediumAllocator() {
-		for (auto& i : bin_) {
-			if (i.allocatedBlocks == 0)
-				free(i.startMem);
+		for (auto* i : bin_) {
+			if (i->allocatedBlocks == 0)
+				free(i);
 		}
 	}
 
@@ -197,19 +189,16 @@ class MediumAllocator {
 	}
 
 	void fillSlabs(const uint16_t slabNum) {
+		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
+			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
+			_CHECK_(!mem);
 
-			MediumSlab slab;
-			slab.startMem = reinterpret_cast<MediumSlab**>(std::aligned_alloc(SLABSIZE, SLABSIZE));
+			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
+			mem->allocatedBlocks = 0;
+			mem->idxInBin = bin_.size();
 
-			slab.freeMem = reinterpret_cast<uint8_t*>(slab.startMem) + SLABPOINTERSIZE;
-			_CHECK_(!slab.freeMem);
-			slab.allocatedBlocks = 0;
-			slab.idxInBin = bin_.size();
-
-			bin_.push_back(slab);
-			MediumSlab& stored = bin_.back();
-			*stored.startMem = &stored;
+			bin_.push_back(mem);
 		}
 	}
 
@@ -345,6 +334,7 @@ class SmallAllocator {
 			SmallSlab* slab = static_cast<SmallSlab*>(midAlloc_.alloc(SLABSIZE, SLABSIZE));
 
 			_CHECK(!slab, "out of memory");
+
 			new (slab) SmallSlab();
 
 			slab->nextSlab = bin_[sizeType];
