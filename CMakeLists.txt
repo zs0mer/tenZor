@@ -40,9 +40,9 @@ target_compile_options(bench PRIVATE
     -O3
     -march=x86-64-v3
     -ffast-math
-    -funroll-loops
-    -fopt-info-vec
-    -fno-omit-frame-pointer
+    #-funroll-loops
+    #-fopt-info-vec
+    #-fno-omit-frame-pointer
 )
 
 

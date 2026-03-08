@@ -1,6 +1,6 @@
 #pragma once
 
-#define ERRORS 0
+#define ERRORS 1
 
 #define START_MEM_SIZE 10 * 1024 * 1024
 #define DEFAULT_ALIGNMENT 64
