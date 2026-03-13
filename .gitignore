@@ -1,2 +1,5 @@
 *.o
 build
+.direnv
+.vscode
+flake.lock
