@@ -103,8 +103,8 @@ class MediumAllocator {
   private:
 	struct MediumSlab {
 		uint8_t* freeMem = nullptr;
-		uint32_t allocatedBlocks = -1;
-		size_t idxInBin = -1;
+		uint32_t allocatedBlocks = 0;
+		size_t idxInBin = 0;
 	};
 
 	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
@@ -155,8 +155,8 @@ class MediumAllocator {
 		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 
 		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
+			slab->idxInBin = bin_.size();
 			bin_.push_back(slab);
-			slab->idxInBin = activeSlabIdx_;
 			return;
 		}
 

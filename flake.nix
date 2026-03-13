@@ -27,6 +27,8 @@
           doctest
           nixfmt
           perf
+          valgrind
+          python3
         ];
 
         shellHook = '''';

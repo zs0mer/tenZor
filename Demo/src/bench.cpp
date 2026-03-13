@@ -14,19 +14,6 @@ int main() {
 		v[i] = (rng() % 1024 * 8) + 1;
 	}
 
-	{
-		TZ::_Timer timer("malloc");
-		std::vector<void*> space(n);
-
-		for (int k = 0; k < m; k++) {
-			for (int i = 0; i < n; i++)
-				space[i] = malloc(v[i]);
-
-			for (int i = 0; i < n; i++)
-				free(space[i]);
-		}
-	}
-
 	TZ::mem::salloc& aalloc = TZ::mem::salloc::instance();
 	{
 		TZ::_Timer timer("salloc");
