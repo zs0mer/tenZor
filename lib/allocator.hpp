@@ -62,7 +62,8 @@ class LargeAllocator {
 
 				return reinterpret_cast<void*>(aligned);
 			}
-			last = ptr;
+			last = nullptr;
+			free(ptr);
 			ptr = ptr->next;
 		}
 
@@ -242,10 +243,6 @@ class SmallAllocator {
 	SmallAllocator() = delete;
 
 	void* alloc(const size_t bytes) {
-
-		if (bytes == 0)
-			return nullptr;
-
 		// determening the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
 		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
@@ -397,6 +394,8 @@ class salloc : public Allocator {
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
 	void* allocate(const size_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+		if (bytes == 0)
+			return nullptr;
 		_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~

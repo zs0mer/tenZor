@@ -45,6 +45,17 @@ target_compile_options(bench PRIVATE
     #-fno-omit-frame-pointer
 )
 
+add_executable(alloc_bench "${SRC_DIR}/alloc_bench.cpp")
+target_include_directories(alloc_bench PRIVATE ${INCLUDE_DIR})
+target_compile_options(alloc_bench PRIVATE
+    -O3
+    -march=x86-64-v3
+    -ffast-math
+    #-funroll-loops
+    #-fopt-info-vec
+    #-fno-omit-frame-pointer
+)
+
 
 ### ============================================================================================================
 # Testing ======================================================================================================
