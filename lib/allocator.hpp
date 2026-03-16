@@ -13,7 +13,7 @@ class Allocator {
 
 	virtual void* allocate(const size_t bytes, const uint8_t alignment) = 0;
 
-	virtual void deallocate(void*& ptr, const size_t bytes) = 0;
+	virtual void deallocate(void* ptr, const size_t bytes) = 0;
 
 	virtual ~Allocator() = default;
 
@@ -406,7 +406,7 @@ class salloc : public Allocator {
 		}
 	};
 
-	void deallocate(void*& ptr, const size_t bytes) override {
+	void deallocate(void* ptr, const size_t bytes) override {
 		if (bytes <= 4 * 1024) {            //~ 0b
 			return sa_().dealloc(ptr);      //~
 		} else if (bytes <= 1024 * 1024) {  //~ 4KB
