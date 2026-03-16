@@ -44,7 +44,7 @@ int main() {
 				l[0] = j;
 				// g += *(t.data() + i * m + j);
 				//  g += t[i][j].get();
-				g += t.at(l);
+				g += *(t.data() + i * m + j);
 			}
 		}
 

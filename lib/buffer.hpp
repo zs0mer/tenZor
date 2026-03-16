@@ -95,14 +95,16 @@ class Buffer {
 	// this buffer will become the new owner of the BufferIMPL
 	Buffer(BufferIMPL* buffer)
 	    : ptr_(buffer ? buffer
-	                  : static_cast<BufferIMPL*>(salloc::instance().allocate(sizeof(BufferIMPL)))) {
-		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &salloc::instance());
+	                  : static_cast<BufferIMPL*>(
+	                        buffer->allocator()->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &DEFAULT_ALLOCATOR);
 	}
 
 	// standard constructor
 	Buffer(const uint64_t size = 0, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       Allocator* allocator = &salloc::instance())
-	    : ptr_(static_cast<BufferIMPL*>(salloc::instance().allocate(sizeof(BufferIMPL)))) {
+	       Allocator* allocator = &DEFAULT_ALLOCATOR)
+	    : ptr_(static_cast<BufferIMPL*>(
+	          allocator->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
 		new (ptr_) BufferIMPL(size, alignment, allocator);
 	}
 
@@ -158,7 +160,8 @@ class Buffer {
 
 	// makes a new buffer with the same data
 	Buffer clone() const {
-		BufferIMPL* p = static_cast<BufferIMPL*>(salloc::instance().allocate(sizeof(BufferIMPL)));
+		BufferIMPL* p = static_cast<BufferIMPL*>(
+		    ptr_->allocator()->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
 		new (p) BufferIMPL(*ptr_);
 		return Buffer(p);
 	}
@@ -167,7 +170,7 @@ class Buffer {
 	void clear() {
 		if (ptr_)
 			if (ptr_->release())
-				salloc::instance().deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
+				ptr_->allocator()->deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
 	}
 };
 
