@@ -10,7 +10,7 @@ static std::mt19937 rng(123455);
 
 
 TEST_CASE("alloc_little1") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 1000;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 4)) + 1;
@@ -21,7 +21,7 @@ TEST_CASE("alloc_little1") {
 }
 
 TEST_CASE("alloc_little2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 1000;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
@@ -37,7 +37,7 @@ TEST_CASE("alloc_little2") {
 }
 
 TEST_CASE("alloc_little3") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int k = 10;
 	int n = 100;
 	std::vector<uint8_t*> v(n);
@@ -57,7 +57,7 @@ TEST_CASE("alloc_little3") {
 }
 
 TEST_CASE("alloc_little_multy1") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 
 	int threadCount = 8;
 
@@ -89,7 +89,7 @@ TEST_CASE("alloc_little_multy1") {
 }
 
 TEST_CASE("alloc_little_multy2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 
 	int k = 1;
 	int n = 1;
@@ -120,7 +120,7 @@ TEST_CASE("alloc_little_multy2") {
 //& ============================================================
 
 TEST_CASE("alloc_middle1") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 500;
 	for (int i = 0; i < n; i++) {
 		int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
@@ -131,7 +131,7 @@ TEST_CASE("alloc_middle1") {
 }
 
 TEST_CASE("alloc_middle2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 500;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
@@ -147,7 +147,7 @@ TEST_CASE("alloc_middle2") {
 }
 
 TEST_CASE("alloc_middle3") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int k = 5;
 	int n = 100;
 	std::vector<uint8_t*> v(n);
@@ -167,7 +167,7 @@ TEST_CASE("alloc_middle3") {
 }
 
 TEST_CASE("alloc_middle_multy1") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 
 	int threadCount = 8;
 
@@ -199,7 +199,7 @@ TEST_CASE("alloc_middle_multy1") {
 }
 
 TEST_CASE("alloc_middle_multy2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 
 	int k = 5;
 	int n = 200;
@@ -230,7 +230,7 @@ TEST_CASE("alloc_middle_multy2") {
 //& ============================================================
 
 TEST_CASE("alloc_large1") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 40;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
@@ -241,7 +241,7 @@ TEST_CASE("alloc_large1") {
 }
 
 TEST_CASE("alloc_large2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 40;
 	std::vector<uint8_t*> v(n);
 	std::vector<int> sizee(n);
@@ -257,7 +257,7 @@ TEST_CASE("alloc_large2") {
 }
 
 TEST_CASE("alloc_large3") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int k = 5;
 	int n = 10;
 	std::vector<uint8_t*> v(n);
@@ -277,7 +277,7 @@ TEST_CASE("alloc_large3") {
 }
 
 TEST_CASE("alloc_large_multy1") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 
 	int threadCount = 8;
 
@@ -309,7 +309,7 @@ TEST_CASE("alloc_large_multy1") {
 }
 
 TEST_CASE("alloc_large_multy2") {
-	TZ::mem::salloc& s = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 
 	int k = 5;
 	int n = 40;
@@ -340,14 +340,14 @@ TEST_CASE("alloc_large_multy2") {
 //& ============================================================
 
 TEST_CASE("alloc_zero") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 
 	void* p = s.allocate(0);
 	CHECK(p == nullptr);
 }
 
 TEST_CASE("alloc_alignment") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 	int n = 100;
 	int m = 40;
 	std::vector<int> alignments = {8, 16, 32, 64};
@@ -374,7 +374,7 @@ TEST_CASE("alloc_alignment") {
 }
 
 TEST_CASE("alloc_size_boundaries") {
-	auto& s = TZ::mem::salloc::instance();
+	auto& s = TZ::mem::Salloc::instance();
 
 	std::vector<size_t> sizes = {
 	    2,       4,       8,       16,       32,       64,       128,      256,      512,

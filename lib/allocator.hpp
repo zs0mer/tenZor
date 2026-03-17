@@ -90,7 +90,7 @@ class LargeAllocator {
 	}
 
   private:
-	friend class salloc;
+	friend class Salloc;
 
 	LargeAllocator() = default;
 };
@@ -203,7 +203,7 @@ class MediumAllocator {
 		}
 	}
 
-	friend class salloc;
+	friend class Salloc;
 };
 
 //& ================================================================================
@@ -350,7 +350,7 @@ class SmallAllocator {
 		}
 	}
 
-	friend class salloc;
+	friend class Salloc;
 };
 
 //& ================================================================================
@@ -359,7 +359,7 @@ class SmallAllocator {
 //! singelton
 // max alignment: 64
 // alignment can only be 2^n
-class salloc : public Allocator {
+class Salloc : public Allocator {
   private:
 	// percentiges of the allocators
 	//! has to add up to 100%
@@ -377,12 +377,12 @@ class salloc : public Allocator {
 		return sa_;
 	}
 
-	salloc() = default;
+	Salloc() = default;
 
 
   public:
-	static salloc& instance() {
-		static salloc* s = new salloc;
+	static Salloc& instance() {
+		static Salloc* s = new Salloc;
 		return *s;
 	}
 
@@ -418,16 +418,55 @@ class salloc : public Allocator {
 		return;
 	};
 
-	~salloc() = default;
+	~Salloc() = default;
 
 
-	salloc(const salloc&) = delete;
+	Salloc(const Salloc&) = delete;
 
-	salloc& operator=(const salloc&) = delete;
+	Salloc& operator=(const Salloc&) = delete;
 
-	salloc(salloc&&) = delete;
+	Salloc(Salloc&&) = delete;
 
-	salloc& operator=(salloc&&) = delete;
+	Salloc& operator=(Salloc&&) = delete;
+};
+
+
+//& ================================================================================
+
+// simple allocator using malloc()
+class Malloc : public Allocator {
+  private:
+	Malloc() = default;
+
+
+  public:
+	static Malloc& instance() {
+		static Malloc* s = new Malloc;
+		return *s;
+	}
+
+	Device device() const override {
+		return Device::CPU;
+	};
+
+	void* allocate(const size_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+		return aligned_alloc(alignment, bytes);
+	};
+
+	void deallocate(void* ptr, const size_t bytes = 0) override {
+		free(ptr);
+	};
+
+	~Malloc() = default;
+
+
+	Malloc(const Malloc&) = delete;
+
+	Malloc& operator=(const Malloc&) = delete;
+
+	Malloc(Malloc&&) = delete;
+
+	Malloc& operator=(Malloc&&) = delete;
 };
 
 } // namespace mem

@@ -27,17 +27,17 @@ class Tensor {
 
 	// standard constructor
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::salloc::instance());
+	       mem::Allocator& allocator = mem::Salloc::instance());
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
 	Tensor(const std::vector<NestedVector>& v, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::salloc::instance());
+	       mem::Allocator& allocator = mem::Salloc::instance());
 
 	// makes a new Tensor
 	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::salloc::instance());
+	         mem::Allocator& allocator = mem::Salloc::instance());
 
 
 	Tensor(const Tensor&) = default;

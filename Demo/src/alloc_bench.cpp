@@ -6,12 +6,12 @@ static std::mt19937 rng(345678);
 
 int main() {
 	const int n = 10000;
-	const int m = 100;
+	const int m = 1;
 	std::vector<int> v(n, 0);
 
 
 	for (int i = 0; i < n; i++) {
-		v[i] = (rng() % (1024)) + 1;
+		v[i] = (rng() % (1024 * 8)) + 1;
 	}
 
 	{
@@ -27,9 +27,9 @@ int main() {
 		}
 	}
 
-	TZ::mem::salloc& aalloc = TZ::mem::salloc::instance();
+	TZ::mem::Salloc& aalloc = TZ::mem::Salloc::instance();
 	{
-		TZ::_Timer timer("salloc");
+		TZ::_Timer timer("Salloc");
 		std::vector<void*> space(n);
 
 		for (int k = 0; k < m; k++) {

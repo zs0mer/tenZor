@@ -19,7 +19,7 @@ class BufferIMPL {
 	// standard constructor
 	// you can only construct with this constructor
 	BufferIMPL(const uint64_t size, const uint8_t alignment,
-	           Allocator* allocator = &salloc::instance())
+	           Allocator* allocator = &Salloc::instance())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
