@@ -13,25 +13,27 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
 
 template <class T>
 template <class NestedVector>
-Tensor<T>::Tensor(const std::vector<NestedVector>& v, const uint8_t alignment,
-                  mem::Allocator& allocator)
-    : offset_(0) {
+Tensor<T> Tensor<T>::fromNested(const std::vector<NestedVector>& v, const uint8_t alignment,
+                                mem::Allocator& allocator) {
+	Tensor<T> t;
+	t.offset_ = 0;
 	uint8_t currDim = 0;
-	getSTDVecShape(v, shape_.begin(), currDim);
+	t.getSTDVecShape(v, t.shape_.data(), currDim);
 
-	dim_ = static_cast<int8_t>(currDim);
+	t.dim_ = static_cast<uint8_t>(currDim);
 
-	ComputeStrides();
+	t.computeStrides();
 
 	uint64_t capacity = 1;
-	for (int i = 0; i < dim_; i++)
-		capacity *= shape_[i];
+	for (int i = 0; i < t.dim_; i++)
+		capacity *= t.shape_[i];
 
 
-	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
+	t.data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
 
 	uint64_t offset = 0;
-	falttenSTDVec(v, data(), offset);
+	t.falttenSTDVec(v, t.data(), offset);
+	return t;
 }
 
 template <class T>
@@ -47,7 +49,7 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
 		capacity *= shape[i];
 	}
 
-	ComputeStrides();
+	computeStrides();
 
 	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
 }

@@ -15,7 +15,7 @@ int main() {
 		}
 	}
 
-	TZ::Tensor<int> t(v);
+	TZ::Tensor<int> t = TZ::Tensor<int>::fromNested(v);
 	std::vector<uint64_t> l(2);
 
 	{

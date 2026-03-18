@@ -3,7 +3,7 @@
 namespace TZ {
 
 template <class T>
-void Tensor<T>::ComputeStrides() {
+void Tensor<T>::computeStrides() {
 	uint64_t k = 1;
 
 	for (int64_t i = dim_; i-- > 0;) {
