@@ -96,7 +96,7 @@ class Buffer {
 	Buffer(BufferIMPL* buffer)
 	    : ptr_(buffer ? buffer
 	                  : static_cast<BufferIMPL*>(
-	                        buffer->allocator()->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+	                        DEFAULT_ALLOCATOR.allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
 		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &DEFAULT_ALLOCATOR);
 	}
 

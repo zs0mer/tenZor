@@ -15,10 +15,10 @@ class Tensor {
 	mem::Buffer data_;
 
 	// the tensor can be:
-	// - Normal - dimenson: anything   - shape: anything else               - data: anything
-	// - Scalar - dimenson: 0          - shape: {}                          - data: sizeof(T)
-	// - Empty  - dimenson: 0          - shape: has at least one 0 in it    - data: nullptr
-	// - Null   - dimenson: 0          - shape: {}                          - data: nullptr
+	// - Normal - dimenson: anything   - shape: anything
+	// - Scalar - dimenson: 0          - shape: {}
+	// - Empty  - dimenson: 0          - shape: has at least one 0 in it
+	// - Null   - dimenson: 0          - shape: {}
 
   public:
 	//& seters ===========================================================================
