@@ -70,7 +70,11 @@ std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
 		os << t[i] << ",\n";
 	os << t[t.shape()[0] - 1] << "\n]";
 	return os;
+}
 
+template <typename Derived, typename T>
+std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
+	os << t.tensor();
 	return os;
 }
 

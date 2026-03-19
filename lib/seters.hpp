@@ -13,7 +13,7 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
 
 template <class T>
 template <class NestedVector>
-Tensor<T> Tensor<T>::fromNested(const std::vector<NestedVector>& v, const uint8_t alignment,
+Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_t alignment,
                                 mem::Allocator& allocator) {
 	Tensor<T> t;
 	t.offset_ = 0;

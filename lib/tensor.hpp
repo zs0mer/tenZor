@@ -32,7 +32,7 @@ class Tensor {
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
-	static Tensor fromNested(const std::vector<NestedVector>& v,
+	static Tensor fromSTDVec(const std::vector<NestedVector>& v,
 	                         const uint8_t alignment = DEFAULT_ALIGNMENT,
 	                         mem::Allocator& allocator = mem::Salloc::instance());
 
