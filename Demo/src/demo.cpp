@@ -5,6 +5,6 @@
 int main() {
 	std::vector<int> a = {1, 2, 3};
 	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(a);
-	TZ::Vector<int> vec(t);
+	TZ::Vector<int> vec = t;
 	std::cout << vec;
 }

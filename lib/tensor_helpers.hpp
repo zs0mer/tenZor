@@ -73,7 +73,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
 }
 
 template <typename Derived, typename T>
-std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
+std::ostream& operator<<(std::ostream& os, const _tensorWrapper<Derived, T>& t) {
 	os << t.tensor();
 	return os;
 }
