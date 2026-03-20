@@ -3,8 +3,8 @@
 #include <random>
 
 int main() {
-	std::vector<int> a = {1, 2, 3};
+	std::vector<std::vector<int>> a = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
 	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(a);
-	TZ::Vector<int> vec = t;
-	std::cout << vec;
+	TZ::Matrix<int> vec(t);
+	std::cout << vec.at(2, 1);
 }

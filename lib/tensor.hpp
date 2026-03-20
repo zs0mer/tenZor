@@ -54,8 +54,11 @@ class Tensor {
 	// get the dimenson of the tensor
 	uint64_t dim() const;
 
-	// get the shape of the tensor in a vector
+	// get the shape of the tensor
 	const uint64_t* shape() const;
+
+	// get the strides of the tensor
+	const uint64_t* strides() const;
 
 	// get the number of elements in the tensor
 	uint64_t size() const;

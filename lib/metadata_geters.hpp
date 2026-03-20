@@ -13,6 +13,11 @@ const uint64_t* Tensor<T>::shape() const {
 }
 
 template <class T>
+const uint64_t* Tensor<T>::strides() const {
+	return strides_.begin();
+}
+
+template <class T>
 uint64_t Tensor<T>::size() const {
 	if (c_sizeCached_)
 		return c_sizeValue_;

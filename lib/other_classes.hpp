@@ -115,6 +115,14 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 		this->t_.set(std::vector<uint64_t>({rows, cols}), alignment, allocator);
 		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
+
+	T& at(const uint64_t i, const uint64_t j) {
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
+	}
+
+	const T& at(const uint64_t i, const uint64_t j) const {
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
+	}
 };
 
 template <typename T>
@@ -156,6 +164,14 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 		this->t_.set(std::vector<uint64_t>({size}), alignment, allocator);
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
+
+	T& at(const uint64_t idx) {
+		return this->t_.data()[idx * this->t_.strides()[0]];
+	}
+
+	const T& at(const uint64_t idx) const {
+		return this->t_.data()[idx * this->t_.strides()[0]];
+	}
 };
 
 template <typename T>
@@ -179,7 +195,7 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
-	Scalar(const T* z, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	Scalar(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       mem::Allocator& allocator = mem::Salloc::instance())
 	    : Base(std::vector<uint64_t>({}), alignment, allocator) {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
@@ -193,11 +209,19 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 		_CHECK(this->t_.dim() != 0, "not a Vector in the TZ::Vector");
 	}
 
-	void set(const T* z, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	void set(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	         mem::Allocator& allocator = mem::Salloc::instance()) {
 		this->t_.set(std::vector<uint64_t>({}), alignment, allocator);
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = z;
+	}
+
+	T& get() {
+		return this->t_.get();
+	}
+
+	const T& get() const {
+		return this->t_.get();
 	}
 };
 
