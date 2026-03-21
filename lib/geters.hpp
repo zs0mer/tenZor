@@ -47,8 +47,8 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 	}
 
 	result.dim_--;
-	result.c_isDenseCached_ = false;
-	result.c_sizeCached_ = false;
+	result.c_size_.reset();
+	result.c_dense.reset();
 
 	return result;
 }

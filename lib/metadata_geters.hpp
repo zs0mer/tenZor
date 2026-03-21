@@ -19,12 +19,11 @@ const uint64_t* Tensor<T>::strides() const {
 
 template <class T>
 uint64_t Tensor<T>::size() const {
-	if (c_sizeCached_)
-		return c_sizeValue_;
+	if (c_size_.cached)
+		return c_size_.value;
 
 	if (dim_ == 0 && !data_->data()) {
-		c_sizeCached_ = true;
-		c_sizeValue_ = 0;
+		c_size_.set(0);
 		return 0;
 	}
 
@@ -33,8 +32,7 @@ uint64_t Tensor<T>::size() const {
 	for (uint8_t i = 0; i < dim_; i++)
 		elements *= shape_[i];
 
-	c_sizeCached_ = true;
-	c_sizeValue_ = elements;
+	c_size_.set(elements);
 
 	return elements;
 };
@@ -74,28 +72,25 @@ bool Tensor<T>::isContiguous() const {
 
 template <class T>
 bool Tensor<T>::isDense() const {
-	if (c_isDenseCached_)
-		return c_isDenseValue_;
+	if (c_dense.cached)
+		return c_dense.value;
 
 
 	if (empty()) {
-		c_isDenseCached_ = true;
-		c_isDenseValue_ = true;
+		c_dense.set(true);
 		return true;
 	}
 
 	uint64_t expected = 1;
 	for (int64_t i = dim_; i-- > 0;) {
 		if (strides_[i] != expected) {
-			c_isDenseCached_ = true;
-			c_isDenseValue_ = false;
+			c_dense.set(false);
 			return false;
 		}
 
 		expected *= shape_[i];
 	}
-	c_isDenseCached_ = true;
-	c_isDenseValue_ = true;
+	c_dense.set(true);
 
 	return true;
 }

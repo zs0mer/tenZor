@@ -26,6 +26,10 @@ class Tensor {
 	Tensor();
 
 	// standard constructor
+	Tensor(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	       mem::Allocator& allocator = mem::Salloc::instance());
+
+	// standard constructor
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	       mem::Allocator& allocator = mem::Salloc::instance());
 
@@ -38,6 +42,10 @@ class Tensor {
 
 	// makes a new Tensor
 	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	         mem::Allocator& allocator = mem::Salloc::instance());
+
+	// makes a new Tensor
+	void set(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	         mem::Allocator& allocator = mem::Salloc::instance());
 
 
@@ -119,13 +127,26 @@ class Tensor {
 
 	//& private ==========================================================================
   private:
-	//& metadata cash
+	//& metadata cache
 
-	mutable bool c_sizeCached_ = false;
-	mutable uint64_t c_sizeValue_ = 0;
+	template <class K>
+	struct Cache {
+		bool cached = false;
+		K value;
 
-	mutable bool c_isDenseCached_ = false;
-	mutable bool c_isDenseValue_ = false;
+		void set(const K& data) {
+			value = data;
+			cached = true;
+		}
+
+		void reset() {
+			cached = false;
+		}
+	};
+
+	mutable Cache<uint64_t> c_size_;
+
+	mutable Cache<bool> c_dense;
 
 	//& helper functions
 

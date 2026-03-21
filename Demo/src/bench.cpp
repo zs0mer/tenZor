@@ -15,7 +15,7 @@ int main() {
 		}
 	}
 
-	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(v);
+	TZ::Matrix<int> t = TZ::Tensor<int>::fromSTDVec(v);
 	std::vector<uint64_t> l(2);
 
 	{
@@ -43,8 +43,9 @@ int main() {
 			for (uint64_t j = 0; j < m; j++) {
 				l[0] = j;
 				// g += *(t.data() + i * m + j);
-				//  g += t[i][j].get();
-				g += *(t.data() + i * m + j);
+				// g += t[i][j].get();
+				// g += *(t.data() + i * m + j);
+				g += t.at(i, j);
 			}
 		}
 

@@ -12,6 +12,12 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
 }
 
 template <class T>
+Tensor<T>::Tensor(const uint64_t dim, const uint64_t* shape, const uint8_t alignment,
+                  mem::Allocator& allocator) {
+	set(dim, shape, alignment, allocator);
+}
+
+template <class T>
 template <class NestedVector>
 Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_t alignment,
                                 mem::Allocator& allocator) {
@@ -39,8 +45,14 @@ Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_
 template <class T>
 void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
                     mem::Allocator& allocator) {
-	_CHECK(shape.size() > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
-	dim_ = shape.size();
+	set(shape.size(), shape.begin(), alignment, allocator);
+}
+
+template <class T>
+void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, const uint8_t alignment,
+                    mem::Allocator& allocator) {
+	_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	dim_ = dim;
 	offset_ = 0;
 
 	uint64_t capacity = 1;

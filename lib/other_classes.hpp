@@ -1,7 +1,5 @@
 #pragma once
 
-// TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
-
 namespace TZ {
 
 template <typename Derived, typename T>
@@ -68,7 +66,7 @@ class _tensorWrapper {
 	}
 
 	Tensor<T> operator[](uint64_t idx) const {
-		return t_[idx];
+		return Derived(t_[idx]);
 	}
 
 	Tensor<T> clone() const {
@@ -125,6 +123,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 	}
 };
 
+
 template <typename T>
 class Vector : public _tensorWrapper<Vector<T>, T> {
 	using Base = _tensorWrapper<Vector<T>, T>;
@@ -153,9 +152,9 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 	}
 
 
-	void set(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(std::vector<uint64_t>({rows, cols}), alignment, allocator);
+		this->t_.set(shape, alignment, allocator);
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
