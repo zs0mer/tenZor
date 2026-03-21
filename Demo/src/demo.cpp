@@ -5,6 +5,6 @@
 int main() {
 	std::vector<std::vector<int>> a = {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}};
 	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(a);
-	TZ::Matrix<int> vec(t);
-	std::cout << vec.at(2, 1);
+	TZ::Matrix<int> m(t);
+	std::cout << m;
 }

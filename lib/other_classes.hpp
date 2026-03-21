@@ -17,7 +17,7 @@ class _tensorWrapper {
 	_tensorWrapper(Tensor<T>&& t) : t_(std::move(t)) {}
 
 	_tensorWrapper(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	               mem::Allocator& allocator = mem::Salloc::instance())
+	               mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
 	    : t_(shape, alignment, allocator) {}
 
 
@@ -65,111 +65,8 @@ class _tensorWrapper {
 		return t_;
 	}
 
-	Tensor<T> operator[](uint64_t idx) const {
-		return Derived(t_[idx]);
-	}
-
 	Tensor<T> clone() const {
 		return t_.clone();
-	}
-};
-
-template <typename T>
-class Matrix : public _tensorWrapper<Matrix<T>, T> {
-	using Base = _tensorWrapper<Matrix<T>, T>;
-
-  public:
-	using Base::Base;
-
-	Matrix(const Tensor<T>& t) : Base(t) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-	Matrix(Tensor<T>&& t) : Base(std::move(t)) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-	Matrix(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
-	    : Base(shape, alignment, allocator) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-	Matrix(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
-	    : Base(std::vector<uint64_t>({rows, cols}), alignment, allocator) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-
-	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(shape, alignment, allocator);
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-	void set(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(std::vector<uint64_t>({rows, cols}), alignment, allocator);
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
-	}
-
-	T& at(const uint64_t i, const uint64_t j) {
-		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
-	}
-
-	const T& at(const uint64_t i, const uint64_t j) const {
-		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
-	}
-};
-
-
-template <typename T>
-class Vector : public _tensorWrapper<Vector<T>, T> {
-	using Base = _tensorWrapper<Vector<T>, T>;
-
-  public:
-	using Base::Base;
-
-	Vector(const Tensor<T>& t) : Base(t) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-	Vector(Tensor<T>&& t) : Base(std::move(t)) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-	Vector(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
-	    : Base(shape, alignment, allocator) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-	Vector(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
-	    : Base(std::vector<uint64_t>({size}), alignment, allocator) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-
-	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(shape, alignment, allocator);
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-	void set(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(std::vector<uint64_t>({size}), alignment, allocator);
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
-	}
-
-	T& at(const uint64_t idx) {
-		return this->t_.data()[idx * this->t_.strides()[0]];
-	}
-
-	const T& at(const uint64_t idx) const {
-		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 };
 
@@ -188,28 +85,16 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
-	Scalar(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
-	    : Base(shape, alignment, allocator) {
-		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
-	}
-
 	Scalar(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance())
+	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
 	    : Base(std::vector<uint64_t>({}), alignment, allocator) {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = z;
 	}
 
 
-	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
-		this->t_.set(shape, alignment, allocator);
-		_CHECK(this->t_.dim() != 0, "not a Vector in the TZ::Vector");
-	}
-
 	void set(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance()) {
+	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
 		this->t_.set(std::vector<uint64_t>({}), alignment, allocator);
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = z;
@@ -221,6 +106,88 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 
 	const T& get() const {
 		return this->t_.get();
+	}
+};
+
+template <typename T>
+class Vector : public _tensorWrapper<Vector<T>, T> {
+	using Base = _tensorWrapper<Vector<T>, T>;
+
+  public:
+	using Base::Base;
+
+	Vector(const Tensor<T>& t) : Base(t) {
+		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	}
+
+	Vector(Tensor<T>&& t) : Base(std::move(t)) {
+		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	}
+
+	Vector(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
+	    : Base(std::vector<uint64_t>({size}), alignment, allocator) {
+		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	}
+
+
+	void set(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		this->t_.set(std::vector<uint64_t>({size}), alignment, allocator);
+		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	}
+
+	T& at(const uint64_t idx) {
+		return this->t_.data()[idx * this->t_.strides()[0]];
+	}
+
+	const T& at(const uint64_t idx) const {
+		return this->t_.data()[idx * this->t_.strides()[0]];
+	}
+
+	Scalar<T> operator[](uint64_t idx) const {
+		return Scalar<T>(this->t_[idx]);
+	}
+};
+
+template <typename T>
+class Matrix : public _tensorWrapper<Matrix<T>, T> {
+	using Base = _tensorWrapper<Matrix<T>, T>;
+
+  public:
+	using Base::Base;
+
+	Matrix(const Tensor<T>& t) : Base(t) {
+		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	}
+
+	Matrix(Tensor<T>&& t) : Base(std::move(t)) {
+		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	}
+
+	Matrix(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
+	    : Base(std::vector<uint64_t>({rows, cols}), alignment, allocator) {
+		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	}
+
+
+	void set(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		this->t_.set(std::vector<uint64_t>({rows, cols}), alignment, allocator);
+		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	}
+
+	T& at(const uint64_t i, const uint64_t j) {
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
+	}
+
+	const T& at(const uint64_t i, const uint64_t j) const {
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
+	}
+
+	Vector<T> operator[](uint64_t idx) const {
+		return Vector<T>(this->t_[idx]);
 	}
 };
 

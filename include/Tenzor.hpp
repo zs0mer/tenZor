@@ -5,7 +5,7 @@
 #define START_MEM_SIZE 10 * 1024 * 1024
 #define DEFAULT_ALIGNMENT 64
 #define MAX_DIM 64
-#define DEFAULT_ALLOCATOR Salloc::instance()
+#define DEFAULT_ALLOCATOR mem::Salloc::instance()
 
 #include <atomic>
 #include <chrono>
