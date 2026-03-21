@@ -55,7 +55,14 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 
 template <class T>
 Tensor<T> Tensor<T>::clone() const {
-	return Tensor(shape_, data_.clone(), strides_, offset_);
+	Tensor<T> out(dim_, shape_, DEFAULT_ALIGNMENT, data_->allocator());
+
+	if (isDense()) {
+		std::memcpy(out.data(), this->data(), size());
+		return out;
+	}
+	// TODO asdasdsdsadsadad
+	return out;
 }
 
 template <class T>

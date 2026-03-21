@@ -18,7 +18,7 @@
 #include <array>
 #include <span>
 #include <iostream>
-#include <deque>
+#include <functional>
 
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"
@@ -29,3 +29,4 @@
 #include "metadata_geters.hpp"
 #include "other_classes.hpp"
 #include "tensor_helpers.hpp"
+#include "operators.hpp"

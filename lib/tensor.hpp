@@ -27,26 +27,26 @@ class Tensor {
 
 	// standard constructor
 	Tensor(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance());
+	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// standard constructor
 	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = mem::Salloc::instance());
+	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
 	static Tensor fromSTDVec(const std::vector<NestedVector>& v,
 	                         const uint8_t alignment = DEFAULT_ALIGNMENT,
-	                         mem::Allocator& allocator = mem::Salloc::instance());
+	                         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// makes a new Tensor
 	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance());
+	         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// makes a new Tensor
 	void set(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = mem::Salloc::instance());
+	         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 
 	Tensor(const Tensor&) = default;
@@ -125,6 +125,10 @@ class Tensor {
 	// returns that one element
 	const T& get() const;
 
+	//& operators ========================================================================
+
+	static Tensor<T> doOp(const Tensor<T>& a, const Tensor<T>& b, std::function<T(T, T)> func);
+
 	//& private ==========================================================================
   private:
 	//& metadata cache
@@ -145,7 +149,6 @@ class Tensor {
 	};
 
 	mutable Cache<uint64_t> c_size_;
-
 	mutable Cache<bool> c_dense;
 
 	//& helper functions
