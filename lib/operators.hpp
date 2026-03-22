@@ -11,7 +11,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 	if (a.dense()) {
 		T* ptr = a.data();
 		for (uint64_t i = 0; i < n; i++)
-			ptr[i] = func(ptr[i]);
+			func(ptr[i]);
 		return;
 	}
 
@@ -21,7 +21,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 	uint64_t linearIdx = a.offset_;
 
 	for (uint64_t i = 0; i < n; i++) {
-		base[linearIdx] = func(base[linearIdx]);
+		func(base[linearIdx]);
 
 		for (uint8_t d = a.dim_; d-- > 0;) {
 			linearIdx += a.strides_[d];
@@ -46,7 +46,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 		T* bp = b.data();
 
 		for (uint64_t i = 0; i < n; i++)
-			bp[i] = func(ap[i], bp[i]);
+			func(ap[i], bp[i]);
 
 		return;
 	}
@@ -59,7 +59,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 	uint64_t linearIdxB = b.offset_;
 
 	for (uint64_t i = 0; i < n; i++) {
-		baseB[linearIdxB] = func(baseA[linearIdxA], baseB[linearIdxB]);
+		func(baseA[linearIdxA], baseB[linearIdxB]);
 
 		for (uint8_t d = a.dim_; d-- > 0;) {
 			linearIdxA += a.strides_[d];
@@ -88,7 +88,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 		T* cp = c.data();
 
 		for (uint64_t i = 0; i < n; i++)
-			cp[i] = func(ap[i], bp[i], cp[i]);
+			func(ap[i], bp[i], cp[i]);
 
 		return;
 	}
@@ -105,7 +105,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 
 
 	for (uint64_t i = 0; i < n; i++) {
-		baseC[linearIdxC] = func(baseA[linearIdxA], baseB[linearIdxB], baseC[linearIdxC]);
+		func(baseA[linearIdxA], baseB[linearIdxB], baseC[linearIdxC]);
 
 		for (uint8_t d = a.dim_; d-- > 0;) {
 			linearIdxA += a.strides_[d];
@@ -126,23 +126,21 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 
 
 template <class T>
-uint64_t Tensor<T>::computeLinearIdx(const uint64_t* idx) const {
-	uint64_t linearIdx = offset_;
-
-	for (size_t i = 0; i < dim_; ++i) {
-		_CHECK(idx[i] >= shape_[i], "index out of bounds");
-		linearIdx += idx[i] * strides_[i];
-	}
-
-	return linearIdx;
+template <typename Func>
+void Tensor<T>::apply(Func func) {
+	Tensor<T>::apply(*this, func);
 }
 
 template <class T>
-void Tensor<T>::incrementIdx(uint64_t* idx) const {
-	for (uint8_t d = dim_; d-- > 0;) {
-		if (++idx[d] < shape_[d])
-			break;
-		idx[d] = 0;
-	}
+template <typename Func>
+void Tensor<T>::apply(const Tensor<T>& a, Func func) {
+	Tensor<T>::apply(a, *this, func);
 }
+
+template <class T>
+template <typename Func>
+void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
+	Tensor<T>::apply(a, b, *this, func);
+}
+
 }; // namespace TZ

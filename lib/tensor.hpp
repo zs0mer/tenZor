@@ -135,25 +135,39 @@ class Tensor {
 
 	//& operators ========================================================================
 
-	// makes a = func(a) for all elements of the tensor
+	//* static
+	// calls func(a[i]) for all elements of the tensor
+	// you can modify a
 	template <typename Func>
 	static void apply(Tensor<T>& a, Func func);
 
-	// makes b = func(a, b) for all elements of the tensor
+	//* static
+	// calls func(a[i], b[i]) for all elements of the tensor
+	// you can modify b
 	template <typename Func>
 	static void apply(const Tensor<T>& a, Tensor<T>& b, Func func);
 
-	// makes c = func(a, b, c) for all elements of the tensor
+	//* static
+	// calls func(a[i], b[i], c[i]) for all elements of the tensor
+	// you can modify c
 	template <typename Func>
 	static void apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func);
 
-	// calculates the linear index give by the normal index of the tensor
-	// the index is passed by a C style array
-	uint64_t computeLinearIdx(const uint64_t* idx) const;
 
-	// increment the normal index given by the C style array
-	// if the index is at full, makes idx 0,0,0...
-	void incrementIdx(uint64_t* idx) const;
+	// calls func(this[i]) for all elements of the tensor
+	// you can modify "this[i]"
+	template <typename Func>
+	void apply(Func func);
+
+	// calls func(a[i], this[i]) for all elements of the tensor
+	// you can modify "this[i]"
+	template <typename Func>
+	void apply(const Tensor<T>& a, Func func);
+
+	// calls func(a[i], b[i], this[i]) for all elements of the tensor
+	// you can modify "this[i]"
+	template <typename Func>
+	void apply(const Tensor<T>& a, const Tensor<T>& b, Func func);
 
 	//& private ==========================================================================
   private:
