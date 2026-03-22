@@ -11,8 +11,18 @@ Tensor<T>::Tensor(const std::vector<uint64_t>& shape, mem::Allocator& allocator)
 }
 
 template <class T>
-Tensor<T>::Tensor(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
+Tensor<T>::Tensor(const uint8_t dim, const uint64_t* shape, mem::Allocator& allocator) {
 	set(dim, shape, allocator);
+}
+
+template <class T>
+Tensor<T>::Tensor(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
+                  const uint64_t offset, mem::Buffer data)
+    : dim_(dim), offset_(offset), data_(data) {
+	for (uint8_t i = 0; i < dim; i++) {
+		shape_[i] = shape[i];
+		strides_[i] = strides[i];
+	}
 }
 
 template <class T>

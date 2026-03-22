@@ -53,10 +53,6 @@ class _tensorWrapper {
 		return t_.shape();
 	}
 
-	uint64_t size() const {
-		return t_.size();
-	}
-
 	T* data() {
 		return t_.data();
 	}
@@ -67,6 +63,10 @@ class _tensorWrapper {
 
 	bool empty() const {
 		return t_.empty();
+	}
+
+	bool dense() const {
+		return t_.dense();
 	}
 
 	//& geters ===========================================================================
@@ -126,6 +126,12 @@ class _tensorWrapper {
 
 	void setAll(const T& s) {
 		Tensor<T>::apply(this->t_, [&](T& a) { a = s; });
+	}
+
+	Scalar<T> sum() {
+		Scalar<T> s = 0;
+		Tensor<T>::apply(this->t_, [&](const T& a) { s.get() += a; });
+		return s;
 	}
 };
 
@@ -200,6 +206,10 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 	Scalar<T> operator[](uint64_t idx) const {
 		return Scalar<T>(this->t_[idx]);
 	}
+
+	uint64_t size() const {
+		return this->shape()[0];
+	}
 };
 
 template <typename T>
@@ -240,6 +250,32 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	Vector<T> operator[](uint64_t idx) const {
 		return Vector<T>(this->t_[idx]);
+	}
+
+	uint64_t size() const {
+		return this->t_.size();
+	}
+
+	uint64_t rows() const {
+		return this->t.shape()[0];
+	}
+
+	uint64_t cols() const {
+		return this.t_->shape()[1];
+	}
+
+	Vector<T> row(uint64_t i) {
+		_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+
+		return Vector<T>(this->t_[i]);
+	}
+
+	Vector<T> col(uint64_t j) {
+		_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+
+		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                           j * this->t_.strides()[1] + this->t_.offset(),
+		                           this->t_.buffer()));
 	}
 };
 

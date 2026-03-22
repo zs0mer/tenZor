@@ -2,6 +2,7 @@
 
 namespace TZ {
 
+
 template <class T>
 template <typename Func>
 void Tensor<T>::apply(Tensor<T>& a, Func func) {
@@ -143,4 +144,39 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
 	Tensor<T>::apply(a, b, *this, func);
 }
 
+namespace math {
+
+template <class T>
+Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
+	_CHECK(a.size() != b.size(), "not the same size vectors in dot");
+	Scalar<T> out(0);
+	uint64_t n = a.size();
+
+	if (a.dense() && b.dense()) {
+		const T* ap = a.data();
+		const T* bp = b.data();
+
+		for (uint64_t i = 0; i < n; i++)
+			out.get() += ap[i] * bp[i];
+	} else {
+		for (uint64_t i = 0; i < n; i++)
+			out.get() += a.at(i) * b.at(i);
+	}
+
+	return out;
+}
+
+/*template <class T>
+Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
+    _CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
+    Matrix<T> out(a.rows(), b.cols(), a.tensor().allocator());
+
+    for (uint64_t i = 0; i < a.rows(), i++) {
+        for (uint64_t j = 0; j < b.cols(), j++) {
+            out[i][j] =
+        }
+    }
+}*/
+
+}; // namespace math
 }; // namespace TZ

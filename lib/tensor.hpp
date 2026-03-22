@@ -7,7 +7,7 @@ namespace TZ {
 template <class T>
 // standard tensor class
 class Tensor {
-  private:
+  protected:
 	uint8_t dim_;
 	std::array<uint64_t, MAX_DIM> shape_;
 	std::array<uint64_t, MAX_DIM> strides_;
@@ -31,11 +31,14 @@ class Tensor {
 	// standard constructor
 	// the first argument is the number of dimensons the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
-	Tensor(const uint64_t dim, const uint64_t* shape,
-	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	Tensor(const uint8_t dim, const uint64_t* shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// standard constructor
 	Tensor(const std::vector<uint64_t>& shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+
+	// constructor, should only use it professional
+	Tensor(const uint8_t dim, const uint64_t* shape, const uint64_t* strides, const uint64_t offset,
+	       mem::Buffer data);
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
@@ -88,6 +91,8 @@ class Tensor {
 	// this will not necessarily start where the data is located
 	const T* rawData() const;
 
+	uint64_t offset() const;
+
 	// the tensor is layed out flat in memory
 	bool dense() const;
 
@@ -102,6 +107,8 @@ class Tensor {
 	bool indexable() const;
 
 	mem::Allocator& allocator() const;
+
+	mem::Buffer buffer();
 
 	//& geters ===========================================================================
 
@@ -172,7 +179,7 @@ class Tensor {
 	void apply(const Tensor<T>& a, const Tensor<T>& b, Func func);
 
 	//& private ==========================================================================
-  private:
+  protected:
 	//& metadata cache
 
 	template <class K>

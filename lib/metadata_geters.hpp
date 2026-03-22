@@ -66,6 +66,11 @@ const T* Tensor<T>::rawData() const {
 }
 
 template <class T>
+uint64_t Tensor<T>::offset() const {
+	return offset_;
+}
+
+template <class T>
 bool Tensor<T>::dense() const {
 	if (c_dense.cached)
 		return c_dense.value;
@@ -109,4 +114,10 @@ template <class T>
 mem::Allocator& Tensor<T>::allocator() const {
 	return *data_->allocator();
 }
+
+template <class T>
+mem::Buffer Tensor<T>::buffer() {
+	return data_;
+}
+
 } // namespace TZ
