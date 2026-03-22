@@ -7,7 +7,7 @@ int main() {
 	                                                {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}},
 	                                                {{1, 2, 3}, {1, 2, 3}, {1, 2, 3}}};
 	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(a);
-	TZ::Tensor<int> k = t.clone();
+	TZ::Matrix<int> k = t.clone()[1];
 	t.apply([](int& a) { a = 0; });
-	std::cout << k;
+	std::cout << t;
 }

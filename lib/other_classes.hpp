@@ -16,9 +16,13 @@ class _tensorWrapper {
 
 	_tensorWrapper(Tensor<T>&& t) : t_(std::move(t)) {}
 
-	_tensorWrapper(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	_tensorWrapper(const std::vector<uint64_t>& shape,
 	               mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
-	    : t_(shape, alignment, allocator) {}
+	    : t_(shape, allocator) {}
+
+	_tensorWrapper(const uint8_t dim, const uint64_t* shape,
+	               mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
+	    : t_(dim, shape, allocator) {}
 
 
 	_tensorWrapper(const _tensorWrapper&) = default;
@@ -64,10 +68,6 @@ class _tensorWrapper {
 	const Tensor<T>& tensor() const {
 		return t_;
 	}
-
-	Tensor<T> clone() const {
-		return t_.clone();
-	}
 };
 
 template <typename T>
@@ -85,19 +85,15 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
-	Scalar(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
-	    : Base(std::vector<uint64_t>({}), alignment, allocator) {
-		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
-		this->t_.get() = z;
+	Scalar(const T& val, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		set(val, allocator);
 	}
 
 
-	void set(const T& z, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
-		this->t_.set(std::vector<uint64_t>({}), alignment, allocator);
+	void set(const T& val, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		this->t_.set(0, nullptr, allocator);
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
-		this->t_.get() = z;
+		this->t_.get() = val;
 	}
 
 	T& get() {
@@ -106,6 +102,10 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 
 	const T& get() const {
 		return this->t_.get();
+	}
+
+	Scalar<T> clone() const {
+		return Scalar(this->t_.clone());
 	}
 };
 
@@ -124,16 +124,13 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
-	Vector(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
-	    : Base(std::vector<uint64_t>({size}), alignment, allocator) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	Vector(const uint64_t size, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		set(size, allocator);
 	}
 
 
-	void set(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
-		this->t_.set(std::vector<uint64_t>({size}), alignment, allocator);
+	void set(const uint64_t size, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		this->t_.set(1, &size, allocator);
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
@@ -147,6 +144,10 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 
 	Scalar<T> operator[](uint64_t idx) const {
 		return Scalar<T>(this->t_[idx]);
+	}
+
+	Vector<T> clone() const {
+		return Vector(this->t_.clone());
 	}
 };
 
@@ -165,16 +166,16 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
-	Matrix(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
-	    : Base(std::vector<uint64_t>({rows, cols}), alignment, allocator) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	Matrix(const uint64_t rows, const uint64_t cols,
+	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+		set(rows, cols, allocator);
 	}
 
 
-	void set(const uint64_t rows, const uint64_t cols, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	void set(const uint64_t rows, const uint64_t cols,
 	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
-		this->t_.set(std::vector<uint64_t>({rows, cols}), alignment, allocator);
+		std::array<uint64_t, 2> shape = {rows, cols};
+		this->t_.set(2, shape.data(), allocator);
 		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
@@ -188,6 +189,10 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	Vector<T> operator[](uint64_t idx) const {
 		return Vector<T>(this->t_[idx]);
+	}
+
+	Matrix<T> clone() const {
+		return Matrix(this->t_.clone());
 	}
 };
 

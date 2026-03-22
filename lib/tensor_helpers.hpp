@@ -69,7 +69,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
 	}
 
 	if (t.dim() == 1) {
-		os << "[";
+		os << "\n[";
 		for (int i = 0; i < t.size() - 1; i++)
 			os << t[i].get() << ", ";
 
@@ -77,9 +77,9 @@ std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
 		return os;
 	}
 
-	os << "[\n";
+	os << "[";
 	for (int i = 0; i < t.shape()[0] - 1; i++)
-		os << t[i] << ",\n";
+		os << t[i] << ",";
 	os << t[t.shape()[0] - 1] << "\n]";
 	return os;
 }
