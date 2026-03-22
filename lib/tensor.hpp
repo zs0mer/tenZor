@@ -26,26 +26,24 @@ class Tensor {
 	Tensor();
 
 	// standard constructor
-	Tensor(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	Tensor(const uint64_t dim, const uint64_t* shape,
 	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// standard constructor
-	Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	Tensor(const std::vector<uint64_t>& shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
 	static Tensor fromSTDVec(const std::vector<NestedVector>& v,
-	                         const uint8_t alignment = DEFAULT_ALIGNMENT,
+
 	                         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	void set(const std::vector<uint64_t>& shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 	// makes a new Tensor
-	void set(const uint64_t dim, const uint64_t* shape, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	void set(const uint64_t dim, const uint64_t* shape,
 	         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
 
@@ -127,7 +125,14 @@ class Tensor {
 
 	//& operators ========================================================================
 
-	static Tensor<T> doOp(const Tensor<T>& a, const Tensor<T>& b, std::function<T(T, T)> func);
+	template <typename Func>
+	static void apply(Tensor<T>& a, Func func);
+
+	template <typename Func>
+	static void apply(const Tensor<T>& a, Tensor<T>& b, Func func);
+
+	template <typename Func>
+	static void apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func);
 
 	//& private ==========================================================================
   private:

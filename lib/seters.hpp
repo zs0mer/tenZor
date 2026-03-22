@@ -6,21 +6,18 @@ template <class T>
 Tensor<T>::Tensor() : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr) {}
 
 template <class T>
-Tensor<T>::Tensor(const std::vector<uint64_t>& shape, const uint8_t alignment,
-                  mem::Allocator& allocator) {
-	set(shape, alignment, allocator);
+Tensor<T>::Tensor(const std::vector<uint64_t>& shape, mem::Allocator& allocator) {
+	set(shape, allocator);
 }
 
 template <class T>
-Tensor<T>::Tensor(const uint64_t dim, const uint64_t* shape, const uint8_t alignment,
-                  mem::Allocator& allocator) {
-	set(dim, shape, alignment, allocator);
+Tensor<T>::Tensor(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
+	set(dim, shape, allocator);
 }
 
 template <class T>
 template <class NestedVector>
-Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_t alignment,
-                                mem::Allocator& allocator) {
+Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, mem::Allocator& allocator) {
 	Tensor<T> t;
 	t.offset_ = 0;
 	uint8_t currDim = 0;
@@ -35,7 +32,7 @@ Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_
 		capacity *= t.shape_[i];
 
 
-	t.data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
+	t.data_ = mem::Buffer(capacity * sizeof(T), &allocator);
 
 	uint64_t offset = 0;
 	t.falttenSTDVec(v, t.data(), offset);
@@ -43,14 +40,12 @@ Tensor<T> Tensor<T>::fromSTDVec(const std::vector<NestedVector>& v, const uint8_
 }
 
 template <class T>
-void Tensor<T>::set(const std::vector<uint64_t>& shape, const uint8_t alignment,
-                    mem::Allocator& allocator) {
-	set(shape.size(), shape.begin(), alignment, allocator);
+void Tensor<T>::set(const std::vector<uint64_t>& shape, mem::Allocator& allocator) {
+	set(shape.size(), shape.begin(), allocator);
 }
 
 template <class T>
-void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, const uint8_t alignment,
-                    mem::Allocator& allocator) {
+void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
 	_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = dim;
 	offset_ = 0;
@@ -63,6 +58,6 @@ void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, const uint8_t ali
 
 	computeStrides();
 
-	data_ = mem::Buffer(capacity * sizeof(T), alignment, &allocator);
+	data_ = mem::Buffer(capacity * sizeof(T), &allocator);
 }
 } // namespace TZ

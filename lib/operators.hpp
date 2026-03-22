@@ -2,13 +2,16 @@
 
 namespace TZ {
 
-template <typename T>
-Tensor<T> Tensor<T>::doOp(const Tensor<T>& a, const Tensor<T>& b, std::function<T(T, T)> func) {
-	_CHECK(a.size() != b.size(), "a and b do not have the same shape");
+template <class T>
+template <typename Func>
+void Tensor<T>::apply(Tensor<T>& a, Func func) {}
 
-	// TODO SDadadddsdasdsadsada
+template <class T>
+template <typename Func>
+void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {}
 
-	return out;
-}
+template <class T>
+template <typename Func>
+void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func) {}
 
 }; // namespace TZ

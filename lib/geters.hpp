@@ -55,13 +55,15 @@ Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 
 template <class T>
 Tensor<T> Tensor<T>::clone() const {
-	Tensor<T> out(dim_, shape_, DEFAULT_ALIGNMENT, data_->allocator());
+	Tensor<T> out(dim_, shape_.data(), *data_->allocator());
 
 	if (isDense()) {
-		std::memcpy(out.data(), this->data(), size());
+		std::memcpy(out.data(), this->data(), size() * sizeof(T));
 		return out;
 	}
-	// TODO asdasdsdsadsadad
+
+	apply(*this, out, [](const T& a, T& b) { b = a; });
+
 	return out;
 }
 

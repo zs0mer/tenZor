@@ -18,7 +18,7 @@ class BufferIMPL {
 
 	// standard constructor
 	// you can only construct with this constructor
-	BufferIMPL(const uint64_t size, const uint8_t alignment,
+	BufferIMPL(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	           Allocator* allocator = &DEFAULT_ALLOCATOR)
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
@@ -101,11 +101,10 @@ class Buffer {
 	}
 
 	// standard constructor
-	Buffer(const uint64_t size = 0, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       Allocator* allocator = &DEFAULT_ALLOCATOR)
+	Buffer(const uint64_t size = 0, Allocator* allocator = &DEFAULT_ALLOCATOR)
 	    : ptr_(static_cast<BufferIMPL*>(
 	          allocator->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
-		new (ptr_) BufferIMPL(size, alignment, allocator);
+		new (ptr_) BufferIMPL(size, DEFAULT_ALIGNMENT, allocator);
 	}
 
 	// this buffer will contain the same BufferIMPL
