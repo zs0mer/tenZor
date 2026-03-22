@@ -66,12 +66,7 @@ const T* Tensor<T>::rawData() const {
 }
 
 template <class T>
-bool Tensor<T>::isContiguous() const {
-	return isDense() && offset_ == 0;
-}
-
-template <class T>
-bool Tensor<T>::isDense() const {
+bool Tensor<T>::dense() const {
 	if (c_dense.cached)
 		return c_dense.value;
 

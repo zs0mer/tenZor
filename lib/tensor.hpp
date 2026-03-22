@@ -14,11 +14,14 @@ class Tensor {
 	uint64_t offset_;
 	mem::Buffer data_;
 
-	// the tensor can be:
-	// - Normal - dimenson: anything   - shape: anything
-	// - Scalar - dimenson: 0          - shape: {}
-	// - Empty  - dimenson: 0          - shape: has at least one 0 in it
-	// - Null   - dimenson: 0          - shape: {}
+	//* the tensor can be:
+	//* - Normal - dimenson: anything   - shape: anything
+	//* - Scalar - dimenson: 0          - shape: {}
+	//* - Empty  - dimenson: 0          - shape: has at least one 0 in it
+	//* - Null   - dimenson: 0          - shape: {}
+
+	//* normal index: array of the indexes to each dimenson
+	//* linear index: the way to index the memory, it only works with rawData()
 
   public:
 	//& seters ===========================================================================
@@ -26,6 +29,8 @@ class Tensor {
 	Tensor();
 
 	// standard constructor
+	// the first argument is the number of dimensons the tensor has
+	// the second argument is a pointer to a C style array containing the shape of the tensor
 	Tensor(const uint64_t dim, const uint64_t* shape,
 	       mem::Allocator& allocator = DEFAULT_ALLOCATOR);
 
@@ -83,11 +88,8 @@ class Tensor {
 	// this will not necessarily start where the data is located
 	const T* rawData() const;
 
-	// isDense() && offset == 0
-	bool isContiguous() const;
-
 	// the tensor is layed out flat in memory
-	bool isDense() const;
+	bool dense() const;
 
 	// returns true if the tensor is a scalar
 	bool scalar() const;
@@ -107,6 +109,14 @@ class Tensor {
 	// returns the data containing in the given index
 	const T& at(const std::vector<uint64_t>& idx) const;
 
+	// returns the data containing in the given index
+	// the input is a C style array containing dim number of indexes
+	T& at(const uint64_t* idx);
+
+	// returns the data containing in the given index
+	// the input is a C style array containing dim number of indexes
+	const T& at(const uint64_t* idx) const;
+
 	// returns a Tensor containing the data in the given index
 	// its just a view
 	// if the remaining tensor is a scalar then it will return a saclar Tensor
@@ -125,14 +135,25 @@ class Tensor {
 
 	//& operators ========================================================================
 
+	// makes a = func(a) for all elements of the tensor
 	template <typename Func>
 	static void apply(Tensor<T>& a, Func func);
 
+	// makes b = func(a, b) for all elements of the tensor
 	template <typename Func>
 	static void apply(const Tensor<T>& a, Tensor<T>& b, Func func);
 
+	// makes c = func(a, b, c) for all elements of the tensor
 	template <typename Func>
 	static void apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func);
+
+	// calculates the linear index give by the normal index of the tensor
+	// the index is passed by a C style array
+	uint64_t computeLinearIdx(const uint64_t* idx) const;
+
+	// increment the normal index given by the C style array
+	// if the index is at full, makes idx 0,0,0...
+	void incrementIdx(uint64_t* idx) const;
 
 	//& private ==========================================================================
   private:
@@ -173,6 +194,8 @@ class Tensor {
 
 	template <class K>
 	void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset);
+
+	static bool isSameShape(const Tensor<T>& a, const Tensor<T>& b);
 };
 
 } // namespace TZ

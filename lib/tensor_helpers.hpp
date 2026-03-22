@@ -43,6 +43,18 @@ void Tensor<T>::falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset)
 		falttenSTDVec(i, dst, offset);
 }
 
+template <class T>
+bool Tensor<T>::isSameShape(const Tensor<T>& a, const Tensor<T>& b) {
+	if (a.dim_ != b.dim_)
+		return false;
+
+	for (uint8_t i = 0; i < a.dim_; i++)
+		if (a.shape()[i] != b.shape()[i])
+			return false;
+
+	return true;
+}
+
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
