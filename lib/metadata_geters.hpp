@@ -105,4 +105,8 @@ bool Tensor<T>::indexable() const {
 	return !scalar() && !empty();
 }
 
+template <class T>
+mem::Allocator& Tensor<T>::allocator() const {
+	return *data_->allocator();
+}
 } // namespace TZ

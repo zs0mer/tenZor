@@ -2,6 +2,16 @@
 
 namespace TZ {
 
+template <typename T>
+class Scalar;
+
+template <typename T>
+class Vector;
+
+template <typename T>
+class Matrix;
+
+
 template <typename Derived, typename T>
 class _tensorWrapper {
   protected:
@@ -17,11 +27,11 @@ class _tensorWrapper {
 	_tensorWrapper(Tensor<T>&& t) : t_(std::move(t)) {}
 
 	_tensorWrapper(const std::vector<uint64_t>& shape,
-	               mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
+	               mem::Allocator& allocator = DEFAULT_ALLOCATOR)
 	    : t_(shape, allocator) {}
 
 	_tensorWrapper(const uint8_t dim, const uint64_t* shape,
-	               mem::Allocator& allocator = &DEFAULT_ALLOCATOR)
+	               mem::Allocator& allocator = DEFAULT_ALLOCATOR)
 	    : t_(dim, shape, allocator) {}
 
 
@@ -68,6 +78,55 @@ class _tensorWrapper {
 	const Tensor<T>& tensor() const {
 		return t_;
 	}
+
+	Derived clone() const {
+		return Derived(this->t_.clone());
+	}
+
+	//& operations ===========================================================================
+
+	Derived operator+(const _tensorWrapper& other) const {
+		Derived out(t_.dim(), t_.shape(), t_.allocator());
+		Tensor<T>::apply(this->t_, other.t_, out.t_,
+		                 [](const T& a, const T& b, T& c) { c = a + b; });
+		return out;
+	}
+
+	Derived operator-(const _tensorWrapper& other) const {
+		Derived out(t_.dim(), t_.shape(), t_.allocator());
+		Tensor<T>::apply(this->t_, other.t_, out.t_,
+		                 [](const T& a, const T& b, T& c) { c = a - b; });
+		return out;
+	}
+
+	Derived operator-() const {
+		Derived out = this->clone();
+		Tensor<T>::apply(out.t_, [](T& a) { a = -a; });
+		return out;
+	}
+
+
+	Derived operator+(const Scalar<T>& s) const {
+		Derived out(t_.dim(), t_.shape(), t_.allocator());
+		Tensor<T>::apply(this->t_, out.t_, [&](const T& a, T& b) { b = a + s.get(); });
+		return out;
+	}
+
+	Derived operator-(const Scalar<T>& s) const {
+		Derived out(t_.dim(), t_.shape(), t_.allocator());
+		Tensor<T>::apply(this->t_, out.t_, [&](const T& a, T& b) { b = a - s.get(); });
+		return out;
+	}
+
+	Derived operator*(const Scalar<T>& s) const {
+		Derived out(t_.dim(), t_.shape(), t_.allocator());
+		Tensor<T>::apply(this->t_, out.t_, [&](const T& a, T& b) { b = a * s.get(); });
+		return out;
+	}
+
+	void setAll(const T& s) {
+		Tensor<T>::apply(this->t_, [&](T& a) { a = s; });
+	}
 };
 
 template <typename T>
@@ -85,12 +144,12 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
-	Scalar(const T& val, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	Scalar(const T& val, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		set(val, allocator);
 	}
 
 
-	void set(const T& val, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	void set(const T& val, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		this->t_.set(0, nullptr, allocator);
 		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
@@ -102,10 +161,6 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 
 	const T& get() const {
 		return this->t_.get();
-	}
-
-	Scalar<T> clone() const {
-		return Scalar(this->t_.clone());
 	}
 };
 
@@ -124,12 +179,12 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
-	Vector(const uint64_t size, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	Vector(const uint64_t size, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		set(size, allocator);
 	}
 
 
-	void set(const uint64_t size, mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	void set(const uint64_t size, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		this->t_.set(1, &size, allocator);
 		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
@@ -144,10 +199,6 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 
 	Scalar<T> operator[](uint64_t idx) const {
 		return Scalar<T>(this->t_[idx]);
-	}
-
-	Vector<T> clone() const {
-		return Vector(this->t_.clone());
 	}
 };
 
@@ -167,13 +218,13 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 	}
 
 	Matrix(const uint64_t rows, const uint64_t cols,
-	       mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	       mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		set(rows, cols, allocator);
 	}
 
 
 	void set(const uint64_t rows, const uint64_t cols,
-	         mem::Allocator& allocator = &DEFAULT_ALLOCATOR) {
+	         mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		this->t_.set(2, shape.data(), allocator);
 		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
@@ -189,10 +240,6 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	Vector<T> operator[](uint64_t idx) const {
 		return Vector<T>(this->t_[idx]);
-	}
-
-	Matrix<T> clone() const {
-		return Matrix(this->t_.clone());
 	}
 };
 

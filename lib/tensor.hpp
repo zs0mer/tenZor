@@ -101,6 +101,8 @@ class Tensor {
 	// returns true if the tensor is normal
 	bool indexable() const;
 
+	mem::Allocator& allocator() const;
+
 	//& geters ===========================================================================
 
 	// returns the data containing in the given index

@@ -9,5 +9,6 @@ int main() {
 	TZ::Tensor<int> t = TZ::Tensor<int>::fromSTDVec(a);
 	TZ::Matrix<int> k = t.clone()[1];
 	t.apply([](int& a) { a = 0; });
-	std::cout << t;
+	k.setAll(0);
+	std::cout << k * TZ::Scalar<int>(3);
 }
