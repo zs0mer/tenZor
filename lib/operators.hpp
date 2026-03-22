@@ -166,17 +166,18 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	return out;
 }
 
-/*template <class T>
+template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
-    _CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
-    Matrix<T> out(a.rows(), b.cols(), a.tensor().allocator());
+	_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
+	Matrix<T> out(a.rows(), b.cols(), a.tensor().allocator());
 
-    for (uint64_t i = 0; i < a.rows(), i++) {
-        for (uint64_t j = 0; j < b.cols(), j++) {
-            out[i][j] =
-        }
-    }
-}*/
+	for (uint64_t i = 0; i < a.rows(); i++) {
+		for (uint64_t j = 0; j < b.cols(); j++) {
+			out[i][j].get() = dot(a.row(i), b.col(j)).get();
+		}
+	}
+	return out;
+}
 
 }; // namespace math
 }; // namespace TZ

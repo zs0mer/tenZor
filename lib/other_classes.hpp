@@ -257,20 +257,34 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 	}
 
 	uint64_t rows() const {
-		return this->t.shape()[0];
+		return this->t_.shape()[0];
 	}
 
 	uint64_t cols() const {
-		return this.t_->shape()[1];
+		return this->t_.shape()[1];
 	}
 
-	Vector<T> row(uint64_t i) {
+	Vector<T> row(const uint64_t i) {
 		_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
 
 		return Vector<T>(this->t_[i]);
 	}
 
-	Vector<T> col(uint64_t j) {
+	Vector<T> col(const uint64_t j) {
+		_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+
+		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                           j * this->t_.strides()[1] + this->t_.offset(),
+		                           this->t_.buffer()));
+	}
+
+	const Vector<T> row(const uint64_t i) const {
+		_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+
+		return Vector<T>(this->t_[i]);
+	}
+
+	const Vector<T> col(const uint64_t j) const {
 		_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
 
 		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
