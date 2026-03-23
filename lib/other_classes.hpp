@@ -305,13 +305,6 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 		                           j * this->t_.strides()[1] + this->t_.offset(),
 		                           this->t_.buffer()));
 	}
-
-	Matrix<T> transpose() {
-		std::array<uint64_t, 2> strides = {this->t_.strides()[1], this->t_.strides()[0]};
-		std::array<uint64_t, 2> shape = {cols(), rows()};
-		return Matrix<T>(
-		    Tensor<T>(2, shape.data(), strides.data(), this->t_.offset(), this->t_.buffer()));
-	}
 };
 
 } // namespace TZ

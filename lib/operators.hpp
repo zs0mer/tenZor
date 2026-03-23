@@ -179,5 +179,12 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	return out;
 }
 
+template <class T>
+Matrix<T> transpose(const Matrix<T>& m) {
+	std::array<uint64_t, 2> strides = {m.tensor().strides()[1], m.tensor().strides()[0]};
+	std::array<uint64_t, 2> shape = {m.cols(), m.rows()};
+	return Matrix<T>(
+	    Tensor<T>(2, shape.data(), strides.data(), m.tensor().offset(), m.tensor().buffer()));
+}
 }; // namespace math
 }; // namespace TZ
