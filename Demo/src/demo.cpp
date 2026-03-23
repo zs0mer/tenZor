@@ -11,5 +11,5 @@ int main() {
 	t.apply([](int& a) { a = 0; });
 	TZ::Scalar g(3);
 
-	std::cout << TZ::math::matmul(k, k);
+	std::cout << TZ::math::matmul(k, k).transpose();
 }

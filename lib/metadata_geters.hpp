@@ -116,7 +116,12 @@ mem::Allocator& Tensor<T>::allocator() const {
 }
 
 template <class T>
-mem::Buffer Tensor<T>::buffer() const {
+mem::Buffer Tensor<T>::buffer() {
+	return data_;
+}
+
+template <class T>
+const mem::Buffer Tensor<T>::buffer() const {
 	return data_;
 }
 

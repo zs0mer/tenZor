@@ -173,7 +173,7 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
-			out[i][j].get() = dot(a.row(i), b.col(j)).get();
+			out[i][j] = dot(a.row(i), b.col(j));
 		}
 	}
 	return out;

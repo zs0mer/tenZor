@@ -168,6 +168,20 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 	const T& get() const {
 		return this->t_.get();
 	}
+
+	Scalar& operator=(const T& val) {
+		this->t_.get() = val;
+		return *this;
+	}
+
+	Scalar& operator=(const Scalar& other) {
+		this->t_.get() = other.get();
+		return *this;
+	}
+
+	operator T() const {
+		return this->t_.get();
+	}
 };
 
 template <typename T>
@@ -290,6 +304,13 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
 		                           j * this->t_.strides()[1] + this->t_.offset(),
 		                           this->t_.buffer()));
+	}
+
+	Matrix<T> transpose() {
+		std::array<uint64_t, 2> strides = {this->t_.strides()[1], this->t_.strides()[0]};
+		std::array<uint64_t, 2> shape = {cols(), rows()};
+		return Matrix<T>(
+		    Tensor<T>(2, shape.data(), strides.data(), this->t_.offset(), this->t_.buffer()));
 	}
 };
 

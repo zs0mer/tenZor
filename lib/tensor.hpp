@@ -108,7 +108,9 @@ class Tensor {
 
 	mem::Allocator& allocator() const;
 
-	mem::Buffer buffer() const;
+	mem::Buffer buffer();
+
+	const mem::Buffer buffer() const;
 
 	//& geters ===========================================================================
 
