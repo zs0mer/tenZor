@@ -111,6 +111,9 @@ class Tensor {
 	// returns the allocator, what allocated this buffer
 	mem::Allocator& allocator() const;
 
+	// returns the device the memory is on
+	mem::Device device() const;
+
 	// returns the TZ::mem::Buffer object, that has the memory
 	mem::Buffer _buffer();
 

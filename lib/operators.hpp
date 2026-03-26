@@ -144,6 +144,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
 	Tensor<T>::apply(a, b, *this, func);
 }
 
+// does a normal dot product beetwen two vectors
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	_CHECK(a.size() != b.size(), "not the same size vectors in dot");
@@ -164,6 +165,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	return out;
 }
 
+// does a normal matrix multiplication
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
@@ -177,6 +179,7 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	return out;
 }
 
+// returns the transeposed Matrix
 template <class T>
 Matrix<T> transpose(const Matrix<T>& m) {
 	std::array<uint64_t, 2> strides = {m.tensor()._strides()[1], m.tensor()._strides()[0]};
@@ -186,6 +189,7 @@ Matrix<T> transpose(const Matrix<T>& m) {
 }
 
 //! don't use with intregers
+// returns the determinant of the Matrix
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
 	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
