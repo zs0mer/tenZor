@@ -18,7 +18,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	T* base = a.rawData();
+	T* base = a._rawData();
 	uint64_t linearIdx = a.offset_;
 
 	for (uint64_t i = 0; i < n; i++) {
@@ -54,8 +54,8 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	const T* baseA = a.rawData();
-	T* baseB = b.rawData();
+	const T* baseA = a._rawData();
+	T* baseB = b._rawData();
 	uint64_t linearIdxA = a.offset_;
 	uint64_t linearIdxB = b.offset_;
 
@@ -96,9 +96,9 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	const T* baseA = a.rawData();
-	const T* baseB = b.rawData();
-	T* baseC = c.rawData();
+	const T* baseA = a._rawData();
+	const T* baseB = b._rawData();
+	T* baseC = c._rawData();
 
 	uint64_t linearIdxA = a.offset_;
 	uint64_t linearIdxB = b.offset_;
@@ -144,8 +144,6 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
 	Tensor<T>::apply(a, b, *this, func);
 }
 
-namespace math {
-
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	_CHECK(a.size() != b.size(), "not the same size vectors in dot");
@@ -181,13 +179,13 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 
 template <class T>
 Matrix<T> transpose(const Matrix<T>& m) {
-	std::array<uint64_t, 2> strides = {m.tensor().strides()[1], m.tensor().strides()[0]};
+	std::array<uint64_t, 2> strides = {m.tensor()._strides()[1], m.tensor()._strides()[0]};
 	std::array<uint64_t, 2> shape = {m.cols(), m.rows()};
 	return Matrix<T>(
-	    Tensor<T>(2, shape.data(), strides.data(), m.tensor().offset(), m.tensor().buffer()));
+	    Tensor<T>(2, shape.data(), strides.data(), m.tensor()._offset(), m.tensor()._buffer()));
 }
 
-// If the matrix has intregers inside it, it won't give an acurate anwser
+//! don't use with intregers
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
 	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
@@ -234,5 +232,4 @@ Scalar<T> det(const Matrix<T>& m) {
 
 	return Scalar<T>(det);
 }
-}; // namespace math
 }; // namespace TZ

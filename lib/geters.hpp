@@ -57,7 +57,15 @@ const T& Tensor<T>::at(const uint64_t* idx) const {
 }
 
 template <class T>
-Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
+Tensor<T> Tensor<T>::operator[](const uint64_t idx) {
+	_CHECK(!indexable(), "not indexable");
+	_CHECK(idx >= shape_[0], "index out of bounds");
+
+	return Tensor<T>(dim_ - 1, &shape_[1], &strides_[1], offset_ + idx * strides_[0], data_);
+}
+
+template <class T>
+const Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
 	_CHECK(!indexable(), "not indexable");
 	_CHECK(idx >= shape_[0], "index out of bounds");
 

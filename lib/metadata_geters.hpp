@@ -13,7 +13,7 @@ const uint64_t* Tensor<T>::shape() const {
 }
 
 template <class T>
-const uint64_t* Tensor<T>::strides() const {
+const uint64_t* Tensor<T>::_strides() const {
 	return strides_.begin();
 }
 
@@ -52,21 +52,21 @@ const T* Tensor<T>::data() const {
 }
 
 template <class T>
-T* Tensor<T>::rawData() {
+T* Tensor<T>::_rawData() {
 	if (!data_->data())
 		return nullptr;
 	return static_cast<T*>(data_->data());
 }
 
 template <class T>
-const T* Tensor<T>::rawData() const {
+const T* Tensor<T>::_rawData() const {
 	if (!data_->data())
 		return nullptr;
 	return static_cast<const T*>(data_->data());
 }
 
 template <class T>
-uint64_t Tensor<T>::offset() const {
+uint64_t Tensor<T>::_offset() const {
 	return offset_;
 }
 
@@ -116,12 +116,12 @@ mem::Allocator& Tensor<T>::allocator() const {
 }
 
 template <class T>
-mem::Buffer Tensor<T>::buffer() {
+mem::Buffer Tensor<T>::_buffer() {
 	return data_;
 }
 
 template <class T>
-const mem::Buffer Tensor<T>::buffer() const {
+const mem::Buffer Tensor<T>::_buffer() const {
 	return data_;
 }
 

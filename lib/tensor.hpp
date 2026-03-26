@@ -14,6 +14,8 @@ class Tensor {
 	uint64_t offset_;
 	mem::Buffer data_;
 
+	//! The data may not be layed linearly in memory
+
 	//* the tensor can be:
 	//* - Normal - dimenson: anything   - shape: anything
 	//* - Scalar - dimenson: 0          - shape: {}
@@ -72,7 +74,7 @@ class Tensor {
 	const uint64_t* shape() const;
 
 	// get the strides of the tensor
-	const uint64_t* strides() const;
+	const uint64_t* _strides() const;
 
 	// get the number of elements in the tensor
 	uint64_t size() const;
@@ -85,13 +87,13 @@ class Tensor {
 
 	// get the pointer to the start of the whole tensor buffer
 	// this will not necessarily start where the data is located
-	T* rawData();
+	T* _rawData();
 
 	// get the pointer to the start of the whole tensor buffer
 	// this will not necessarily start where the data is located
-	const T* rawData() const;
+	const T* _rawData() const;
 
-	uint64_t offset() const;
+	uint64_t _offset() const;
 
 	// the tensor is layed out flat in memory
 	bool dense() const;
@@ -106,11 +108,14 @@ class Tensor {
 	// returns true if the tensor is normal
 	bool indexable() const;
 
+	// returns the allocator, what allocated this buffer
 	mem::Allocator& allocator() const;
 
-	mem::Buffer buffer();
+	// returns the TZ::mem::Buffer object, that has the memory
+	mem::Buffer _buffer();
 
-	const mem::Buffer buffer() const;
+	// returns the TZ::mem::Buffer object, that has the memory
+	const mem::Buffer _buffer() const;
 
 	//& geters ===========================================================================
 
@@ -131,7 +136,12 @@ class Tensor {
 	// returns a Tensor containing the data in the given index
 	// its just a view
 	// if the remaining tensor is a scalar then it will return a saclar Tensor
-	Tensor<T> operator[](const uint64_t idx) const;
+	Tensor<T> operator[](const uint64_t idx);
+
+	// returns a Tensor containing the data in the given index
+	// its just a view
+	// if the remaining tensor is a scalar then it will return a saclar Tensor
+	const Tensor<T> operator[](const uint64_t idx) const;
 
 	// makes a new tensor that has the same data as the old one
 	Tensor<T> clone() const;
@@ -206,6 +216,8 @@ class Tensor {
 
 	void computeStrides();
 
+	static bool isSameShape(const Tensor<T>& a, const Tensor<T>& b);
+
 	// base case
 	template <class K>
 	void getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim);
@@ -219,8 +231,6 @@ class Tensor {
 
 	template <class K>
 	void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset);
-
-	static bool isSameShape(const Tensor<T>& a, const Tensor<T>& b);
 };
 
 } // namespace TZ
