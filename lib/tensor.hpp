@@ -57,11 +57,11 @@ class Tensor {
 
 	Tensor(const Tensor&) = default;
 
-	Tensor& operator=(const Tensor&) = default;
+	Tensor<T>& operator=(const Tensor<T>&);
 
 	Tensor(Tensor&&) = default;
 
-	Tensor& operator=(Tensor&&) = default;
+	Tensor<T>& operator=(Tensor<T>&&);
 
 	//& metadata geters ==================================================================
 

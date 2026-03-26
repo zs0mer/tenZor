@@ -70,4 +70,38 @@ void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& a
 
 	data_ = mem::Buffer(capacity * sizeof(T), &allocator);
 }
+
+template <class T>
+Tensor<T>& Tensor<T>::operator=(const Tensor<T>& a) {
+#if NORMAL
+	if (isSameShape(*this, a) && (!dense() || offset_ != 0)) {
+
+		apply(a, *this, [](const T& a, T& b) { b = a; });
+
+		return *this;
+	}
+#endif
+	return Tensor<T>(a);
+}
+
+template <class T>
+Tensor<T>& Tensor<T>::operator=(Tensor<T>&& a) {
+#if NORMAL
+	if (isSameShape(*this, a)) {
+
+		apply(a, *this, [](const T& a, T& b) { b = a; });
+
+		return *this;
+	}
+#endif
+
+	dim_ = a.dim_;
+	shape_ = a.shape_;
+	strides_ = a.strides_;
+	offset_ = a.offset_;
+	data_ = std::move(a.data_);
+
+	return *this;
+}
+
 } // namespace TZ
