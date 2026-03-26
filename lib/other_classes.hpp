@@ -124,6 +124,33 @@ class _tensorWrapper {
 		return out;
 	}
 
+
+	Derived operator+=(const _tensorWrapper& other) {
+		Tensor<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b += a; });
+		return Derived(this->t_);
+	}
+
+	Derived operator-=(const _tensorWrapper& other) {
+		Tensor<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b -= a; });
+		return Derived(this->t_);
+	}
+
+	Derived operator+=(const Scalar<T>& s) {
+		Tensor<T>::apply(this->t_, [&](T& a) { a += s.get(); });
+		return Derived(this->t_);
+	}
+
+	Derived operator-=(const Scalar<T>& s) {
+		Tensor<T>::apply(this->t_, [&](T& a) { a -= s.get(); });
+		return Derived(this->t_);
+	}
+
+	Derived operator*=(const Scalar<T>& s) {
+		Tensor<T>::apply(this->t_, [&](T& a) { a *= s.get(); });
+		return Derived(this->t_);
+	}
+
+
 	void setAll(const T& s) {
 		Tensor<T>::apply(this->t_, [&](T& a) { a = s; });
 	}

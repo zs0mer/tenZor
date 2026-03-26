@@ -187,8 +187,8 @@ Matrix<T> transpose(const Matrix<T>& m) {
 	    Tensor<T>(2, shape.data(), strides.data(), m.tensor().offset(), m.tensor().buffer()));
 }
 
-template <class T>
 // If the matrix has intregers inside it, it won't give an acurate anwser
+template <class T>
 Scalar<T> det(const Matrix<T>& m) {
 	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
 	_CHECK(m.rows() != m.cols(), "matrix must be square");
