@@ -186,5 +186,53 @@ Matrix<T> transpose(const Matrix<T>& m) {
 	return Matrix<T>(
 	    Tensor<T>(2, shape.data(), strides.data(), m.tensor().offset(), m.tensor().buffer()));
 }
+
+template <class T>
+// If the matrix has intregers inside it, it won't give an acurate anwser
+Scalar<T> det(const Matrix<T>& m) {
+	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
+	_CHECK(m.rows() != m.cols(), "matrix must be square");
+
+	const uint64_t n = m.rows();
+
+	Matrix<T> A = m.clone();
+
+	T det = 1;
+
+	for (uint64_t k = 0; k < n; k++) {
+		// 1. Find pivot row
+		uint64_t pivot = k;
+		for (uint64_t i = k + 1; i < n; i++) {
+			if (std::abs(A.at(i, k)) > std::abs(A.at(pivot, k))) {
+				pivot = i;
+			}
+		}
+
+		// 2. If pivot is zero return 0
+		if (A.at(pivot, k) == T(0)) {
+			return Scalar<T>(0);
+		}
+
+		// 3. Swap rows if needed
+		if (pivot != k) {
+			A.swapRow(k, pivot);
+			det = -det;
+		}
+
+		// 4. Eliminate below rows k-th column
+		for (uint64_t i = k + 1; i < n; i++) {
+			T factor = A.at(i, k) / A.at(k, k);
+
+			for (uint64_t j = k + 1; j < n; j++) {
+				A.at(i, j) -= factor * A.at(k, j);
+			}
+		}
+
+		// 5. Multiply diagonal
+		det *= A.at(k, k);
+	}
+
+	return Scalar<T>(det);
+}
 }; // namespace math
 }; // namespace TZ

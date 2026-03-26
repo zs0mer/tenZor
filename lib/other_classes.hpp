@@ -210,10 +210,12 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 	}
 
 	T& at(const uint64_t idx) {
+		_CHECK(idx >= size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
 	const T& at(const uint64_t idx) const {
+		_CHECK(idx >= size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
@@ -255,10 +257,12 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 	}
 
 	T& at(const uint64_t i, const uint64_t j) {
+		_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
 	const T& at(const uint64_t i, const uint64_t j) const {
+		_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
@@ -304,6 +308,26 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
 		                           j * this->t_.strides()[1] + this->t_.offset(),
 		                           this->t_.buffer()));
+	}
+
+	void swapRow(uint64_t i, uint64_t j) {
+		_CHECK(i >= rows() || j >= rows(), "out of bounds index in swapRow");
+
+		if (i == j)
+			return;
+
+		for (uint64_t c = 0; c < cols(); c++)
+			std::swap(at(i, c), at(j, c));
+	}
+
+	void swapCol(uint64_t i, uint64_t j) {
+		_CHECK(i >= cols() || j >= cols(), "out of bounds index in swapCol");
+
+		if (i == j)
+			return;
+
+		for (uint64_t c = 0; c < rows(); c++)
+			std::swap(at(c, i), at(c, i));
 	}
 };
 
