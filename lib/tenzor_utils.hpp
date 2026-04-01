@@ -2,15 +2,15 @@
 
 namespace TZ {
 
-#if ERRORS
-#define _CHECK(expresson, error) _check((expresson), (error), __FILE__, __LINE__, __func__)
-#define _CHECK_(expresson) _check((expresson), "unexpected", __FILE__, __LINE__, __func__)
+#if TZ_ERRORS
+#define TZ_CHECK(expr, error) _check((expr), (error), __FILE__, __LINE__, __func__)
+#define TZ_CHECK_(expr) _check((expr), "unexpected", __FILE__, __LINE__, __func__)
 
 // a function to make error handleing easier
-inline void _check(const bool expresson, const char* error, const char* file, int line,
+inline void _check(const bool expr, const char* error, const char* file, int line,
                    const char* func) {
 
-	if (expresson) {
+	if (expr) {
 		auto now = std::chrono::system_clock::now();
 		std::time_t t_c = std::chrono::system_clock::to_time_t(now);
 
@@ -25,8 +25,8 @@ inline void _check(const bool expresson, const char* error, const char* file, in
 	}
 }
 #else
-#define _CHECK(expresson, error)
-#define _CHECK_(expresson)
+#define TZ_CHECK(expr, error) ((void)0)
+#define TZ_CHECK_(expr) ((void)0)
 #endif
 
 class _Timer {

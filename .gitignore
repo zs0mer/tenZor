@@ -2,4 +2,4 @@
 build
 .direnv
 .vscode
-flake.lock
+.cache

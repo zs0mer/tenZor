@@ -1,6 +1,4 @@
 #include "Tenzor.hpp"
-#include <iostream>
-#include <random>
 
 int main() {
 	std::vector<std::vector<float>> a = {{1, 2}, {2, 3}};

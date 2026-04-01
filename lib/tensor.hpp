@@ -9,8 +9,8 @@ template <class T>
 class Tensor {
   protected:
 	uint8_t dim_;
-	std::array<uint64_t, MAX_DIM> shape_;
-	std::array<uint64_t, MAX_DIM> strides_;
+	std::array<uint64_t, config::MAX_DIM> shape_;
+	std::array<uint64_t, config::MAX_DIM> strides_;
 	uint64_t offset_;
 	mem::Buffer data_;
 
@@ -33,10 +33,12 @@ class Tensor {
 	// standard constructor
 	// the first argument is the number of dimensons the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
-	Tensor(const uint8_t dim, const uint64_t* shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	Tensor(const uint8_t dim, const uint64_t* shape,
+	       mem::Allocator& allocator = config::defaultAllocator());
 
 	// standard constructor
-	Tensor(const std::vector<uint64_t>& shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	Tensor(const std::vector<uint64_t>& shape,
+	       mem::Allocator& allocator = config::defaultAllocator());
 
 	// constructor, should only use it professional
 	Tensor(const uint8_t dim, const uint64_t* shape, const uint64_t* strides, const uint64_t offset,
@@ -46,15 +48,15 @@ class Tensor {
 	// has to be right shape
 	template <class NestedVector>
 	static Tensor fromSTDVec(const std::vector<NestedVector>& v,
-
-	                         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	                         mem::Allocator& allocator = config::defaultAllocator());
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape, mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	void set(const std::vector<uint64_t>& shape,
+	         mem::Allocator& allocator = config::defaultAllocator());
 
 	// makes a new Tensor
 	void set(const uint64_t dim, const uint64_t* shape,
-	         mem::Allocator& allocator = DEFAULT_ALLOCATOR);
+	         mem::Allocator& allocator = config::defaultAllocator());
 
 
 	Tensor(const Tensor&) = default;

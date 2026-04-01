@@ -28,11 +28,11 @@ class _tensorWrapper {
 	_tensorWrapper(Tensor<T>&& t) : t_(std::move(t)) {}
 
 	_tensorWrapper(const std::vector<uint64_t>& shape,
-	               mem::Allocator& allocator = DEFAULT_ALLOCATOR)
+	               mem::Allocator& allocator = config::defaultAllocator())
 	    : t_(shape, allocator) {}
 
 	_tensorWrapper(const uint8_t dim, const uint64_t* shape,
-	               mem::Allocator& allocator = DEFAULT_ALLOCATOR)
+	               mem::Allocator& allocator = config::defaultAllocator())
 	    : t_(dim, shape, allocator) {}
 
 
@@ -180,25 +180,25 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 
 	// standard constructor with tensor
 	Scalar(const Tensor<T>& t) : Base(t) {
-		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
 	// standard constructor with tensor
 	Scalar(Tensor<T>&& t) : Base(std::move(t)) {
-		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
 	// standard constructor with a T class
-	Scalar(const T& val, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	Scalar(const T& val, mem::Allocator& allocator = config::defaultAllocator()) {
 		set(val, allocator);
 	}
 
 	//& methods --------------------
 
 	// makes a new scalar with the class T
-	void set(const T& val, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	void set(const T& val, mem::Allocator& allocator = config::defaultAllocator()) {
 		this->t_.set(0, nullptr, allocator);
-		_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
 	}
 
@@ -240,36 +240,36 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 
 	// standard constructor with tensor
 	Vector(const Tensor<T>& t) : Base(t) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
 	// standard constructor with tensor
 	Vector(Tensor<T>&& t) : Base(std::move(t)) {
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
 	// standard constructor with size of the Vector
-	Vector(const uint64_t size, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	Vector(const uint64_t size, mem::Allocator& allocator = config::defaultAllocator()) {
 		set(size, allocator);
 	}
 
 	//& methods --------------------
 
 	// standard set function
-	void set(const uint64_t size, mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	void set(const uint64_t size, mem::Allocator& allocator = config::defaultAllocator()) {
 		this->t_.set(1, &size, allocator);
-		_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t idx) {
-		_CHECK(idx >= size(), "index out of bounds in matrix");
+		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_._strides()[0]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t idx) const {
-		_CHECK(idx >= size(), "index out of bounds in matrix");
+		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_._strides()[0]];
 	}
 
@@ -297,17 +297,17 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// standard constructor with tensor
 	Matrix(const Tensor<T>& t) : Base(t) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// standard constructor with tensor
 	Matrix(Tensor<T>&& t) : Base(std::move(t)) {
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// standard constructor with the size of the rows, and columns
 	Matrix(const uint64_t rows, const uint64_t cols,
-	       mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	       mem::Allocator& allocator = config::defaultAllocator()) {
 		set(rows, cols, allocator);
 	}
 
@@ -315,21 +315,21 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// standard set function with the size of the rows, and columns
 	void set(const uint64_t rows, const uint64_t cols,
-	         mem::Allocator& allocator = DEFAULT_ALLOCATOR) {
+	         mem::Allocator& allocator = config::defaultAllocator()) {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		this->t_.set(2, shape.data(), allocator);
-		_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t i, const uint64_t j) {
-		_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
+		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_._strides()[0] + j * this->t_._strides()[1]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t i, const uint64_t j) const {
-		_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
+		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_._strides()[0] + j * this->t_._strides()[1]];
 	}
 
@@ -355,21 +355,21 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// returns the i'th row
 	Vector<T> row(const uint64_t i) {
-		_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+		TZ_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
 
 		return Vector<T>(this->t_[i]);
 	}
 
 	// returns the i'th row
 	const Vector<T> row(const uint64_t i) const {
-		_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+		TZ_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
 
 		return Vector<T>(this->t_[i]);
 	}
 
 	// returns the j'th collumn
 	Vector<T> col(const uint64_t j) {
-		_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
 
 		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_._strides()[0],
 		                           j * this->t_._strides()[1] + this->t_._offset(),
@@ -378,7 +378,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// returns the j'th collumn
 	const Vector<T> col(const uint64_t j) const {
-		_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
 
 		return Vector<T>(Tensor<T>(1, &this->t_.shape()[0], &this->t_._strides()[0],
 		                           j * this->t_._strides()[1] + this->t_._offset(),
@@ -387,7 +387,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// swap two rows, given by the indexes
 	void swapRow(uint64_t i, uint64_t j) {
-		_CHECK(i >= rows() || j >= rows(), "out of bounds index in swapRow");
+		TZ_CHECK(i >= rows() || j >= rows(), "out of bounds index in swapRow");
 
 		if (i == j)
 			return;
@@ -398,7 +398,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// swap two collumns, given by the indexes
 	void swapCol(uint64_t i, uint64_t j) {
-		_CHECK(i >= cols() || j >= cols(), "out of bounds index in swapCol");
+		TZ_CHECK(i >= cols() || j >= cols(), "out of bounds index in swapCol");
 
 		if (i == j)
 			return;

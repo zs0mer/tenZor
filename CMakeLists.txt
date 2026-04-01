@@ -9,24 +9,23 @@ set(CMAKE_CXX_FLAGS_DEBUG
     "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 )
 
-###
+# ##
 # Sanitizers
-###
+# ##
 
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
-#set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
+# set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
-
-###
+# ##
 # Paths
-###
-set(SRC_DIR   "${CMAKE_SOURCE_DIR}/Demo/src")
-set(INCLUDE_DIR     "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib")
-set(TEST_DIR  "${CMAKE_SOURCE_DIR}/Demo/test")
+# ##
+set(SRC_DIR "${CMAKE_SOURCE_DIR}/Demo/src")
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib")
+set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
 
-###
+# ##
 # Application executable
-###
+# ##
 file(GLOB APP_SOURCES
     "${SRC_DIR}/*.cpp"
 )
@@ -40,9 +39,10 @@ target_compile_options(bench PRIVATE
     -O3
     -march=x86-64-v3
     -ffast-math
-    #-funroll-loops
-    #-fopt-info-vec
-    #-fno-omit-frame-pointer
+
+    # -funroll-loops
+    # -fopt-info-vec
+    # -fno-omit-frame-pointer
 )
 
 add_executable(alloc_bench "${SRC_DIR}/alloc_bench.cpp")
@@ -51,52 +51,46 @@ target_compile_options(alloc_bench PRIVATE
     -O3
     -march=x86-64-v3
     -ffast-math
-    #-funroll-loops
-    #-fopt-info-vec
-    #-fno-omit-frame-pointer
+
+    # -funroll-loops
+    # -fopt-info-vec
+    # -fno-omit-frame-pointer
 )
 
-
-### ============================================================================================================
+# ## ============================================================================================================
 # Testing ======================================================================================================
-### ============================================================================================================
-
-
+# ## ============================================================================================================
 find_package(doctest REQUIRED)
 
 # allocater ------------------------
-
 add_executable(Tallocater "${TEST_DIR}/allocater.cpp")
 
 target_include_directories(Tallocater PUBLIC ${INCLUDE_DIR})
 
 target_link_libraries(Tallocater
     PRIVATE
-        doctest::doctest
+    doctest::doctest
 )
 
 # buffer ----------------------------
-
 add_executable(Tbuffer "${TEST_DIR}/buffer.cpp")
 
 target_include_directories(Tbuffer PUBLIC ${INCLUDE_DIR})
 
 target_link_libraries(Tbuffer
     PRIVATE
-        doctest::doctest
+    doctest::doctest
 )
 
-#  ---------------------------------
-
+# ---------------------------------
 enable_testing()
 
 add_test(
     NAME allocater
     COMMAND Tallocater --color=yes
-    )
-
+)
 
 add_test(
     NAME buffer
     COMMAND Tbuffer --color=yes
-    )
+)

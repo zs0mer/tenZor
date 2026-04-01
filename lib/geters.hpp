@@ -4,13 +4,13 @@ namespace TZ {
 
 template <class T>
 T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
-	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx.size() != dim_, "incorrect number of indices");
+	TZ_CHECK(!indexable(), "not indexable");
+	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -19,13 +19,13 @@ T& Tensor<T>::at(const std::vector<uint64_t>& idx) {
 
 template <class T>
 const T& Tensor<T>::at(const std::vector<uint64_t>& idx) const {
-	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx.size() != dim_, "incorrect number of indices");
+	TZ_CHECK(!indexable(), "not indexable");
+	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -37,7 +37,7 @@ T& Tensor<T>::at(const uint64_t* idx) {
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -49,7 +49,7 @@ const T& Tensor<T>::at(const uint64_t* idx) const {
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -58,16 +58,16 @@ const T& Tensor<T>::at(const uint64_t* idx) const {
 
 template <class T>
 Tensor<T> Tensor<T>::operator[](const uint64_t idx) {
-	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx >= shape_[0], "index out of bounds");
+	TZ_CHECK(!indexable(), "not indexable");
+	TZ_CHECK(idx >= shape_[0], "index out of bounds");
 
 	return Tensor<T>(dim_ - 1, &shape_[1], &strides_[1], offset_ + idx * strides_[0], data_);
 }
 
 template <class T>
 const Tensor<T> Tensor<T>::operator[](const uint64_t idx) const {
-	_CHECK(!indexable(), "not indexable");
-	_CHECK(idx >= shape_[0], "index out of bounds");
+	TZ_CHECK(!indexable(), "not indexable");
+	TZ_CHECK(idx >= shape_[0], "index out of bounds");
 
 	return Tensor<T>(dim_ - 1, &shape_[1], &strides_[1], offset_ + idx * strides_[0], data_);
 }
@@ -88,13 +88,13 @@ Tensor<T> Tensor<T>::clone() const {
 
 template <class T>
 T& Tensor<T>::get() {
-	_CHECK(!scalar(), "Not a scalar");
+	TZ_CHECK(!scalar(), "Not a scalar");
 	return *(static_cast<T*>(data_->data()) + offset_);
 }
 
 template <class T>
 const T& Tensor<T>::get() const {
-	_CHECK(!scalar(), "Not a scalar");
+	TZ_CHECK(!scalar(), "Not a scalar");
 	return *(static_cast<const T*>(data_->data()) + offset_);
 }
 

@@ -1,35 +1,54 @@
 {
-  description = "C/C++ environment";
+  description = "C/C++ (Cuda) environment";
 
-  inputs = { nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable"; };
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    oldNixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
+  };
 
-  outputs = { self, nixpkgs, ... }:
+  outputs =
+    {
+      nixpkgs,
+      oldNixpkgs,
+      ...
+    }:
     let
       system = "x86_64-linux";
+
       pkgs = import nixpkgs {
         inherit system;
-        config = { allowUnfree = true; };
       };
-    in {
+
+      old = import oldNixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+        };
+      };
+
+    in
+    {
       devShells.${system}.default = pkgs.mkShell {
         packages = with pkgs; [
           gnumake
           pkg-config
-          gnumake
-          gcc
+          old.gcc11
           gdb
-          autoconf
-          automake
-          libtool
-          direnv
           cmake
           doctest
           nixfmt
           perf
           valgrind
           python3
-          cudaPackages.cuda_nvcc
-          cudaPackages.cudatoolkit
+          old.cudaPackages.cuda_nvcc
+          old.cudaPackages.cudatoolkit
+
+          zed-editor
+
+          clang-tools
+          nixd
+          nil
+          neocmakelsp
         ];
 
         shellHook = "";

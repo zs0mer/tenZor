@@ -56,7 +56,7 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, mem::Allocator& allocato
 
 template <class T>
 void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
-	_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	TZ_CHECK(dim > config::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = dim;
 	offset_ = 0;
 
@@ -73,7 +73,7 @@ void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& a
 
 template <class T>
 Tensor<T>& Tensor<T>::operator=(const Tensor<T>& a) {
-#if NORMAL
+#if TZ_NORMAL_EQUAL
 	if (isSameShape(*this, a) && (!dense() || offset_ != 0)) {
 
 		apply(a, *this, [](const T& a, T& b) { b = a; });
@@ -86,7 +86,7 @@ Tensor<T>& Tensor<T>::operator=(const Tensor<T>& a) {
 
 template <class T>
 Tensor<T>& Tensor<T>::operator=(Tensor<T>&& a) {
-#if NORMAL
+#if TZ_NORMAL_EQUAL
 	if (isSameShape(*this, a)) {
 
 		apply(a, *this, [](const T& a, T& b) { b = a; });

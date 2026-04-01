@@ -193,7 +193,7 @@ class MediumAllocator {
 		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
-			_CHECK_(!mem);
+			TZ_CHECK_(!mem);
 
 			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 			mem->allocatedBlocks = 0;
@@ -252,12 +252,12 @@ class SmallAllocator {
 			}
 		}
 
-		_CHECK_(sizeType == POOLTYPENUMBER);
+		TZ_CHECK_(sizeType == POOLTYPENUMBER);
 
 		while (true) {
 			SmallSlab* slab = bin_[sizeType];
 			if (slab) [[likely]] {
-				_CHECK_(!slab->nextFreeBlock);
+				TZ_CHECK_(!slab->nextFreeBlock);
 
 				void* block = slab->nextFreeBlock;
 				slab->nextFreeBlock = slab->nextFreeBlock->next;
@@ -275,7 +275,7 @@ class SmallAllocator {
 	}
 
 	void dealloc(void* ptr) {
-		_CHECK(!ptr, "double free");
+		TZ_CHECK(!ptr, "double free");
 		SmallSlab* slab =
 		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
@@ -330,7 +330,7 @@ class SmallAllocator {
 			const uint32_t blockSize = std::max<uint32_t>(POOLSIZE[sizeType], sizeof(FreeBlock));
 			SmallSlab* slab = static_cast<SmallSlab*>(midAlloc_.alloc(SLABSIZE, SLABSIZE));
 
-			_CHECK(!slab, "out of memory");
+			TZ_CHECK(!slab, "out of memory");
 
 			new (slab) SmallSlab();
 
@@ -368,12 +368,12 @@ class Salloc : public Allocator {
 	LargeAllocator la_;
 
 	MediumAllocator& ma_() {
-		static thread_local MediumAllocator ma_(START_MEM_SIZE * INITRATIO[1] / 100);
+		static thread_local MediumAllocator ma_(config::START_MEM_SIZE * INITRATIO[1] / 100);
 		return ma_;
 	}
 
 	SmallAllocator& sa_() {
-		static thread_local SmallAllocator sa_(START_MEM_SIZE * INITRATIO[0] / 100, ma_());
+		static thread_local SmallAllocator sa_(config::START_MEM_SIZE * INITRATIO[0] / 100, ma_());
 		return sa_;
 	}
 
@@ -393,10 +393,11 @@ class Salloc : public Allocator {
 	// if size < alignment, alignment will not be used
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
-	void* allocate(const size_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const size_t bytes,
+	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
 		if (bytes == 0)
 			return nullptr;
-		_CHECK_(alignment > 64 || alignment == 0);
+		TZ_CHECK_(alignment > 64 || alignment == 0);
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
@@ -449,7 +450,8 @@ class Malloc : public Allocator {
 		return Device::CPU;
 	};
 
-	void* allocate(const size_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const size_t bytes,
+	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
 		return aligned_alloc(alignment, bytes);
 	};
 
@@ -469,5 +471,13 @@ class Malloc : public Allocator {
 	Malloc& operator=(Malloc&&) = delete;
 };
 
+
 } // namespace mem
+namespace config {
+
+inline mem::Allocator& defaultAllocator() {
+	return mem::Salloc::instance();
+}
+
+}; // namespace config
 } // namespace TZ

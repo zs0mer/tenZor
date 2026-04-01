@@ -16,7 +16,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 		return;
 	}
 
-	std::array<uint64_t, MAX_DIM> counters = {};
+	std::array<uint64_t, config::MAX_DIM> counters = {};
 
 	T* base = a._rawData();
 	uint64_t linearIdx = a.offset_;
@@ -38,7 +38,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 template <class T>
 template <typename Func>
 void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
-	_CHECK(!isSameShape(a, b), "not same size tensors in apply");
+	TZ_CHECK(!isSameShape(a, b), "not same size tensors in apply");
 
 	const uint64_t n = a.size();
 
@@ -52,7 +52,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 		return;
 	}
 
-	std::array<uint64_t, MAX_DIM> counters = {};
+	std::array<uint64_t, config::MAX_DIM> counters = {};
 
 	const T* baseA = a._rawData();
 	T* baseB = b._rawData();
@@ -79,7 +79,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 template <class T>
 template <typename Func>
 void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func) {
-	_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
+	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
 
 	const uint64_t n = a.size();
 
@@ -94,7 +94,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 		return;
 	}
 
-	std::array<uint64_t, MAX_DIM> counters = {};
+	std::array<uint64_t, config::MAX_DIM> counters = {};
 
 	const T* baseA = a._rawData();
 	const T* baseB = b._rawData();
@@ -147,7 +147,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
 // does a normal dot product beetwen two vectors
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
-	_CHECK(a.size() != b.size(), "not the same size vectors in dot");
+	TZ_CHECK(a.size() != b.size(), "not the same size vectors in dot");
 	Scalar<T> out(0);
 	uint64_t n = a.size();
 
@@ -168,7 +168,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 // does a normal matrix multiplication
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
-	_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
+	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
 	Matrix<T> out(a.rows(), b.cols(), a.tensor().allocator());
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
@@ -193,7 +193,7 @@ Matrix<T> transpose(const Matrix<T>& m) {
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
 	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
-	_CHECK(m.rows() != m.cols(), "matrix must be square");
+	TZ_CHECK(m.rows() != m.cols(), "matrix must be square");
 
 	const uint64_t n = m.rows();
 

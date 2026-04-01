@@ -23,7 +23,7 @@ template <class T>
 template <class K>
 void Tensor<T>::getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
 	shape[currDim++] = v.size();
-	_CHECK(currDim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	TZ_CHECK(currDim > config::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	if (v.empty())
 		return;
 	getSTDVecShape(v[0], shape, currDim);

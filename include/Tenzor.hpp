@@ -1,13 +1,5 @@
 #pragma once
 
-#define ERRORS 1
-#define NORMAL 1
-
-#define START_MEM_SIZE 10 * 1024 * 1024
-#define DEFAULT_ALIGNMENT 64
-#define MAX_DIM 64
-#define DEFAULT_ALLOCATOR mem::Salloc::instance()
-
 #include <atomic>
 #include <chrono>
 #include <iomanip>
@@ -21,6 +13,7 @@
 #include <iostream>
 #include <functional>
 
+#include "config.hpp"
 #include "tenzor_utils.hpp"
 #include "allocator.hpp"
 #include "buffer.hpp"
