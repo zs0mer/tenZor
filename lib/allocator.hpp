@@ -1,5 +1,9 @@
 #pragma once
 
+#include "config.hpp"
+#include "allocator.hpp"
+#include "utils.hpp"
+
 namespace TZ {
 namespace mem {
 
@@ -431,7 +435,6 @@ class Salloc : public Allocator {
 	Salloc& operator=(Salloc&&) = delete;
 };
 
-
 //& ================================================================================
 
 // simple allocator using malloc()
@@ -471,13 +474,11 @@ class Malloc : public Allocator {
 	Malloc& operator=(Malloc&&) = delete;
 };
 
-
 } // namespace mem
-namespace config {
 
+namespace config {
 inline mem::Allocator& defaultAllocator() {
 	return mem::Salloc::instance();
 }
-
 }; // namespace config
 } // namespace TZ

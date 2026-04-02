@@ -1,4 +1,4 @@
-#include "Tenzor.hpp"
+#include "Tenzor_math.hpp"
 
 int main() {
 	std::vector<std::vector<float>> a = {{1, 2}, {2, 3}};

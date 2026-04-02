@@ -1,4 +1,4 @@
-#include "Tenzor.hpp"
+#include "Tenzor_math.hpp"
 #include <iostream>
 #include <random>
 
@@ -19,7 +19,7 @@ int main() {
 	std::vector<uint64_t> l(2);
 
 	{
-		TZ::_Timer timer("vector");
+		TZ::internal::Timer timer("vector");
 
 		long long g = 0;
 		for (int i = 0; i < n; i++) {
@@ -36,7 +36,7 @@ int main() {
 	}
 
 	{
-		TZ::_Timer timer("tensor");
+		TZ::internal::Timer timer("tensor");
 		long long g = 0;
 		for (uint64_t i = 0; i < n; i++) {
 			l[1] = i;

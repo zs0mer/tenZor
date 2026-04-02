@@ -1,6 +1,9 @@
 #pragma once
-// only the declarations are in this file
 
+#include "config.hpp"
+#include "allocator.hpp"
+#include "buffer.hpp"
+#include "utils.hpp"
 
 namespace TZ {
 

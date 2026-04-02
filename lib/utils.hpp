@@ -1,14 +1,29 @@
 #pragma once
 
-namespace TZ {
+
+#include <atomic>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
+#include <mutex>
+#include <cstring>
+#include <array>
+#include <span>
+#include <iostream>
+#include <functional>
+
+
+namespace TZ::internal {
 
 #if TZ_ERRORS
-#define TZ_CHECK(expr, error) _check((expr), (error), __FILE__, __LINE__, __func__)
-#define TZ_CHECK_(expr) _check((expr), "unexpected", __FILE__, __LINE__, __func__)
+#define TZ_CHECK(expr, error) TZ::internal::check((expr), (error), __FILE__, __LINE__, __func__)
+#define TZ_CHECK_(expr) TZ::internal::check((expr), "unexpected", __FILE__, __LINE__, __func__)
 
 // a function to make error handleing easier
-inline void _check(const bool expr, const char* error, const char* file, int line,
-                   const char* func) {
+inline void check(const bool expr, const char* error, const char* file, int line,
+                  const char* func) {
 
 	if (expr) {
 		auto now = std::chrono::system_clock::now();
@@ -29,16 +44,16 @@ inline void _check(const bool expr, const char* error, const char* file, int lin
 #define TZ_CHECK_(expr) ((void)0)
 #endif
 
-class _Timer {
+class Timer {
   private:
 	std::chrono::_V2::system_clock::time_point start;
 	std::string s;
 
   public:
-	_Timer(std::string s_ = "timer") : s(s_) {
+	Timer(std::string s_ = "timer") : s(s_) {
 		start = std::chrono::high_resolution_clock::now();
 	}
-	~_Timer() {
+	~Timer() {
 		std::chrono::_V2::system_clock::time_point end = std::chrono::high_resolution_clock::now();
 
 		std::chrono::duration duration = std::chrono::duration<double>(end - start);
@@ -46,4 +61,4 @@ class _Timer {
 	}
 };
 
-} // namespace TZ
+} // namespace TZ::internal

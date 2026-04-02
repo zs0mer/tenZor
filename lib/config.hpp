@@ -14,11 +14,34 @@
 #include <iostream>
 #include <functional>
 
-namespace TZ::mem {
+namespace TZ {
+
+namespace mem {
+
 class Allocator;
+class LargeAllocator;
+class MediumAllocator;
+class SmallAllocator;
+class Salloc;
+class Malloc;
+
 class BufferIMPL;
 class Buffer;
-} // namespace TZ::mem
+} // namespace mem
+
+template <class T>
+class Tensor;
+template <typename Derived, typename T>
+class _tensorWrapper;
+
+template <typename T>
+class Scalar;
+template <typename T>
+class Vector;
+template <typename T>
+class Matrix;
+
+} // namespace TZ
 
 #ifdef TENZOR_USER_CONFIG
 #include TENZOR_USER_CONFIG

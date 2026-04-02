@@ -1,15 +1,12 @@
 #pragma once
+#include "tensor_impl.hpp"
+#include "config.hpp"
+#include "allocator.hpp"
+#include "buffer.hpp"
+#include "tensor.hpp"
+#include "utils.hpp"
 
 namespace TZ {
-
-template <typename T>
-class Scalar;
-
-template <typename T>
-class Vector;
-
-template <typename T>
-class Matrix;
 
 //& _tensorWrapper =============================================================
 

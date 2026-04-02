@@ -1,7 +1,10 @@
 #pragma once
 
-namespace TZ {
-namespace mem {
+#include "config.hpp"
+#include "allocator.hpp"
+#include "utils.hpp"
+
+namespace TZ::mem {
 
 // Buffer implementation
 // holds the metadata for the buffer
@@ -173,5 +176,5 @@ class Buffer {
 	}
 };
 
-} // namespace mem
-} // namespace TZ
+
+} // namespace TZ::mem

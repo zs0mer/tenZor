@@ -1,4 +1,4 @@
-#include "Tenzor.hpp"
+#include "Tenzor_math.hpp"
 #include <iostream>
 #include <random>
 
@@ -15,7 +15,7 @@ int main() {
 	}
 
 	{
-		TZ::_Timer timer("malloc");
+		TZ::internal::Timer timer("malloc");
 		std::vector<void*> space(n);
 
 		for (int k = 0; k < m; k++) {
@@ -29,7 +29,7 @@ int main() {
 
 	TZ::mem::Salloc& aalloc = TZ::mem::Salloc::instance();
 	{
-		TZ::_Timer timer("Salloc");
+		TZ::internal::Timer timer("Salloc");
 		std::vector<void*> space(n);
 
 		for (int k = 0; k < m; k++) {
