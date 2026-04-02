@@ -87,7 +87,8 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 
 template <class T>
 template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func) {
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
+                          Func func) {
 	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
 
 	const uint64_t n = a.size();
@@ -153,7 +154,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 	TensorIMPL<T>::apply(a, b, *this, func);
 }
 
-};
+}; // namespace internal
 
 // does a normal dot product beetwen two vectors
 template <class T>
@@ -195,8 +196,8 @@ template <class T>
 Matrix<T> transpose(const Matrix<T>& m) {
 	std::array<uint64_t, 2> strides = {m.tensor()._strides()[1], m.tensor()._strides()[0]};
 	std::array<uint64_t, 2> shape = {m.cols(), m.rows()};
-	return Matrix<T>(
-	    Tensor<T>(2, shape.data(), strides.data(), m.tensor()._offset(), m.tensor()._buffer()));
+	return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), m.tensor()._offset(),
+	                                         m.tensor()._buffer()));
 }
 
 //! don't use with intregers
