@@ -6,7 +6,6 @@
 #include <cstring>
 #include <iostream>
 
-#include "config.hpp"
 #include "allocator.hpp"
 #include "buffer.hpp"
 #include "tensor.hpp"
@@ -69,7 +68,7 @@ void Tensor<T>::set(const std::vector<uint64_t>& shape, mem::Allocator& allocato
 
 template <class T>
 void Tensor<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
-	TZ_CHECK(dim > config::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	TZ_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = dim;
 	offset_ = 0;
 
@@ -372,7 +371,7 @@ template <class T>
 template <class K>
 void Tensor<T>::getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
 	shape[currDim++] = v.size();
-	TZ_CHECK(currDim > config::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	TZ_CHECK(currDim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	if (v.empty())
 		return;
 	getSTDVecShape(v[0], shape, currDim);
@@ -430,12 +429,6 @@ std::ostream& operator<<(std::ostream& os, const Tensor<T>& t) {
 	for (int i = 0; i < t.shape()[0] - 1; i++)
 		os << t[i] << ",";
 	os << t[t.shape()[0] - 1] << "\n]";
-	return os;
-}
-
-template <typename Derived, typename T>
-std::ostream& operator<<(std::ostream& os, const _tensorWrapper<Derived, T>& t) {
-	os << t.tensor();
 	return os;
 }
 

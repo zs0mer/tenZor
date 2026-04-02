@@ -1,8 +1,8 @@
 #pragma once
+
 #include <iostream>
 #include <chrono>
 #include <iomanip>
-
 
 namespace TZ::internal {
 

@@ -5,12 +5,22 @@
 #include <cstdlib>
 #include <vector>
 
-
-#include "config.hpp"
 #include "utils.hpp"
 
-namespace TZ {
-namespace mem {
+namespace TZ::mem {
+
+#ifdef TZ_START_MEM_SIZE
+const constexpr std::uint64_t START_MEM_SIZE = TZ_START_MEM_SIZE;
+#else
+const constexpr std::uint64_t START_MEM_SIZE = 10 * 1024 * 1024;
+#endif
+
+
+#ifdef TZ_DEFAULT_ALIGNMENT
+const constexpr std::uint64_t DEFAULT_ALIGNMENT = TZ_DEFAULT_ALIGNMENT;
+#else
+const constexpr std::uint64_t DEFAULT_ALIGNMENT = 64;
+#endif
 
 enum Device { CPU, CUDA };
 
@@ -377,12 +387,12 @@ class Salloc : public Allocator {
 	LargeAllocator la_;
 
 	MediumAllocator& ma_() {
-		static thread_local MediumAllocator ma_(config::START_MEM_SIZE * INITRATIO[1] / 100);
+		static thread_local MediumAllocator ma_(START_MEM_SIZE * INITRATIO[1] / 100);
 		return ma_;
 	}
 
 	SmallAllocator& sa_() {
-		static thread_local SmallAllocator sa_(config::START_MEM_SIZE * INITRATIO[0] / 100, ma_());
+		static thread_local SmallAllocator sa_(START_MEM_SIZE * INITRATIO[0] / 100, ma_());
 		return sa_;
 	}
 
@@ -403,7 +413,7 @@ class Salloc : public Allocator {
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
 	void* allocate(const uint64_t bytes,
-	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
+	               const uint8_t alignment = DEFAULT_ALIGNMENT) override {
 		if (bytes == 0)
 			return nullptr;
 		TZ_CHECK_(alignment > 64 || alignment == 0);
@@ -459,7 +469,7 @@ class Malloc : public Allocator {
 	};
 
 	void* allocate(const uint64_t bytes,
-	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
+	               const uint8_t alignment = DEFAULT_ALIGNMENT) override {
 		return aligned_alloc(alignment, bytes);
 	};
 
@@ -479,11 +489,10 @@ class Malloc : public Allocator {
 	Malloc& operator=(Malloc&&) = delete;
 };
 
-} // namespace mem
+//& ================================================================================
 
-namespace config {
-inline mem::Allocator& defaultAllocator() {
-	return mem::Salloc::instance();
+inline Allocator& defaultAllocator() {
+	return Salloc::instance();
 }
-}; // namespace config
-} // namespace TZ
+
+} // namespace TZ::mem

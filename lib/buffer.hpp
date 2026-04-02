@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <atomic>
 
-
-#include "config.hpp"
 #include "allocator.hpp"
 
 namespace TZ::mem {
@@ -25,8 +23,8 @@ class BufferIMPL {
 
 	// standard constructor
 	// you can only construct with this constructor
-	BufferIMPL(const uint64_t size, const uint8_t alignment = config::DEFAULT_ALIGNMENT,
-	           Allocator* allocator = &config::defaultAllocator())
+	BufferIMPL(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	           Allocator* allocator = &defaultAllocator())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
@@ -102,16 +100,16 @@ class Buffer {
 	// this buffer will become the new owner of the BufferIMPL
 	Buffer(BufferIMPL* buffer)
 	    : ptr_(buffer ? buffer
-	                  : static_cast<BufferIMPL*>(config::defaultAllocator().allocate(
-	                        sizeof(BufferIMPL), config::DEFAULT_ALIGNMENT))) {
-		new (ptr_) BufferIMPL(0, config::DEFAULT_ALIGNMENT, &config::defaultAllocator());
+	                  : static_cast<BufferIMPL*>(defaultAllocator().allocate(
+	                        sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &defaultAllocator());
 	}
 
 	// standard constructor
-	Buffer(const uint64_t size = 0, Allocator* allocator = &config::defaultAllocator())
+	Buffer(const uint64_t size = 0, Allocator* allocator = &defaultAllocator())
 	    : ptr_(static_cast<BufferIMPL*>(
-	          allocator->allocate(sizeof(BufferIMPL), config::DEFAULT_ALIGNMENT))) {
-		new (ptr_) BufferIMPL(size, config::DEFAULT_ALIGNMENT, allocator);
+	          allocator->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+		new (ptr_) BufferIMPL(size, DEFAULT_ALIGNMENT, allocator);
 	}
 
 	// this buffer will contain the same BufferIMPL
@@ -167,7 +165,7 @@ class Buffer {
 	// makes a new buffer with the same data
 	Buffer clone() const {
 		BufferIMPL* p = static_cast<BufferIMPL*>(
-		    ptr_->allocator()->allocate(sizeof(BufferIMPL), config::DEFAULT_ALIGNMENT));
+		    ptr_->allocator()->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
 		new (p) BufferIMPL(*ptr_);
 		return Buffer(p);
 	}

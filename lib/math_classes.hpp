@@ -4,13 +4,20 @@
 #include <cstdint>
 #include <array>
 
-
-#include "config.hpp"
 #include "allocator.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
 
 namespace TZ {
+
+template <typename T>
+class Scalar;
+
+template <typename T>
+class Vector;
+
+template <typename T>
+class Matrix;
 
 //& _tensorWrapper =============================================================
 
@@ -29,11 +36,11 @@ class _tensorWrapper {
 	_tensorWrapper(Tensor<T>&& t) : t_(std::move(t)) {}
 
 	_tensorWrapper(const std::vector<uint64_t>& shape,
-	               mem::Allocator& allocator = config::defaultAllocator())
+	               mem::Allocator& allocator = mem::defaultAllocator())
 	    : t_(shape, allocator) {}
 
 	_tensorWrapper(const uint8_t dim, const uint64_t* shape,
-	               mem::Allocator& allocator = config::defaultAllocator())
+	               mem::Allocator& allocator = mem::defaultAllocator())
 	    : t_(dim, shape, allocator) {}
 
 
@@ -168,6 +175,13 @@ class _tensorWrapper {
 	}
 };
 
+
+template <typename Derived, typename T>
+std::ostream& operator<<(std::ostream& os, const _tensorWrapper<Derived, T>& t) {
+	os << t.tensor();
+	return os;
+}
+
 //& Scalar =====================================================================
 
 template <typename T>
@@ -190,14 +204,14 @@ class Scalar : public _tensorWrapper<Scalar<T>, T> {
 	}
 
 	// standard constructor with a T class
-	Scalar(const T& val, mem::Allocator& allocator = config::defaultAllocator()) {
+	Scalar(const T& val, mem::Allocator& allocator = mem::defaultAllocator()) {
 		set(val, allocator);
 	}
 
 	//& methods --------------------
 
 	// makes a new scalar with the class T
-	void set(const T& val, mem::Allocator& allocator = config::defaultAllocator()) {
+	void set(const T& val, mem::Allocator& allocator = mem::defaultAllocator()) {
 		this->t_.set(0, nullptr, allocator);
 		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
@@ -250,14 +264,14 @@ class Vector : public _tensorWrapper<Vector<T>, T> {
 	}
 
 	// standard constructor with size of the Vector
-	Vector(const uint64_t size, mem::Allocator& allocator = config::defaultAllocator()) {
+	Vector(const uint64_t size, mem::Allocator& allocator = mem::defaultAllocator()) {
 		set(size, allocator);
 	}
 
 	//& methods --------------------
 
 	// standard set function
-	void set(const uint64_t size, mem::Allocator& allocator = config::defaultAllocator()) {
+	void set(const uint64_t size, mem::Allocator& allocator = mem::defaultAllocator()) {
 		this->t_.set(1, &size, allocator);
 		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
@@ -308,7 +322,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// standard constructor with the size of the rows, and columns
 	Matrix(const uint64_t rows, const uint64_t cols,
-	       mem::Allocator& allocator = config::defaultAllocator()) {
+	       mem::Allocator& allocator = mem::defaultAllocator()) {
 		set(rows, cols, allocator);
 	}
 
@@ -316,7 +330,7 @@ class Matrix : public _tensorWrapper<Matrix<T>, T> {
 
 	// standard set function with the size of the rows, and columns
 	void set(const uint64_t rows, const uint64_t cols,
-	         mem::Allocator& allocator = config::defaultAllocator()) {
+	         mem::Allocator& allocator = mem::defaultAllocator()) {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		this->t_.set(2, shape.data(), allocator);
 		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");

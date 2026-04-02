@@ -5,7 +5,6 @@
 #include <cmath>
 
 #include "tensor_impl.hpp"
-#include "config.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
 #include "math_classes.hpp"
@@ -26,7 +25,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 		return;
 	}
 
-	std::array<uint64_t, config::MAX_DIM> counters = {};
+	std::array<uint64_t, MAX_DIM> counters = {};
 
 	T* base = a._rawData();
 	uint64_t linearIdx = a.offset_;
@@ -62,7 +61,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 		return;
 	}
 
-	std::array<uint64_t, config::MAX_DIM> counters = {};
+	std::array<uint64_t, MAX_DIM> counters = {};
 
 	const T* baseA = a._rawData();
 	T* baseB = b._rawData();
@@ -104,7 +103,7 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 		return;
 	}
 
-	std::array<uint64_t, config::MAX_DIM> counters = {};
+	std::array<uint64_t, MAX_DIM> counters = {};
 
 	const T* baseA = a._rawData();
 	const T* baseB = b._rawData();
