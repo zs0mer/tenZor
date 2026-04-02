@@ -10,11 +10,11 @@
 #include "math_classes.hpp"
 
 namespace TZ {
-
+namespace internal {
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(Tensor<T>& a, Func func) {
+void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	const uint64_t n = a.size();
 
 
@@ -27,7 +27,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	T* base = a._rawData();
+	T* base = a.rawData();
 	uint64_t linearIdx = a.offset_;
 
 	for (uint64_t i = 0; i < n; i++) {
@@ -46,7 +46,7 @@ void Tensor<T>::apply(Tensor<T>& a, Func func) {
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	TZ_CHECK(!isSameShape(a, b), "not same size tensors in apply");
 
 	const uint64_t n = a.size();
@@ -63,8 +63,8 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	const T* baseA = a._rawData();
-	T* baseB = b._rawData();
+	const T* baseA = a.rawData();
+	T* baseB = b.rawData();
 	uint64_t linearIdxA = a.offset_;
 	uint64_t linearIdxB = b.offset_;
 
@@ -87,7 +87,7 @@ void Tensor<T>::apply(const Tensor<T>& a, Tensor<T>& b, Func func) {
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func func) {
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func) {
 	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
 
 	const uint64_t n = a.size();
@@ -105,9 +105,9 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 
 	std::array<uint64_t, MAX_DIM> counters = {};
 
-	const T* baseA = a._rawData();
-	const T* baseB = b._rawData();
-	T* baseC = c._rawData();
+	const T* baseA = a.rawData();
+	const T* baseB = b.rawData();
+	T* baseC = c.rawData();
 
 	uint64_t linearIdxA = a.offset_;
 	uint64_t linearIdxB = b.offset_;
@@ -137,21 +137,23 @@ void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Tensor<T>& c, Func
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(Func func) {
-	Tensor<T>::apply(*this, func);
+void TensorIMPL<T>::apply(Func func) {
+	TensorIMPL<T>::apply(*this, func);
 }
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(const Tensor<T>& a, Func func) {
-	Tensor<T>::apply(a, *this, func);
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func) {
+	TensorIMPL<T>::apply(a, *this, func);
 }
 
 template <class T>
 template <typename Func>
-void Tensor<T>::apply(const Tensor<T>& a, const Tensor<T>& b, Func func) {
-	Tensor<T>::apply(a, b, *this, func);
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func) {
+	TensorIMPL<T>::apply(a, b, *this, func);
 }
+
+};
 
 // does a normal dot product beetwen two vectors
 template <class T>
