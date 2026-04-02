@@ -1,8 +1,12 @@
 #pragma once
-#include "tensor_impl.hpp"
+
+#include <vector>
+#include <cstdint>
+#include <array>
+
+
 #include "config.hpp"
 #include "allocator.hpp"
-#include "buffer.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
 

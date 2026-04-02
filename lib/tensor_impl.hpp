@@ -1,5 +1,11 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+#include <vector>
+#include <cstring>
+#include <iostream>
+
 #include "config.hpp"
 #include "allocator.hpp"
 #include "buffer.hpp"

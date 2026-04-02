@@ -1,8 +1,12 @@
 #pragma once
 
+#include <cstring>
+#include <cstdint>
+#include <atomic>
+
+
 #include "config.hpp"
 #include "allocator.hpp"
-#include "utils.hpp"
 
 namespace TZ::mem {
 

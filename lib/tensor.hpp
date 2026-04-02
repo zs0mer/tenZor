@@ -1,9 +1,13 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+#include <vector>
+
+
 #include "config.hpp"
 #include "allocator.hpp"
 #include "buffer.hpp"
-#include "utils.hpp"
 
 namespace TZ {
 

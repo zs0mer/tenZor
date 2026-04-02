@@ -1,7 +1,12 @@
 #pragma once
 
+#include <cstdint>
+#include <mutex>
+#include <cstdlib>
+#include <vector>
+
+
 #include "config.hpp"
-#include "allocator.hpp"
 #include "utils.hpp"
 
 namespace TZ {
@@ -15,9 +20,9 @@ class Allocator {
   public:
 	virtual Device device() const = 0;
 
-	virtual void* allocate(const size_t bytes, const uint8_t alignment) = 0;
+	virtual void* allocate(const uint64_t bytes, const uint8_t alignment) = 0;
 
-	virtual void deallocate(void* ptr, const size_t bytes) = 0;
+	virtual void deallocate(void* ptr, const uint64_t bytes) = 0;
 
 	virtual ~Allocator() = default;
 
@@ -41,7 +46,7 @@ class Allocator {
 class LargeAllocator {
   private:
 	struct LargeBlock {
-		size_t size = 0;
+		uint64_t size = 0;
 		LargeBlock* next = nullptr;
 	};
 
@@ -49,7 +54,7 @@ class LargeAllocator {
 	LargeBlock* blocks_ = nullptr;
 
   public:
-	void* alloc(const size_t bytes, const uint16_t alignment) {
+	void* alloc(const uint64_t bytes, const uint16_t alignment) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
@@ -76,7 +81,7 @@ class LargeAllocator {
 		return std::aligned_alloc(alignment, size);
 	}
 
-	void dealloc(void* ptr, const size_t bytes) {
+	void dealloc(void* ptr, const uint64_t bytes) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* currBlock = reinterpret_cast<LargeBlock*>(ptr);
 		currBlock->size = bytes;
@@ -109,7 +114,7 @@ class MediumAllocator {
 	struct MediumSlab {
 		uint8_t* freeMem = nullptr;
 		uint32_t allocatedBlocks = 0;
-		size_t idxInBin = 0;
+		uint64_t idxInBin = 0;
 	};
 
 	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
@@ -122,7 +127,7 @@ class MediumAllocator {
   public:
 	MediumAllocator() = delete;
 
-	void* alloc(const size_t bytes, const uint16_t alignment) {
+	void* alloc(const uint64_t bytes, const uint16_t alignment) {
 		while (true) {
 			if (bin_.size() <= activeSlabIdx_)
 				fillSlabs(REFILLSIZE);
@@ -246,7 +251,7 @@ class SmallAllocator {
   public:
 	SmallAllocator() = delete;
 
-	void* alloc(const size_t bytes) {
+	void* alloc(const uint64_t bytes) {
 		// determening the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
 		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
@@ -397,7 +402,7 @@ class Salloc : public Allocator {
 	// if size < alignment, alignment will not be used
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
-	void* allocate(const size_t bytes,
+	void* allocate(const uint64_t bytes,
 	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
 		if (bytes == 0)
 			return nullptr;
@@ -411,7 +416,7 @@ class Salloc : public Allocator {
 		}
 	};
 
-	void deallocate(void* ptr, const size_t bytes) override {
+	void deallocate(void* ptr, const uint64_t bytes) override {
 		if (bytes <= 4 * 1024) {            //~ 0b
 			return sa_().dealloc(ptr);      //~
 		} else if (bytes <= 1024 * 1024) {  //~ 4KB
@@ -453,12 +458,12 @@ class Malloc : public Allocator {
 		return Device::CPU;
 	};
 
-	void* allocate(const size_t bytes,
+	void* allocate(const uint64_t bytes,
 	               const uint8_t alignment = config::DEFAULT_ALIGNMENT) override {
 		return aligned_alloc(alignment, bytes);
 	};
 
-	void deallocate(void* ptr, const size_t bytes = 0) override {
+	void deallocate(void* ptr, const uint64_t bytes = 0) override {
 		free(ptr);
 	};
 

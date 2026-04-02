@@ -1,8 +1,11 @@
 #pragma once
+
+#include <cstdint>
+#include <array>
+#include <cmath>
+
 #include "tensor_impl.hpp"
 #include "config.hpp"
-#include "allocator.hpp"
-#include "buffer.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
 #include "math_classes.hpp"

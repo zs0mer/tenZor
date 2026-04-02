@@ -1,21 +1,12 @@
 #pragma once
-
-
-#include <atomic>
+#include <iostream>
 #include <chrono>
 #include <iomanip>
-#include <sstream>
-#include <stdexcept>
-#include <vector>
-#include <mutex>
-#include <cstring>
-#include <array>
-#include <span>
-#include <iostream>
-#include <functional>
 
 
 namespace TZ::internal {
+
+#define TZ_ERRORS 1
 
 #if TZ_ERRORS
 #define TZ_CHECK(expr, error) TZ::internal::check((expr), (error), __FILE__, __LINE__, __func__)
