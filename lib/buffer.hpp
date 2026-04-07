@@ -41,7 +41,7 @@ class BufferIMPL {
 
 	BufferIMPL& operator=(BufferIMPL&&) = delete;
 
-	//& lifetime----
+	// # lifetime----
 
 	// increment the reference count
 	void retain() noexcept {
@@ -59,7 +59,7 @@ class BufferIMPL {
 		return false;
 	}
 
-	//& data--------
+	// # data--------
 
 	// returns the pointer to the buffer
 	void* data() noexcept {
@@ -71,7 +71,7 @@ class BufferIMPL {
 		return data_;
 	};
 
-	//& metadata----
+	// # metadata----
 
 	// returns size of the buffer
 	uint64_t size() const noexcept {
@@ -89,7 +89,7 @@ class BufferIMPL {
 	}
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // standard memory buffer
 // holds the BufferIMPL
@@ -100,8 +100,8 @@ class Buffer {
 	// this buffer will become the new owner of the BufferIMPL
 	Buffer(BufferIMPL* buffer)
 	    : ptr_(buffer ? buffer
-	                  : static_cast<BufferIMPL*>(defaultAllocator().allocate(
-	                        sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+	                  : static_cast<BufferIMPL*>(
+	                        defaultAllocator().allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
 		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &defaultAllocator());
 	}
 

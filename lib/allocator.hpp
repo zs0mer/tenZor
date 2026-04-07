@@ -48,7 +48,7 @@ class Allocator {
 	Allocator& operator=(Allocator&&) = delete;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // this is an allocator
 // can allocate bytes in the range of (1MB; INF)
@@ -114,7 +114,7 @@ class LargeAllocator {
 	LargeAllocator() = default;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // this is an allocator
 // can allocate bytes in the range of (4KB; 1MB]
@@ -127,7 +127,7 @@ class MediumAllocator {
 		uint64_t idxInBin = 0;
 	};
 
-	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; //! must be a power of two
+	const static uintptr_t SLABSIZE = 4 * 1024 * 1024; // ! must be a power of two
 	const static uint16_t REFILLSIZE = 2;
 	const static uint16_t SLABHEADERSIZE = 64;
 
@@ -225,7 +225,7 @@ class MediumAllocator {
 	friend class Salloc;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // this is an allocator
 // can allocate bytes in the range of (0; 4KB]
@@ -246,14 +246,14 @@ class SmallAllocator {
 
 
 	const static uint16_t REFILLSIZE = 2;          // 16KB
-	const static uint16_t SLABHEADERSIZE = 64 * 4; //! this is the size to preserve max alignment
-	const static uintptr_t SLABSIZE = 32 * 1024;   //! must be a power of two
+	const static uint16_t SLABHEADERSIZE = 64 * 4; // ! this is the size to preserve max alignment
+	const static uintptr_t SLABSIZE = 32 * 1024;   // ! must be a power of two
 	const static uint16_t POOLTYPENUMBER = 10;
 	const static constexpr uint32_t POOLSIZE[POOLTYPENUMBER] = // the possible bite pools
 	    {8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096};
 	const static constexpr uint16_t POOLWEIGHT[POOLTYPENUMBER] = // weights for distributing
 	    {6, 8, 10, 10, 10, 10, 10, 10, 12, 14};                  // the memory when creating
-	                                                             //* adds up to 100
+	                                                             // * adds up to 100
 
 	SmallSlab* bin_[POOLTYPENUMBER] = {nullptr};
 	MediumAllocator& midAlloc_;
@@ -340,7 +340,7 @@ class SmallAllocator {
 	}
 
 	void fillPool(const uint32_t bites, const uint16_t sizeType) {
-		//* can be much faster
+		// * can be much faster
 		// if the allocated space is to small for a slab round it up to 1
 		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
 
@@ -372,16 +372,16 @@ class SmallAllocator {
 	friend class Salloc;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // a CPU allocater
-//! singelton
+// ! singelton
 // max alignment: 64
 // alignment can only be 2^n
 class Salloc : public Allocator {
   private:
 	// percentiges of the allocators
-	//! has to add up to 100%
+	// ! has to add up to 100%
 	const static constexpr uint16_t INITRATIO[2] = {50, 50};
 
 	LargeAllocator la_;
@@ -412,8 +412,7 @@ class Salloc : public Allocator {
 	// if size < alignment, alignment will not be used
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
-	void* allocate(const uint64_t bytes,
-	               const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
 		if (bytes == 0)
 			return nullptr;
 		TZ_CHECK_(alignment > 64 || alignment == 0);
@@ -450,7 +449,7 @@ class Salloc : public Allocator {
 	Salloc& operator=(Salloc&&) = delete;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // simple allocator using malloc()
 class Malloc : public Allocator {
@@ -468,8 +467,7 @@ class Malloc : public Allocator {
 		return Device::CPU;
 	};
 
-	void* allocate(const uint64_t bytes,
-	               const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
 		return aligned_alloc(alignment, bytes);
 	};
 
@@ -489,10 +487,16 @@ class Malloc : public Allocator {
 	Malloc& operator=(Malloc&&) = delete;
 };
 
-//& ================================================================================
+// # ================================================================================
 
 inline Allocator& defaultAllocator() {
+	// # ---------------
+#ifdef TZ_DEFAULT_ALLOCATOR
+	TZ_DEFAULT_ALLOCATOR();
+#else
 	return Salloc::instance();
+#endif
+	// # ---------------
 }
 
 } // namespace TZ::mem

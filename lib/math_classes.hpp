@@ -9,7 +9,6 @@
 #include "utils.hpp"
 
 namespace TZ {
-namespace internal {
 
 template <typename T>
 class Scalar;
@@ -23,40 +22,46 @@ class Matrix;
 template <typename T>
 class Tensor;
 
-//& tensorWrapper =============================================================
+namespace internal {
+
+// # tensorWrapper =============================================================
 
 template <typename Derived, typename T>
-class tensorWrapper {
+class TensorWrapper {
   protected:
 	internal::TensorIMPL<T> t_;
 
   public:
-	//& seters ===========================================================================
+	// # seters ===========================================================================
 
-	tensorWrapper() = default;
+	TensorWrapper() = default;
 
-	tensorWrapper(const internal::TensorIMPL<T>& t) : t_(t) {}
+	TensorWrapper(const internal::TensorIMPL<T>& t) : t_(t) {}
 
-	tensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
+	TensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
 
-	tensorWrapper(const std::vector<uint64_t>& shape,
+	TensorWrapper(const std::vector<uint64_t>& shape,
 	              mem::Allocator& allocator = mem::defaultAllocator())
 	    : t_(shape, allocator) {}
 
-	tensorWrapper(const uint8_t dim, const uint64_t* shape,
+	TensorWrapper(const uint8_t dim, const uint64_t* shape,
 	              mem::Allocator& allocator = mem::defaultAllocator())
 	    : t_(dim, shape, allocator) {}
 
 
-	tensorWrapper(const tensorWrapper&) = default;
+	TensorWrapper(const TensorWrapper&) = default;
 
-	tensorWrapper& operator=(const tensorWrapper&) = default;
+	TensorWrapper& operator=(const TensorWrapper&) = default;
 
-	tensorWrapper(tensorWrapper&&) = default;
+	TensorWrapper(TensorWrapper&&) = default;
 
-	tensorWrapper& operator=(tensorWrapper&&) = default;
+	TensorWrapper& operator=(TensorWrapper&&) = default;
 
-	//& metadata geters ===========================================================================
+	Tensor<T> toTensor() {
+		return Tensor<T>(this->tensor_());
+	}
+
+	// # metadata geters ===========================================================================
 
 	uint64_t dim() const {
 		return t_.dim();
@@ -70,7 +75,7 @@ class tensorWrapper {
 		return t_.empty();
 	}
 
-	//& geters ===========================================================================
+	// # geters ===========================================================================
 
 	// returns the inner tensor
 	internal::TensorIMPL<T>& tensor_() {
@@ -91,16 +96,16 @@ class tensorWrapper {
 		return Tensor<T>(this->t_[idx]);
 	}
 
-	//& operations ===========================================================================
+	// # operations ===========================================================================
 
-	Derived operator+(const tensorWrapper& other) const {
+	Derived operator+(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), t_.allocator());
 		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_,
 		                               [](const T& a, const T& b, T& c) { c = a + b; });
 		return out;
 	}
 
-	Derived operator-(const tensorWrapper& other) const {
+	Derived operator-(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), t_.allocator());
 		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_,
 		                               [](const T& a, const T& b, T& c) { c = a - b; });
@@ -136,12 +141,12 @@ class tensorWrapper {
 	}
 
 
-	Derived operator+=(const tensorWrapper& other) {
+	Derived operator+=(const TensorWrapper& other) {
 		internal::TensorIMPL<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b += a; });
 		return Derived(this->t_);
 	}
 
-	Derived operator-=(const tensorWrapper& other) {
+	Derived operator-=(const TensorWrapper& other) {
 		internal::TensorIMPL<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b -= a; });
 		return Derived(this->t_);
 	}
@@ -176,26 +181,86 @@ class tensorWrapper {
 
 
 template <typename Derived, typename T>
-std::ostream& operator<<(std::ostream& os, const tensorWrapper<Derived, T>& t) {
+std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 	os << t.tensor_();
 	return os;
 }
 
 }; // namespace internal
 
-//& Scalar =====================================================================
 
 template <typename T>
-class Scalar : public internal::tensorWrapper<Scalar<T>, T> {
-	using Base = internal::tensorWrapper<Scalar<T>, T>;
+class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
+	using Base = internal::TensorWrapper<Tensor<T>, T>;
 
   public:
 	using Base::Base;
 
-	//& constructors ---------------
+	// un-nests a nested std::vector to a Tensor
+	// has to be right shape
+	template <class NestedVector>
+	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v,
+	                            mem::Allocator& allocator = mem::defaultAllocator()) {
+		uint8_t currDim = 0;
+		std::array<uint64_t, internal::MAX_DIM> shape;
+
+		getSTDVecShape(v, shape.data(), currDim);
+
+		internal::TensorIMPL<T> t(currDim, shape.data(), allocator);
+
+		uint64_t offset = 0;
+		falttenSTDVec(v, t.data(), offset);
+		return Tensor<T>(t);
+	}
+
+
+  private:
+	// base case
+	template <class K>
+	static void getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim) {
+		return;
+	}
+
+	template <class K>
+	static void getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
+		shape[currDim++] = v.size();
+		TZ_CHECK(currDim > internal::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+		if (v.empty())
+			return;
+		getSTDVecShape(v[0], shape, currDim);
+	}
+	// base case
+	template <class K>
+	static void falttenSTDVec(const K& k, T* dst, uint64_t& offset) {
+		dst[offset++] = static_cast<T>(k);
+	}
+
+	template <class K>
+	static void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset) {
+		for (const auto& i : v)
+			falttenSTDVec(i, dst, offset);
+	}
+};
+
+
+// # Scalar =====================================================================
+
+template <typename T>
+class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
+	using Base = internal::TensorWrapper<Scalar<T>, T>;
+
+  public:
+	using Base::Base;
+
+	// # constructors ---------------
 
 	// standard constructor with tensor
-	Scalar(const internal::TensorIMPL<T>& t) : Base(t) {
+	Scalar(internal::TensorIMPL<T>& t) : Base(t) {
+		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+	}
+
+	// standard constructor with tensor
+	Scalar(Tensor<T>& t) : Base(t.tensor_()) {
 		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 	}
 
@@ -209,7 +274,7 @@ class Scalar : public internal::tensorWrapper<Scalar<T>, T> {
 		set(val, allocator);
 	}
 
-	//& methods --------------------
+	// # methods --------------------
 
 	// makes a new scalar with the class T
 	void set(const T& val, mem::Allocator& allocator = mem::defaultAllocator()) {
@@ -243,19 +308,24 @@ class Scalar : public internal::tensorWrapper<Scalar<T>, T> {
 	}
 };
 
-//& Vector =====================================================================
+// # Vector =====================================================================
 
 template <typename T>
-class Vector : public internal::tensorWrapper<Vector<T>, T> {
-	using Base = internal::tensorWrapper<Vector<T>, T>;
+class Vector : public internal::TensorWrapper<Vector<T>, T> {
+	using Base = internal::TensorWrapper<Vector<T>, T>;
 
   public:
 	using Base::Base;
 
-	//& constructors ---------------
+	// # constructors ---------------
 
 	// standard constructor with tensor
 	Vector(const internal::TensorIMPL<T>& t) : Base(t) {
+		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+	}
+
+	// standard constructor with tensor
+	Vector(const Tensor<T>& t) : Base(t.tensor_()) {
 		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
@@ -269,7 +339,7 @@ class Vector : public internal::tensorWrapper<Vector<T>, T> {
 		set(size, allocator);
 	}
 
-	//& methods --------------------
+	// # methods --------------------
 
 	// standard set function
 	void set(const uint64_t size, mem::Allocator& allocator = mem::defaultAllocator()) {
@@ -300,19 +370,24 @@ class Vector : public internal::tensorWrapper<Vector<T>, T> {
 	}
 };
 
-//& Matrix =====================================================================
+// # Matrix =====================================================================
 
 template <typename T>
-class Matrix : public internal::tensorWrapper<Matrix<T>, T> {
-	using Base = internal::tensorWrapper<Matrix<T>, T>;
+class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
+	using Base = internal::TensorWrapper<Matrix<T>, T>;
 
   public:
 	using Base::Base;
 
-	//& constructors ---------------
+	// # constructors ---------------
 
 	// standard constructor with tensor
 	Matrix(const internal::TensorIMPL<T>& t) : Base(t) {
+		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+	}
+
+	// standard constructor with tensor
+	Matrix(const Tensor<T>& t) : Base(t.tensor_()) {
 		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
@@ -327,7 +402,7 @@ class Matrix : public internal::tensorWrapper<Matrix<T>, T> {
 		set(rows, cols, allocator);
 	}
 
-	//& methods --------------------
+	// # methods --------------------
 
 	// standard set function with the size of the rows, and columns
 	void set(const uint64_t rows, const uint64_t cols,
@@ -422,11 +497,6 @@ class Matrix : public internal::tensorWrapper<Matrix<T>, T> {
 		for (uint64_t c = 0; c < rows(); c++)
 			std::swap(at(c, i), at(c, i));
 	}
-};
-
-template <typename T>
-class Tensor : public internal::tensorWrapper<Tensor<T>, T> {
-	using Base = internal::tensorWrapper<Tensor<T>, T>;
 };
 
 } // namespace TZ

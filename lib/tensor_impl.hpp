@@ -29,36 +29,12 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, mem::Allocat
 
 template <class T>
 TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
-                  const uint64_t offset, mem::Buffer data)
+                          const uint64_t offset, mem::Buffer data)
     : dim_(dim), offset_(offset), data_(data) {
 	for (uint8_t i = 0; i < dim; i++) {
 		shape_[i] = shape[i];
 		strides_[i] = strides[i];
 	}
-}
-
-template <class T>
-template <class NestedVector>
-TensorIMPL<T> TensorIMPL<T>::fromSTDVec(const std::vector<NestedVector>& v, mem::Allocator& allocator) {
-	TensorIMPL<T> t;
-	t.offset_ = 0;
-	uint8_t currDim = 0;
-	t.getSTDVecShape(v, t.shape_.data(), currDim);
-
-	t.dim_ = static_cast<uint8_t>(currDim);
-
-	t.computeStrides();
-
-	uint64_t capacity = 1;
-	for (int i = 0; i < t.dim_; i++)
-		capacity *= t.shape_[i];
-
-
-	t.data_ = mem::Buffer(capacity * sizeof(T), &allocator);
-
-	uint64_t offset = 0;
-	t.falttenSTDVec(v, t.data(), offset);
-	return t;
 }
 
 template <class T>
@@ -82,6 +58,14 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocato
 
 	data_ = mem::Buffer(capacity * sizeof(T), &allocator);
 }
+
+// # -------------------------
+#ifdef TZ_NORMAL_EQUAL
+// nothing
+#else
+#define TZ_NORMAL_EQUAL 1
+#endif
+// # -------------------------
 
 template <class T>
 TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
@@ -117,7 +101,7 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(TensorIMPL<T>&& a) {
 }
 
 
-// ================================================================================================================================================================
+// # ====================================================================================
 
 template <class T>
 uint64_t TensorIMPL<T>::dim() const {
@@ -248,7 +232,7 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 }
 
 
-// ================================================================================================================================================================
+// # ====================================================================================
 
 template <class T>
 T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
@@ -347,7 +331,7 @@ const T& TensorIMPL<T>::get() const {
 }
 
 
-// ================================================================================================================================================================
+// # ====================================================================================
 
 template <class T>
 void TensorIMPL<T>::computeStrides() {
@@ -359,36 +343,6 @@ void TensorIMPL<T>::computeStrides() {
 	}
 }
 
-
-template <class T>
-template <class K>
-void TensorIMPL<T>::getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim) {
-	return;
-}
-
-template <class T>
-template <class K>
-void TensorIMPL<T>::getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
-	shape[currDim++] = v.size();
-	TZ_CHECK(currDim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
-	if (v.empty())
-		return;
-	getSTDVecShape(v[0], shape, currDim);
-}
-
-
-template <class T>
-template <class K>
-void TensorIMPL<T>::falttenSTDVec(const K& k, T* dst, uint64_t& offset) {
-	dst[offset++] = static_cast<T>(k);
-}
-
-template <class T>
-template <class K>
-void TensorIMPL<T>::falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset) {
-	for (const auto& i : v)
-		falttenSTDVec(i, dst, offset);
-}
 
 template <class T>
 bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) {
@@ -431,4 +385,4 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 	return os;
 }
 
-} // namespace TZ
+} // namespace TZ::internal

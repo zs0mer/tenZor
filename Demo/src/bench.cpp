@@ -15,7 +15,7 @@ int main() {
 		}
 	}
 
-	TZ::Matrix<int> t = TZ::internal::TensorIMPL<int>::fromSTDVec(v);
+	TZ::Matrix<int> t = TZ::Tensor<int>::fromSTDVec(v).tensor_();
 	std::vector<uint64_t> l(2);
 
 	{

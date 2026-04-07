@@ -6,7 +6,13 @@
 
 namespace TZ::internal {
 
+// # -------------------------
+#ifdef TZ_ERRORS
+// nothing
+#else
 #define TZ_ERRORS 1
+#endif
+// # -------------------------
 
 #if TZ_ERRORS
 #define TZ_CHECK(expr, error) TZ::internal::check((expr), (error), __FILE__, __LINE__, __func__)
@@ -34,6 +40,8 @@ inline void check(const bool expr, const char* error, const char* file, int line
 #define TZ_CHECK(expr, error) ((void)0)
 #define TZ_CHECK_(expr) ((void)0)
 #endif
+
+// # --------------------------------------------------
 
 class Timer {
   private:

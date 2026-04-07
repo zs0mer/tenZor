@@ -25,19 +25,19 @@ class TensorIMPL {
 	uint64_t offset_;
 	mem::Buffer data_;
 
-	//! The data may not be layed linearly in memory
+	// ! The data may not be layed linearly in memory
 
-	//* the tensor can be:
-	//* - Normal - dimenson: anything   - shape: anything
-	//* - Scalar - dimenson: 0          - shape: {}
-	//* - Empty  - dimenson: 0          - shape: has at least one 0 in it
-	//* - Null   - dimenson: 0          - shape: {}
+	// * the tensor can be:
+	// * - Normal - dimenson: anything   - shape: anything
+	// * - Scalar - dimenson: 0          - shape: {}
+	// * - Empty  - dimenson: 0          - shape: has at least one 0 in it
+	// * - Null   - dimenson: 0          - shape: {}
 
-	//* normal index: array of the indexes to each dimenson
-	//* linear index: the way to index the memory, it only works with rawData()
+	// * normal index: array of the indexes to each dimenson
+	// * linear index: the way to index the memory, it only works with rawData()
 
   public:
-	//& seters ===========================================================================
+	// # seters ===========================================================================
 
 	TensorIMPL();
 
@@ -45,21 +45,15 @@ class TensorIMPL {
 	// the first argument is the number of dimensons the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
 	TensorIMPL(const uint8_t dim, const uint64_t* shape,
-	       mem::Allocator& allocator = mem::defaultAllocator());
+	           mem::Allocator& allocator = mem::defaultAllocator());
 
 	// standard constructor
 	TensorIMPL(const std::vector<uint64_t>& shape,
-	       mem::Allocator& allocator = mem::defaultAllocator());
+	           mem::Allocator& allocator = mem::defaultAllocator());
 
 	// constructor, should only use it professional
-	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides, const uint64_t offset,
-	       mem::Buffer data);
-
-	// un-nests a nested std::vector to a Tensor
-	// has to be right shape
-	template <class NestedVector>
-	static TensorIMPL fromSTDVec(const std::vector<NestedVector>& v,
-	                         mem::Allocator& allocator = mem::defaultAllocator());
+	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
+	           const uint64_t offset, mem::Buffer data);
 
 	// makes a new Tensor
 	void set(const std::vector<uint64_t>& shape,
@@ -78,7 +72,7 @@ class TensorIMPL {
 
 	TensorIMPL<T>& operator=(TensorIMPL<T>&&);
 
-	//& metadata geters ==================================================================
+	// # metadata geters ==================================================================
 
 	// get the dimenson of the tensor
 	uint64_t dim() const;
@@ -133,7 +127,7 @@ class TensorIMPL {
 	// returns the TZ::mem::Buffer object, that has the memory
 	const mem::Buffer buffer() const;
 
-	//& geters ===========================================================================
+	// # geters ===========================================================================
 
 	// returns the data containing in the given index
 	T& at(const std::vector<uint64_t>& idx);
@@ -170,21 +164,21 @@ class TensorIMPL {
 	// returns that one element
 	const T& get() const;
 
-	//& operators ========================================================================
+	// # operators ========================================================================
 
-	//* static
+	// * static
 	// calls func(a[i]) for all elements of the tensor
 	// you can modify a
 	template <typename Func>
 	static void apply(TensorIMPL<T>& a, Func func);
 
-	//* static
+	// * static
 	// calls func(a[i], b[i]) for all elements of the tensor
 	// you can modify b
 	template <typename Func>
 	static void apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func);
 
-	//* static
+	// * static
 	// calls func(a[i], b[i], c[i]) for all elements of the tensor
 	// you can modify c
 	template <typename Func>
@@ -206,9 +200,9 @@ class TensorIMPL {
 	template <typename Func>
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
-	//& private ==========================================================================
+	// # private ==========================================================================
   protected:
-	//& metadata cache
+	// # metadata cache
 
 	template <class K>
 	struct Cache {
@@ -228,25 +222,11 @@ class TensorIMPL {
 	mutable Cache<uint64_t> c_size_;
 	mutable Cache<bool> c_dense;
 
-	//& helper functions
+	// # helper functions
 
 	void computeStrides();
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
-
-	// base case
-	template <class K>
-	void getSTDVecShape(const K& k, uint64_t* const shape, uint8_t& currDim);
-
-	template <class K>
-	void getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim);
-
-	// base case
-	template <class K>
-	void falttenSTDVec(const K& k, T* dst, uint64_t& offset);
-
-	template <class K>
-	void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset);
 };
 
-} // namespace TZ
+} // namespace TZ::internal

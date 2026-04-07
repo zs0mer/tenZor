@@ -135,6 +135,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	}
 }
 
+// # --------------------
 
 template <class T>
 template <typename Func>
@@ -155,6 +156,9 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 }
 
 }; // namespace internal
+
+// # ===========================================================================
+
 
 // does a normal dot product beetwen two vectors
 template <class T>
@@ -200,7 +204,7 @@ Matrix<T> transpose(const Matrix<T>& m) {
 	                                         m.tensor()._buffer()));
 }
 
-//! don't use with intregers
+// ! don't use with intregers
 // returns the determinant of the Matrix
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
