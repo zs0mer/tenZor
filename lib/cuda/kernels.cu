@@ -24,7 +24,7 @@ void print_matrix(int* M, int n) {
 	}
 }
 
-int main() {
+void calc() {
 	int n = N;
 	int size = n * n * sizeof(int);
 
@@ -69,5 +69,5 @@ int main() {
 	cudaFree(d_B);
 	cudaFree(d_C);
 
-	return 0;
+	return;
 }

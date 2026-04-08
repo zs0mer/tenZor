@@ -3,3 +3,4 @@ build
 .direnv
 .vscode
 .cache
+.zed
