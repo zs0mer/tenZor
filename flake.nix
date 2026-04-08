@@ -44,6 +44,7 @@
           old.cudaPackages.cudatoolkit
 
           zed-editor
+          tig
 
           clang-tools
           nixd

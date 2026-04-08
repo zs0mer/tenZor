@@ -17,9 +17,9 @@ const constexpr std::uint64_t START_MEM_SIZE = 10 * 1024 * 1024;
 
 
 #ifdef TZ_DEFAULT_ALIGNMENT
-const constexpr std::uint64_t DEFAULT_ALIGNMENT = TZ_DEFAULT_ALIGNMENT;
+const constexpr std::uint8_t DEFAULT_ALIGNMENT = TZ_DEFAULT_ALIGNMENT;
 #else
-const constexpr std::uint64_t DEFAULT_ALIGNMENT = 64;
+const constexpr std::uint8_t DEFAULT_ALIGNMENT = 64;
 #endif
 
 enum Device { CPU, CUDA };
@@ -489,11 +489,17 @@ class Malloc : public Allocator {
 
 // # ================================================================================
 
-inline Allocator& defaultAllocator() {
+inline Allocator& defaultAllocator(Device device = CPU) {
 	// # ---------------
 #ifdef TZ_DEFAULT_ALLOCATOR
 	TZ_DEFAULT_ALLOCATOR();
 #else
+	if (device == CPU)
+		return Salloc::instance();
+
+	if (device == CUDA)
+		return Salloc::instance();
+
 	return Salloc::instance();
 #endif
 	// # ---------------
