@@ -9,11 +9,13 @@
 
 namespace TZ::internal {
 
+// # -------------------------
 #ifdef TZ_MAX_DIM
 const constexpr std::uint8_t MAX_DIM = 64;
 #else
 const constexpr std::uint8_t MAX_DIM = 64;
 #endif
+// # -------------------------
 
 template <class T>
 // standard tensor class
@@ -44,24 +46,20 @@ class TensorIMPL {
 	// standard constructor
 	// the first argument is the number of dimensons the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
-	TensorIMPL(const uint8_t dim, const uint64_t* shape,
-	           mem::Allocator& allocator = mem::defaultAllocator());
+	TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device = CPU);
 
 	// standard constructor
-	TensorIMPL(const std::vector<uint64_t>& shape,
-	           mem::Allocator& allocator = mem::defaultAllocator());
+	TensorIMPL(const std::vector<uint64_t>& shape, Device device = CPU);
 
 	// constructor, should only use it professional
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
 	           const uint64_t offset, mem::Buffer data);
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape,
-	         mem::Allocator& allocator = mem::defaultAllocator());
+	void set(const std::vector<uint64_t>& shape, Device device = CPU);
 
 	// makes a new Tensor
-	void set(const uint64_t dim, const uint64_t* shape,
-	         mem::Allocator& allocator = mem::defaultAllocator());
+	void set(const uint64_t dim, const uint64_t* shape, Device device = CPU);
 
 
 	TensorIMPL(const TensorIMPL&) = default;
@@ -81,7 +79,7 @@ class TensorIMPL {
 	const uint64_t* shape() const;
 
 	// get the strides of the tensor
-	const uint64_t* _strides() const;
+	const uint64_t* strides() const;
 
 	// get the number of elements in the tensor
 	uint64_t size() const;
@@ -119,7 +117,7 @@ class TensorIMPL {
 	mem::Allocator& allocator() const;
 
 	// returns the device the memory is on
-	mem::Device device() const;
+	Device device() const;
 
 	// returns the TZ::mem::Buffer object, that has the memory
 	mem::Buffer buffer();

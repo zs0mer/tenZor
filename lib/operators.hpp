@@ -185,7 +185,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
-	Matrix<T> out(a.rows(), b.cols(), a.tensor().allocator());
+	Matrix<T> out(a.rows(), b.cols(), a.tensor_().allocator());
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
@@ -198,10 +198,10 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 // returns the transeposed Matrix
 template <class T>
 Matrix<T> transpose(const Matrix<T>& m) {
-	std::array<uint64_t, 2> strides = {m.tensor()._strides()[1], m.tensor()._strides()[0]};
+	std::array<uint64_t, 2> strides = {m.tensor_().strides()[1], m.tensor_().strides()[0]};
 	std::array<uint64_t, 2> shape = {m.cols(), m.rows()};
-	return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), m.tensor()._offset(),
-	                                         m.tensor()._buffer()));
+	return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), m.tensor_().offset(),
+	                                         m.tensor_().buffer()));
 }
 
 // ! don't use with intregers

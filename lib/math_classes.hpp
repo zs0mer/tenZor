@@ -40,13 +40,10 @@ class TensorWrapper {
 
 	TensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
 
-	TensorWrapper(const std::vector<uint64_t>& shape,
-	              mem::Allocator& allocator = mem::defaultAllocator())
-	    : t_(shape, allocator) {}
+	TensorWrapper(const std::vector<uint64_t>& shape, Device device) : t_(shape, device) {}
 
-	TensorWrapper(const uint8_t dim, const uint64_t* shape,
-	              mem::Allocator& allocator = mem::defaultAllocator())
-	    : t_(dim, shape, allocator) {}
+	TensorWrapper(const uint8_t dim, const uint64_t* shape, Device device)
+	    : t_(dim, shape, device) {}
 
 
 	TensorWrapper(const TensorWrapper&) = default;
@@ -199,14 +196,13 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	template <class NestedVector>
-	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v,
-	                            mem::Allocator& allocator = mem::defaultAllocator()) {
+	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v, Device device = CPU) {
 		uint8_t currDim = 0;
 		std::array<uint64_t, internal::MAX_DIM> shape;
 
 		getSTDVecShape(v, shape.data(), currDim);
 
-		internal::TensorIMPL<T> t(currDim, shape.data(), allocator);
+		internal::TensorIMPL<T> t(currDim, shape.data(), device);
 
 		uint64_t offset = 0;
 		falttenSTDVec(v, t.data(), offset);
@@ -270,15 +266,15 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	}
 
 	// standard constructor with a T class
-	Scalar(const T& val, mem::Allocator& allocator = mem::defaultAllocator()) {
-		set(val, allocator);
+	Scalar(const T& val, Device device) {
+		set(val, device);
 	}
 
 	// # methods --------------------
 
 	// makes a new scalar with the class T
-	void set(const T& val, mem::Allocator& allocator = mem::defaultAllocator()) {
-		this->t_.set(0, nullptr, allocator);
+	void set(const T& val, Device device) {
+		this->t_.set(0, nullptr, device);
 		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
 	}
@@ -335,28 +331,28 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	}
 
 	// standard constructor with size of the Vector
-	Vector(const uint64_t size, mem::Allocator& allocator = mem::defaultAllocator()) {
-		set(size, allocator);
+	Vector(const uint64_t size, Device device) {
+		set(size, device);
 	}
 
 	// # methods --------------------
 
 	// standard set function
-	void set(const uint64_t size, mem::Allocator& allocator = mem::defaultAllocator()) {
-		this->t_.set(1, &size, allocator);
+	void set(const uint64_t size, Device device) {
+		this->t_.set(1, &size, device);
 		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t idx) {
 		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
-		return this->t_.data()[idx * this->t_._strides()[0]];
+		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t idx) const {
 		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
-		return this->t_.data()[idx * this->t_._strides()[0]];
+		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
 	// returns the scalar at the given index
@@ -397,31 +393,29 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// standard constructor with the size of the rows, and columns
-	Matrix(const uint64_t rows, const uint64_t cols,
-	       mem::Allocator& allocator = mem::defaultAllocator()) {
-		set(rows, cols, allocator);
+	Matrix(const uint64_t rows, const uint64_t cols, Device device) {
+		set(rows, cols, device);
 	}
 
 	// # methods --------------------
 
 	// standard set function with the size of the rows, and columns
-	void set(const uint64_t rows, const uint64_t cols,
-	         mem::Allocator& allocator = mem::defaultAllocator()) {
+	void set(const uint64_t rows, const uint64_t cols, Device device) {
 		std::array<uint64_t, 2> shape = {rows, cols};
-		this->t_.set(2, shape.data(), allocator);
+		this->t_.set(2, shape.data(), device);
 		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t i, const uint64_t j) {
 		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
-		return this->t_.data()[i * this->t_._strides()[0] + j * this->t_._strides()[1]];
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t i, const uint64_t j) const {
 		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
-		return this->t_.data()[i * this->t_._strides()[0] + j * this->t_._strides()[1]];
+		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
 	// returns the i'th row as a Vector
@@ -462,8 +456,8 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	Vector<T> col(const uint64_t j) {
 		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
 
-		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_._strides()[0],
-		                                         j * this->t_._strides()[1] + this->t_.offset(),
+		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                                         j * this->t_.strides()[1] + this->t_.offset(),
 		                                         this->t_.buffer()));
 	}
 
@@ -471,8 +465,8 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	const Vector<T> col(const uint64_t j) const {
 		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
 
-		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_._strides()[0],
-		                                         j * this->t_._strides()[1] + this->t_.offset(),
+		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                                         j * this->t_.strides()[1] + this->t_.offset(),
 		                                         this->t_.buffer()));
 	}
 

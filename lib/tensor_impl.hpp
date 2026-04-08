@@ -14,17 +14,26 @@
 
 namespace TZ::internal {
 
+// # -------------------------
+#ifdef TZ_NORMAL_EQUAL
+// nothing
+#else
+#define TZ_NORMAL_EQUAL 1
+#endif
+// # -------------------------
+
+
 template <class T>
 TensorIMPL<T>::TensorIMPL() : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr) {}
 
 template <class T>
-TensorIMPL<T>::TensorIMPL(const std::vector<uint64_t>& shape, mem::Allocator& allocator) {
-	set(shape, allocator);
+TensorIMPL<T>::TensorIMPL(const std::vector<uint64_t>& shape, Device device) {
+	set(shape, device);
 }
 
 template <class T>
-TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, mem::Allocator& allocator) {
-	set(dim, shape, allocator);
+TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device) {
+	set(dim, shape, device);
 }
 
 template <class T>
@@ -38,12 +47,12 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64
 }
 
 template <class T>
-void TensorIMPL<T>::set(const std::vector<uint64_t>& shape, mem::Allocator& allocator) {
-	set(shape.size(), shape.begin(), allocator);
+void TensorIMPL<T>::set(const std::vector<uint64_t>& shape, Device device) {
+	set(shape.size(), shape.begin(), device);
 }
 
 template <class T>
-void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocator& allocator) {
+void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device) {
 	TZ_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = dim;
 	offset_ = 0;
@@ -56,16 +65,8 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, mem::Allocato
 
 	computeStrides();
 
-	data_ = mem::Buffer(capacity * sizeof(T), &allocator);
+	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
 }
-
-// # -------------------------
-#ifdef TZ_NORMAL_EQUAL
-// nothing
-#else
-#define TZ_NORMAL_EQUAL 1
-#endif
-// # -------------------------
 
 template <class T>
 TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
@@ -114,7 +115,7 @@ const uint64_t* TensorIMPL<T>::shape() const {
 }
 
 template <class T>
-const uint64_t* TensorIMPL<T>::_strides() const {
+const uint64_t* TensorIMPL<T>::strides() const {
 	return strides_.begin();
 }
 
@@ -217,7 +218,7 @@ mem::Allocator& TensorIMPL<T>::allocator() const {
 }
 
 template <class T>
-mem::Device TensorIMPL<T>::device() const {
+Device TensorIMPL<T>::device() const {
 	return data_->allocator()->device();
 }
 
