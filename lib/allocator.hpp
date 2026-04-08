@@ -495,7 +495,7 @@ class Malloc : public Allocator {
 inline Allocator& defaultAllocator(Device device = CPU) {
 	// # -------------------------
 #ifdef TZ_DEFAULT_ALLOCATOR
-	TZ_DEFAULT_ALLOCATOR();
+	TZ_DEFAULT_ALLOCATOR;
 #else
 	if (device == CPU)
 		return Salloc::instance();
@@ -503,7 +503,7 @@ inline Allocator& defaultAllocator(Device device = CPU) {
 	if (device == CUDA)
 		return Salloc::instance();
 
-	return Salloc::instance();
+	return Malloc::instance();
 #endif
 	// # -------------------------
 }

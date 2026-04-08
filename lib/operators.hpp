@@ -167,9 +167,9 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	Scalar<T> out(0);
 	uint64_t n = a.size();
 
-	if (a.dense() && b.dense()) {
-		const T* ap = a.data();
-		const T* bp = b.data();
+	if (a.tensor_().dense() && b.tensor_().dense()) {
+		const T* ap = a.tensor_().data();
+		const T* bp = b.tensor_().data();
 
 		for (uint64_t i = 0; i < n; i++)
 			out.get() += ap[i] * bp[i];
@@ -185,7 +185,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
-	Matrix<T> out(a.rows(), b.cols(), a.tensor_().allocator());
+	Matrix<T> out(a.rows(), b.cols(), a.tensor_().device());
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {

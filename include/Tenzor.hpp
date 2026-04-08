@@ -7,7 +7,7 @@
 // # TZ_MAX_DIM : (64) -> uint8_t
 // # TZ_ERRORS : (1) -> bool
 // # TZ_NORMAL_EQUAL : (1) -> bool
-// # TZ_DEFAULT_ALLOCATOR : -> "function snippet"
+// # TZ_DEFAULT_ALLOCATOR :
 // (
 // 	if (device == CPU)
 //		return Salloc::instance();
@@ -15,8 +15,9 @@
 //	if (device == CUDA)
 //		return Salloc::instance();
 //
-//	return Salloc::instance();
+//	return Malloc::instance();
 // )
+// # -> "function snippet"
 
 
 #include "tensor_impl.hpp"

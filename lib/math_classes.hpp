@@ -40,9 +40,9 @@ class TensorWrapper {
 
 	TensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
 
-	TensorWrapper(const std::vector<uint64_t>& shape, Device device) : t_(shape, device) {}
+	TensorWrapper(const std::vector<uint64_t>& shape, Device device = CPU) : t_(shape, device) {}
 
-	TensorWrapper(const uint8_t dim, const uint64_t* shape, Device device)
+	TensorWrapper(const uint8_t dim, const uint64_t* shape, Device device = CPU)
 	    : t_(dim, shape, device) {}
 
 
@@ -266,14 +266,14 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	}
 
 	// standard constructor with a T class
-	Scalar(const T& val, Device device) {
+	Scalar(const T& val, Device device = CPU) {
 		set(val, device);
 	}
 
 	// # methods --------------------
 
 	// makes a new scalar with the class T
-	void set(const T& val, Device device) {
+	void set(const T& val, Device device = CPU) {
 		this->t_.set(0, nullptr, device);
 		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
@@ -331,14 +331,14 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	}
 
 	// standard constructor with size of the Vector
-	Vector(const uint64_t size, Device device) {
+	Vector(const uint64_t size, Device device = CPU) {
 		set(size, device);
 	}
 
 	// # methods --------------------
 
 	// standard set function
-	void set(const uint64_t size, Device device) {
+	void set(const uint64_t size, Device device = CPU) {
 		this->t_.set(1, &size, device);
 		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
 	}
@@ -393,14 +393,14 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// standard constructor with the size of the rows, and columns
-	Matrix(const uint64_t rows, const uint64_t cols, Device device) {
+	Matrix(const uint64_t rows, const uint64_t cols, Device device = CPU) {
 		set(rows, cols, device);
 	}
 
 	// # methods --------------------
 
 	// standard set function with the size of the rows, and columns
-	void set(const uint64_t rows, const uint64_t cols, Device device) {
+	void set(const uint64_t rows, const uint64_t cols, Device device = CPU) {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		this->t_.set(2, shape.data(), device);
 		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
