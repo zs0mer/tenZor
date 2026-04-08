@@ -11,11 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(CUDAToolkit REQUIRED)
+
 # ! THIS DEPENDS ON GPU
 set(CMAKE_CUDA_ARCHITECTURES 61)
 
 # Debugging flags
-
 set(CMAKE_CXX_FLAGS_DEBUG
     "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 )
@@ -30,7 +30,6 @@ set(CMAKE_CXX_FLAGS_DEBUG
 # # ##
 # # Paths
 # # ##
-
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/Demo/src")
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib/headers")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
@@ -41,8 +40,6 @@ set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/headers")
 # # ##
 # # CUDA Library
 # # ##
-
-
 add_library(tenzor_cuda
     "${CUDA_SRC_DIR}/kernels.cu"
 )
@@ -53,7 +50,6 @@ target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart)
 # # ##
 # # Application executable
 # # ##
-
 file(GLOB APP_SOURCES
     "${SRC_DIR}/*.cpp"
 )
@@ -61,7 +57,6 @@ file(GLOB APP_SOURCES
 add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 target_link_libraries(demo PRIVATE tenzor_cuda)
-
 
 add_executable(bench "${SRC_DIR}/bench.cpp")
 target_include_directories(bench PRIVATE ${INCLUDE_DIR})
@@ -75,7 +70,6 @@ target_compile_options(bench PRIVATE
     # -fno-omit-frame-pointer
 )
 target_link_libraries(bench PRIVATE tenzor_cuda)
-
 
 add_executable(alloc_bench "${SRC_DIR}/alloc_bench.cpp")
 target_include_directories(alloc_bench PRIVATE ${INCLUDE_DIR})
@@ -93,11 +87,9 @@ target_link_libraries(alloc_bench PRIVATE tenzor_cuda)
 # # ## ===========================================================================
 # # Testing =====================================================================
 # # ## ===========================================================================
-
 find_package(doctest REQUIRED)
 
 # # allocater ------------------------
-
 add_executable(Tallocater "${TEST_DIR}/allocater.cpp")
 
 target_include_directories(Tallocater PUBLIC ${INCLUDE_DIR})
@@ -109,7 +101,6 @@ target_link_libraries(Tallocater
 target_link_libraries(Tallocater PRIVATE tenzor_cuda)
 
 # # buffer ----------------------------
-
 add_executable(Tbuffer "${TEST_DIR}/buffer.cpp")
 
 target_include_directories(Tbuffer PUBLIC ${INCLUDE_DIR})
@@ -121,7 +112,6 @@ target_link_libraries(Tbuffer
 target_link_libraries(Tbuffer PRIVATE tenzor_cuda)
 
 # # ---------------------------------
-
 enable_testing()
 
 add_test(

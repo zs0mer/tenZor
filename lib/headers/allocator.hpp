@@ -5,11 +5,12 @@
 #include <cstdlib>
 #include <vector>
 
+#include "kernel_functions.hpp"
 #include "utils.hpp"
 
 namespace TZ {
 
-enum Device { CPU, CUDA };
+enum Device { CPU, GPU };
 
 namespace mem {
 
@@ -454,7 +455,7 @@ class Salloc : public Allocator {
 
 // # ================================================================================
 
-// simple allocator using malloc()
+// simple allocator using malloc() and free()
 class Malloc : public Allocator {
   private:
 	Malloc() = default;
@@ -492,6 +493,46 @@ class Malloc : public Allocator {
 
 // # ================================================================================
 
+// simple allocator to the GPU
+// uses simple CUDA functions
+class Galloc : public Allocator {
+  private:
+	Galloc() = default;
+
+
+  public:
+	static Galloc& instance() {
+		static Galloc* s = new Galloc;
+		return *s;
+	}
+
+	Device device() const override {
+		return Device::GPU;
+	};
+
+	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+		return GPUAlloc(bytes, DEFAULT_ALIGNMENT);
+	};
+
+	void deallocate(void* ptr, const uint64_t bytes = 0) override {
+		GPUFree(ptr, bytes);
+		ptr = nullptr;
+	};
+
+	~Galloc() = default;
+
+
+	Galloc(const Galloc&) = delete;
+
+	Galloc& operator=(const Galloc&) = delete;
+
+	Galloc(Galloc&&) = delete;
+
+	Galloc& operator=(Galloc&&) = delete;
+};
+
+// # ================================================================================
+
 inline Allocator& defaultAllocator(Device device = CPU) {
 	// # -------------------------
 #ifdef TZ_DEFAULT_ALLOCATOR
@@ -500,8 +541,8 @@ inline Allocator& defaultAllocator(Device device = CPU) {
 	if (device == CPU)
 		return Salloc::instance();
 
-	if (device == CUDA)
-		return Salloc::instance();
+	if (device == GPU)
+		return Galloc::instance();
 
 	return Malloc::instance();
 #endif
