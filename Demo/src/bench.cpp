@@ -1,4 +1,4 @@
-#include "Tenzor_math.hpp"
+#include "Tenzor.hpp"
 #include <iostream>
 #include <random>
 

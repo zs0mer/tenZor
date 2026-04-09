@@ -72,6 +72,10 @@ class TensorWrapper {
 		return t_.empty();
 	}
 
+	bool device() const {
+		return t_.device();
+	}
+
 	// # geters ===========================================================================
 
 	// returns the inner tensor
@@ -185,6 +189,7 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 
 }; // namespace internal
 
+// # Tensor =============================================================
 
 template <typename T>
 class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
@@ -195,8 +200,10 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
+	// the device can only be the CPU
 	template <class NestedVector>
-	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v, Device device = CPU) {
+	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v) {
+		Device device = CPU;
 		uint8_t currDim = 0;
 		std::array<uint64_t, internal::MAX_DIM> shape;
 
@@ -237,7 +244,6 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 			falttenSTDVec(i, dst, offset);
 	}
 };
-
 
 // # Scalar =====================================================================
 

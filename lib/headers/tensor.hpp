@@ -51,7 +51,7 @@ class TensorIMPL {
 	// standard constructor
 	TensorIMPL(const std::vector<uint64_t>& shape, Device device = CPU);
 
-	// constructor, should only use it professional
+	// constructor, should only use it caution
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
 	           const uint64_t offset, mem::Buffer data);
 

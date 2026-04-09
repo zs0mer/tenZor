@@ -17,7 +17,6 @@ template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	const uint64_t n = a.size();
 
-
 	if (a.dense()) {
 		T* ptr = a.data();
 		for (uint64_t i = 0; i < n; i++)
@@ -185,7 +184,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
-	Matrix<T> out(a.rows(), b.cols(), a.tensor_().device());
+	Matrix<T> out(a.rows(), b.cols(), a.device());
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {

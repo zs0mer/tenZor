@@ -19,5 +19,5 @@
 // )
 // # -> "function snippet"
 
-
-#include "tensor_impl.hpp"
+#include "math_classes.hpp"
+#include "operators.hpp"

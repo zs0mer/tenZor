@@ -107,8 +107,8 @@ class Buffer {
 
 	// standard constructor
 	Buffer(const uint64_t size = 0, Allocator* allocator = &defaultAllocator())
-	    : ptr_(static_cast<BufferIMPL*>(
-	          allocator->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+	    : ptr_(static_cast<BufferIMPL*>( // allocate with the default CPU allocater
+	          defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
 		new (ptr_) BufferIMPL(size, DEFAULT_ALIGNMENT, allocator);
 	}
 
@@ -174,7 +174,7 @@ class Buffer {
 	void clear() {
 		if (ptr_)
 			if (ptr_->release())
-				ptr_->allocator()->deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
+				defaultAllocator(CPU).deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
 	}
 };
 

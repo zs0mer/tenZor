@@ -237,6 +237,7 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 
 template <class T>
 T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	TZ_CHECK(!indexable(), "not indexable");
 	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
 
@@ -252,6 +253,7 @@ T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	TZ_CHECK(!indexable(), "not indexable");
 	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
 
@@ -267,6 +269,7 @@ const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 
 template <class T>
 T& TensorIMPL<T>::at(const uint64_t* idx) {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
@@ -279,6 +282,7 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const uint64_t* idx) const {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
@@ -307,10 +311,13 @@ const TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::clone() const {
-	TensorIMPL<T> out(dim_, shape_.data(), *data_->allocator());
+	TensorIMPL<T> out(dim_, shape_.data(), mem::defaultAllocator(device()));
 
 	if (dense()) {
-		std::memcpy(out.data(), this->data(), size() * sizeof(T));
+		if (device() == CPU)
+			std::memcpy(out.data(), this->data(), size() * sizeof(T));
+		if (device() == GPU)
+			memCopyGPU(out.data(), this->data(), size() * sizeof(T));
 		return out;
 	}
 
@@ -321,12 +328,14 @@ TensorIMPL<T> TensorIMPL<T>::clone() const {
 
 template <class T>
 T& TensorIMPL<T>::get() {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	TZ_CHECK(!scalar(), "Not a scalar");
 	return *(static_cast<T*>(data_->data()) + offset_);
 }
 
 template <class T>
 const T& TensorIMPL<T>::get() const {
+	TZ_CHECK(device() != CPU, "not on the CPU");
 	TZ_CHECK(!scalar(), "Not a scalar");
 	return *(static_cast<const T*>(data_->data()) + offset_);
 }
