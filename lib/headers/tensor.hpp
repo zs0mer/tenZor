@@ -11,7 +11,7 @@ namespace TZ::internal {
 
 // # -------------------------
 #ifdef TZ_MAX_DIM
-const constexpr std::uint8_t MAX_DIM = 64;
+const constexpr std::uint8_t MAX_DIM = TZ_MAX_DIM;
 #else
 const constexpr std::uint8_t MAX_DIM = 64;
 #endif
@@ -128,17 +128,21 @@ class TensorIMPL {
 	// # geters ===========================================================================
 
 	// returns the data containing in the given index
+	// cant do on the GPU
 	T& at(const std::vector<uint64_t>& idx);
 
 	// returns the data containing in the given index
+	// cant do on the GPU
 	const T& at(const std::vector<uint64_t>& idx) const;
 
 	// returns the data containing in the given index
 	// the input is a C style array containing dim number of indexes
+	// cant do on the GPU
 	T& at(const uint64_t* idx);
 
 	// returns the data containing in the given index
 	// the input is a C style array containing dim number of indexes
+	// cant do on the GPU
 	const T& at(const uint64_t* idx) const;
 
 	// returns a Tensor containing the data in the given index
@@ -156,10 +160,12 @@ class TensorIMPL {
 
 	// IF the tensor is scalar
 	// returns that one element
+	// cant do on the GPU
 	T& get();
 
 	// IF the tensor is scalar
 	// returns that one element
+	// cant do on the GPU
 	const T& get() const;
 
 	// # operators ========================================================================
@@ -167,35 +173,35 @@ class TensorIMPL {
 	// * static
 	// calls func(a[i]) for all elements of the tensor
 	// you can modify a
-	template <typename Func>
+	template <class Func>
 	static void apply(TensorIMPL<T>& a, Func func);
 
 	// * static
 	// calls func(a[i], b[i]) for all elements of the tensor
 	// you can modify b
-	template <typename Func>
+	template <class Func>
 	static void apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func);
 
 	// * static
 	// calls func(a[i], b[i], c[i]) for all elements of the tensor
 	// you can modify c
-	template <typename Func>
+	template <class Func>
 	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func);
 
 
 	// calls func(this[i]) for all elements of the tensor
 	// you can modify "this[i]"
-	template <typename Func>
+	template <class Func>
 	void apply(Func func);
 
 	// calls func(a[i], this[i]) for all elements of the tensor
 	// you can modify "this[i]"
-	template <typename Func>
+	template <class Func>
 	void apply(const TensorIMPL<T>& a, Func func);
 
 	// calls func(a[i], b[i], this[i]) for all elements of the tensor
 	// you can modify "this[i]"
-	template <typename Func>
+	template <class Func>
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
 	// # private ==========================================================================

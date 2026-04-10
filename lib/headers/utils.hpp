@@ -17,6 +17,10 @@ namespace TZ::internal {
 #if TZ_ERRORS
 #define TZ_CHECK(expr, error) TZ::internal::check((expr), (error), __FILE__, __LINE__, __func__)
 #define TZ_CHECK_(expr) TZ::internal::check((expr), "unexpected", __FILE__, __LINE__, __func__)
+#else
+#define TZ_CHECK(expr, error) ((void)0)
+#define TZ_CHECK_(expr) ((void)0)
+#endif
 
 // a function to make error handleing easier
 inline void check(const bool expr, const char* error, const char* file, int line,
@@ -36,10 +40,7 @@ inline void check(const bool expr, const char* error, const char* file, int line
 		throw std::runtime_error(oss.str());
 	}
 }
-#else
-#define TZ_CHECK(expr, error) ((void)0)
-#define TZ_CHECK_(expr) ((void)0)
-#endif
+
 
 // # --------------------------------------------------
 
@@ -59,5 +60,118 @@ class Timer {
 		std::cout << "> " << s << ": " << duration.count() << " seconds" << std::endl;
 	}
 };
+
+// # --------------------------------------------------
+
+template <typename T>
+struct Copy {
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, T& b) const {
+		b = a;
+	}
+};
+
+template <typename T>
+struct Add {
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, const T& b, T& c) const {
+		c = a + b;
+	}
+};
+
+template <typename T>
+struct Subtract {
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, const T& b, T& c) const {
+		c = a - b;
+	}
+};
+
+template <typename T>
+struct Negate {
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(T& a) const {
+		a = -a;
+	}
+};
+
+template <typename T>
+struct AddScalar {
+	T val;
+
+	AddScalar(const T& s) : val(s) {}
+
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, T& b) const {
+		b = a + val;
+	}
+};
+
+template <typename T>
+struct SubtractScalar {
+	T val;
+
+	SubtractScalar(const T& s) : val(s) {}
+
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, T& b) const {
+		b = a - val;
+	}
+};
+
+template <typename T>
+struct MultiplyScalar {
+	T val;
+
+	MultiplyScalar(const T& s) : val(s) {}
+
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(const T& a, T& b) const {
+		b = a * val;
+	}
+};
+
+template <typename T>
+struct Set {
+	T val;
+
+	Set(const T& s) : val(s) {}
+
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(T& a) const {
+		a = val;
+	}
+};
+
+template <typename T>
+struct Sum {
+	T& val;
+
+	Sum(T& s) : val(s) {}
+
+#ifdef CUDACC
+	__host__ __device__
+#endif
+	    void operator()(T& a) const {
+		val += a;
+	}
+};
+
 
 } // namespace TZ::internal

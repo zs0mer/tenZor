@@ -17,13 +17,6 @@ template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	const uint64_t n = a.size();
 
-	if (a.dense()) {
-		T* ptr = a.data();
-		for (uint64_t i = 0; i < n; i++)
-			func(ptr[i]);
-		return;
-	}
-
 	std::array<uint64_t, MAX_DIM> counters = {};
 
 	T* base = a.rawData();
@@ -32,13 +25,17 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	for (uint64_t i = 0; i < n; i++) {
 		func(base[linearIdx]);
 
-		for (uint8_t d = a.dim_; d-- > 0;) {
-			linearIdx += a.strides_[d];
-			if (++counters[d] < a.shape_[d])
-				break;
+		if (a.dense())
+			linearIdx++;
+		else {
+			for (uint8_t d = a.dim_ && !a.dense(); d-- > 0;) {
+				linearIdx += a.strides_[d];
+				if (++counters[d] < a.shape_[d])
+					break;
 
-			linearIdx -= counters[d] * a.strides_[d];
-			counters[d] = 0;
+				linearIdx -= counters[d] * a.strides_[d];
+				counters[d] = 0;
+			}
 		}
 	}
 }
@@ -50,16 +47,6 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 
 	const uint64_t n = a.size();
 
-	if (a.dense() && b.dense()) {
-		const T* ap = a.data();
-		T* bp = b.data();
-
-		for (uint64_t i = 0; i < n; i++)
-			func(ap[i], bp[i]);
-
-		return;
-	}
-
 	std::array<uint64_t, MAX_DIM> counters = {};
 
 	const T* baseA = a.rawData();
@@ -67,19 +54,26 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	uint64_t linearIdxA = a.offset_;
 	uint64_t linearIdxB = b.offset_;
 
+	bool dense = a.dense() && b.dense();
+
 	for (uint64_t i = 0; i < n; i++) {
 		func(baseA[linearIdxA], baseB[linearIdxB]);
 
-		for (uint8_t d = a.dim_; d-- > 0;) {
-			linearIdxA += a.strides_[d];
-			linearIdxB += b.strides_[d];
-			if (++counters[d] < a.shape_[d])
-				break;
+		if (dense) {
+			linearIdxA++;
+			linearIdxB++;
+		} else {
+			for (uint8_t d = a.dim_; d-- > 0;) {
+				linearIdxA += a.strides_[d];
+				linearIdxB += b.strides_[d];
+				if (++counters[d] < a.shape_[d])
+					break;
 
-			linearIdxA -= counters[d] * a.strides_[d];
-			linearIdxB -= counters[d] * b.strides_[d];
+				linearIdxA -= counters[d] * a.strides_[d];
+				linearIdxB -= counters[d] * b.strides_[d];
 
-			counters[d] = 0;
+				counters[d] = 0;
+			}
 		}
 	}
 }
@@ -92,17 +86,6 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 
 	const uint64_t n = a.size();
 
-	if (a.dense() && b.dense() && c.dense()) {
-		const T* ap = a.data();
-		const T* bp = b.data();
-		T* cp = c.data();
-
-		for (uint64_t i = 0; i < n; i++)
-			func(ap[i], bp[i], cp[i]);
-
-		return;
-	}
-
 	std::array<uint64_t, MAX_DIM> counters = {};
 
 	const T* baseA = a.rawData();
@@ -113,23 +96,31 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	uint64_t linearIdxB = b.offset_;
 	uint64_t linearIdxC = c.offset_;
 
+	bool dense = a.dense() && b.dense() && c.dense();
+
 
 	for (uint64_t i = 0; i < n; i++) {
 		func(baseA[linearIdxA], baseB[linearIdxB], baseC[linearIdxC]);
 
-		for (uint8_t d = a.dim_; d-- > 0;) {
-			linearIdxA += a.strides_[d];
-			linearIdxB += b.strides_[d];
-			linearIdxC += c.strides_[d];
+		if (dense) {
+			linearIdxA++;
+			linearIdxB++;
+			linearIdxC++;
+		} else {
+			for (uint8_t d = a.dim_; d-- > 0;) {
+				linearIdxA += a.strides_[d];
+				linearIdxB += b.strides_[d];
+				linearIdxC += c.strides_[d];
 
-			if (++counters[d] < a.shape_[d])
-				break;
+				if (++counters[d] < a.shape_[d])
+					break;
 
-			linearIdxA -= counters[d] * a.strides_[d];
-			linearIdxB -= counters[d] * b.strides_[d];
-			linearIdxC -= counters[d] * c.strides_[d];
+				linearIdxA -= counters[d] * a.strides_[d];
+				linearIdxB -= counters[d] * b.strides_[d];
+				linearIdxC -= counters[d] * c.strides_[d];
 
-			counters[d] = 0;
+				counters[d] = 0;
+			}
 		}
 	}
 }

@@ -72,7 +72,7 @@ class TensorWrapper {
 		return t_.empty();
 	}
 
-	bool device() const {
+	Device device() const {
 		return t_.device();
 	}
 
@@ -100,82 +100,77 @@ class TensorWrapper {
 	// # operations ===========================================================================
 
 	Derived operator+(const TensorWrapper& other) const {
-		Derived out(t_.dim(), t_.shape(), t_.allocator());
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_,
-		                               [](const T& a, const T& b, T& c) { c = a + b; });
+		Derived out(t_.dim(), t_.shape(), device());
+		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, internal::Add<T>{});
 		return out;
 	}
 
 	Derived operator-(const TensorWrapper& other) const {
-		Derived out(t_.dim(), t_.shape(), t_.allocator());
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_,
-		                               [](const T& a, const T& b, T& c) { c = a - b; });
+		Derived out(t_.dim(), t_.shape(), device());
+		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, internal::Subtract<T>{});
 		return out;
 	}
 
 	Derived operator-() const {
 		Derived out = this->clone();
-		internal::TensorIMPL<T>::apply(out.t_, [](T& a) { a = -a; });
+		internal::TensorIMPL<T>::apply(out.t_, internal::Negate<T>{});
 		return out;
 	}
 
 
 	Derived operator+(const Scalar<T>& s) const {
-		Derived out(t_.dim(), t_.shape(), t_.allocator());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_,
-		                               [&](const T& a, T& b) { b = a + s.get(); });
+		Derived out(t_.dim(), t_.shape(), device());
+		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::AddScalar<T>(s.get()));
 		return out;
 	}
 
 	Derived operator-(const Scalar<T>& s) const {
-		Derived out(t_.dim(), t_.shape(), t_.allocator());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_,
-		                               [&](const T& a, T& b) { b = a - s.get(); });
+		Derived out(t_.dim(), t_.shape(), device());
+		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::SubtractScalar<T>(s.get()));
 		return out;
 	}
 
 	Derived operator*(const Scalar<T>& s) const {
-		Derived out(t_.dim(), t_.shape(), t_.allocator());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_,
-		                               [&](const T& a, T& b) { b = a * s.get(); });
+		Derived out(t_.dim(), t_.shape(), device());
+		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::MultiplyScalar<T>(s.get()));
 		return out;
 	}
 
 
 	Derived operator+=(const TensorWrapper& other) {
-		internal::TensorIMPL<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b += a; });
+		internal::TensorIMPL<T>::apply(other.t_, this->t_, this->t_, internal::Add<T>{});
 		return Derived(this->t_);
 	}
 
 	Derived operator-=(const TensorWrapper& other) {
-		internal::TensorIMPL<T>::apply(other.t_, this->t_, [](const T& a, T& b) { b -= a; });
+		internal::TensorIMPL<T>::apply(other.t_, this->t_, this->t_, internal::SubtractScalar<T>{});
 		return Derived(this->t_);
 	}
 
 	Derived operator+=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, [&](T& a) { a += s.get(); });
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::AddScalar<T>(s.get()));
 		return Derived(this->t_);
 	}
 
 	Derived operator-=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, [&](T& a) { a -= s.get(); });
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::SubtractScalar<T>(s.get()));
 		return Derived(this->t_);
 	}
 
 	Derived operator*=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, [&](T& a) { a *= s.get(); });
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::MultiplyScalar<T>(s.get()));
 		return Derived(this->t_);
 	}
 
 	// sets everything to a given value
 	void setAll(const T& s) {
-		internal::TensorIMPL<T>::apply(this->t_, [&](T& a) { a = s; });
+		internal::TensorIMPL<T>::apply(this->t_, internal::Set<T>(s.get()));
 	}
 
 	// sums everything
 	Scalar<T> sum() {
 		Scalar<T> s = 0;
-		internal::TensorIMPL<T>::apply(this->t_, [&](const T& a) { s.get() += a; });
+		internal::TensorIMPL<T>::apply(this->t_, internal::Sum<T>(s.get()));
 		return s;
 	}
 };

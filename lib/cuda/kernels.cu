@@ -3,11 +3,19 @@
 #include <chrono>
 #include <iomanip>
 #include <cstdint>
+
 #include "kernel_functions.hpp"
+#include "utils.hpp"
+
+namespace TZ::cuda {
 
 // # ---------------------------------------------
 
+#if TZ_ERRORS
 #define CHECK_CUDA check_cuda(__FILE__, __LINE__, __func__)
+#else
+#define CHECK_CUDA ((void)0)
+#endif
 
 inline void check_cuda(const char* file, int line, const char* func) {
 	cudaError_t err = cudaGetLastError();
@@ -26,28 +34,12 @@ inline void check_cuda(const char* file, int line, const char* func) {
 	}
 }
 
-// # ------------------
-
-#define CHECK(expr, error) check((expr), (error), __FILE__, __LINE__, __func__)
-#define CHECK_(expr) check((expr), "unexpected", __FILE__, __LINE__, __func__)
-
-inline void check(const bool expr, const char* error, const char* file, int line,
-                  const char* func) {
-
-	if (expr) {
-		auto now = std::chrono::system_clock::now();
-		std::time_t t_c = std::chrono::system_clock::to_time_t(now);
-
-		std::ostringstream oss;
-		oss << "Error: " << error << "\n"
-		    << "File: " << file << "\n"
-		    << "Line: " << line << "\n"
-		    << "Function: " << func << "\n"
-		    << "Time: " << std::put_time(std::localtime(&t_c), "%F %T");
-
-		throw std::runtime_error(oss.str());
-	}
+void sync() {
+#if SYNCGPU
+	cudaDeviceSynchronize();
+#endif
 }
+
 
 // # ---------------------------------------------
 
@@ -73,77 +65,119 @@ void copyToCPU(void* to, void* from, const uint64_t bytes) {
 }
 
 void memCopyGPU(void* to, void* from, const uint64_t bytes) {
-    cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToDevice);
+	cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToDevice);
 }
 
+// # ---------------------------------------------
 
+template <typename T>
+__device__ uint64_t computeLinearIdx(uint64_t flatIdx, const SimpleTensor<T>& a) {
+	uint64_t idx = a.offset;
 
+	for (uint8_t d = a.dim; d-- > 0;) {
+		uint64_t coord = flatIdx % shape[d];
+		flatIdx /= shape[d];
+		idx += coord * strides[d];
+	}
 
-#define N 4 // small demo size (keep simple)
+	return idx;
+}
 
-__global__ void matmul(int* A, int* B, int* C, int n) {
-	int row = blockIdx.y * blockDim.y + threadIdx.y;
-	int col = blockIdx.x * blockDim.x + threadIdx.x;
+template <typename T, typename Func>
+__global__ void applyKernel(SimpleTensor<T>& a, Func func) {
+	const uint64_t stride = blockDim.x * gridDim.x;
+	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	T* base = static_cast<T*>(a.data);
 
-	if (row < n && col < n) {
-		int sum = 0;
-		for (int k = 0; k < n; k++) {
-			sum += A[row * n + k] * B[k * n + col];
-		}
-		C[row * n + col] = sum;
+	while (i < a.size) {
+
+		uint64_t idx = a.dense ? i + a.offset : computeLinearIdx(i, a);
+
+		func(base[idx]);
+
+		i += stride;
 	}
 }
 
-void print_matrix(int* M, int n) {
-	for (int i = 0; i < n; i++) {
-		for (int j = 0; j < n; j++) {
-			printf("%4d ", M[i * n + j]);
+template <typename T, typename Func>
+__global__ void applyKernel(const SimpleTensor<T>& a, SimpleTensor<T>& b, Func func) {
+	const uint64_t stride = blockDim.x * gridDim.x;
+	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	const T* baseA = a.data;
+	T* baseB = b.data;
+
+	if (a.dense && b.dense) {
+		while (i < a.size) {
+			func(baseA[i + a.offset], baseB[i + b.offset]);
+
+			i += stride;
 		}
-		printf("\n");
+		return;
+	}
+
+	while (i < a.size) {
+
+		uint64_t idxA = a.dense ? i + a.offset : computeLinearIdx(i, a);
+		uint64_t idxB = b.dense ? i + b.offset : computeLinearIdx(i, b);
+
+		func(baseA[idxA], baseB[idxB]);
+
+		i += stride;
 	}
 }
 
-void calc() {
-	int n = N;
-	int size = n * n * sizeof(int);
+template <typename T, typename Func>
+__global__ void applyKernel(const SimpleTensor<T>& a, const SimpleTensor<T>& b, SimpleTensor<T>& c,
+                            Func func) {
+	const uint64_t stride = blockDim.x * gridDim.x;
+	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	const T* baseA = a.data;
+	const T* baseB = b.data;
+	T* baseC = c.data;
 
-	int A[N * N] = {1, 2, 3, 4, 5, 6, 7, 8, 1, 1, 1, 1, 2, 2, 2, 2};
+	if (a.dense && b.dense && c.dense) {
+		while (i < a.size) {
+			func(baseA[i + a.offset], baseB[i + b.offset], baseC[i + c.offset]);
 
-	int B[N * N] = {1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1};
+			i += stride;
+		}
+		return;
+	}
 
-	int C[N * N] = {0};
+	while (i < a.size) {
 
-	int *d_A, *d_B, *d_C;
+		uint64_t idxA = a.dense ? i + a.offset : computeLinearIdx(i, a);
+		uint64_t idxB = b.dense ? i + b.offset : computeLinearIdx(i, b);
+		uint64_t idxC = c.dense ? i + c.offset : computeLinearIdx(i, c);
 
-	cudaMalloc(&d_A, size);
-	cudaMalloc(&d_B, size);
-	cudaMalloc(&d_C, size);
+		func(baseA[idxA], baseB[idxB], baseC[idxC]);
 
-	cudaMemcpy(d_A, A, size, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_B, B, size, cudaMemcpyHostToDevice);
+		i += stride;
+	}
+}
 
-	dim3 threads(2, 2);
-	dim3 blocks((n + 1) / 2, (n + 1) / 2);
-
-	matmul<<<blocks, threads>>>(d_A, d_B, d_C, n);
-	cudaDeviceSynchronize(); // 🔥 WAIT for GPU to finish
-
+template <class Func, class T>
+void applyGPU(SimpleTensor<T> a, Func func) {
+	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
+	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+	sync();
 	CHECK_CUDA;
-
-	cudaMemcpy(C, d_C, size, cudaMemcpyDeviceToHost);
-
-	printf("Matrix A:\n");
-	print_matrix(A, n);
-
-	printf("\nMatrix B:\n");
-	print_matrix(B, n);
-
-	printf("\nMatrix C = A x B:\n");
-	print_matrix(C, n);
-
-	cudaFree(d_A);
-	cudaFree(d_B);
-	cudaFree(d_C);
-
-	return;
 }
+
+template <class Func, class T>
+void applyGPU(const SimpleTensor<T> a, SimpleTensor<T> b, Func func) {
+	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
+	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+	sync();
+	CHECK_CUDA;
+}
+
+template <class Func, class T>
+void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c, Func func) {
+	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
+	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+	sync();
+	CHECK_CUDA;
+}
+
+} // namespace TZ::cuda

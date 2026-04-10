@@ -73,7 +73,7 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
 #if TZ_NORMAL_EQUAL
 	if (isSameShape(*this, a) && (!dense() || offset_ != 0)) {
 
-		apply(a, *this, [](const T& a, T& b) { b = a; });
+		apply(a, *this, Copy<T>{});
 
 		return *this;
 	}
@@ -86,7 +86,7 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(TensorIMPL<T>&& a) {
 #if TZ_NORMAL_EQUAL
 	if (isSameShape(*this, a)) {
 
-		apply(a, *this, [](const T& a, T& b) { b = a; });
+		apply(a, *this, Copy<T>{});
 
 		return *this;
 	}
@@ -321,7 +321,7 @@ TensorIMPL<T> TensorIMPL<T>::clone() const {
 		return out;
 	}
 
-	apply(*this, out, [](const T& a, T& b) { b = a; });
+	apply(*this, out, Copy<T>{});
 
 	return out;
 }
