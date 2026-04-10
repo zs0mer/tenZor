@@ -4,6 +4,8 @@
 #include <array>
 #include <cmath>
 
+#include "allocator.hpp"
+#include "kernel_functions.hpp"
 #include "tensor_impl.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
@@ -15,6 +17,11 @@ namespace internal {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
+	if (a.device() == GPU) {
+		cuda::applyGPU(getCudaTensor(a), func);
+		return;
+	}
+
 	const uint64_t n = a.size();
 
 	std::array<uint64_t, MAX_DIM> counters = {};
@@ -44,6 +51,10 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	TZ_CHECK(!isSameShape(a, b), "not same size tensors in apply");
+	if (a.device() == GPU) {
+		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), func);
+		return;
+	}
 
 	const uint64_t n = a.size();
 
@@ -83,6 +94,10 @@ template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
 	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
+	if (a.device() == GPU && b.device() == GPU && c.device() == GPU) {
+		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(b), func);
+		return;
+	}
 
 	const uint64_t n = a.size();
 

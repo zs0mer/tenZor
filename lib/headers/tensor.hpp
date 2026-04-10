@@ -6,6 +6,7 @@
 
 #include "allocator.hpp"
 #include "buffer.hpp"
+#include "kernel_functions.hpp"
 
 namespace TZ::internal {
 
@@ -51,7 +52,7 @@ class TensorIMPL {
 	// standard constructor
 	TensorIMPL(const std::vector<uint64_t>& shape, Device device = CPU);
 
-	// constructor, should only use it caution
+	// constructor, should only use it with caution
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
 	           const uint64_t offset, mem::Buffer data);
 
@@ -158,6 +159,10 @@ class TensorIMPL {
 	// makes a new tensor that has the same data as the old one
 	TensorIMPL<T> clone() const;
 
+	// makes a new tensor that has the same data as the old one
+	// can be on a new device
+	TensorIMPL<T> copyTo(Device device) const;
+
 	// IF the tensor is scalar
 	// returns that one element
 	// cant do on the GPU
@@ -231,6 +236,8 @@ class TensorIMPL {
 	void computeStrides();
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
+
+	static cuda::SimpleTensor<T> getCudaTensor(const TensorIMPL<T>& t);
 };
 
 } // namespace TZ::internal

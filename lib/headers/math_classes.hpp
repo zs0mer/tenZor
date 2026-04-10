@@ -173,6 +173,10 @@ class TensorWrapper {
 		internal::TensorIMPL<T>::apply(this->t_, internal::Sum<T>(s.get()));
 		return s;
 	}
+
+	Derived copyTo(Device device) {
+		return Derived(this->copyTo(device));
+	}
 };
 
 

@@ -10,6 +10,7 @@
 #include "buffer.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
+#include "kernel_functions.hpp"
 
 
 namespace TZ::internal {
@@ -327,6 +328,27 @@ TensorIMPL<T> TensorIMPL<T>::clone() const {
 }
 
 template <class T>
+TensorIMPL<T> TensorIMPL<T>::copyTo(Device toDevice) const {
+	if (device() == toDevice)
+		return clone();
+
+	TensorIMPL<T> t = *this;
+	if (!dense())
+		t = t.clone();
+
+	mem::Buffer buff;
+	if (toDevice == GPU) {
+		buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
+		cuda::copyToGPU(buff->data(), t.data(), t.data_->size());
+	} else if (toDevice == CPU) {
+		buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
+		cuda::copyToCPU(buff->data(), t.data(), t.data_->size());
+	}
+
+	return TensorIMPL<T>(dim_, shape_, strides_, 0, buff);
+}
+
+template <class T>
 T& TensorIMPL<T>::get() {
 	TZ_CHECK(device() != CPU, "not on the CPU");
 	TZ_CHECK(!scalar(), "Not a scalar");
@@ -366,6 +388,17 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 	return true;
 }
 
+template <class T>
+static cuda::SimpleTensor<T> getCudaTensor(const TensorIMPL<T>& t) {
+	return cuda::SimpleTensor<T>({.dim = t.dim(),
+	                              .shape = t.shape(),
+	                              .strides = t.strides(),
+	                              .offset = t.offset(),
+	                              .data = t.rawData(),
+
+	                              .size = t.size(),
+	                              .dense = t.dense()});
+}
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {

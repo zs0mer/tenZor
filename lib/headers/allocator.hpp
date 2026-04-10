@@ -511,11 +511,11 @@ class Galloc : public Allocator {
 	};
 
 	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
-		return allocGPU(bytes, DEFAULT_ALIGNMENT);
+		return cuda::allocGPU(bytes, DEFAULT_ALIGNMENT);
 	};
 
 	void deallocate(void* ptr, const uint64_t bytes = 0) override {
-		freeGPU(ptr, bytes);
+		cuda::freeGPU(ptr, bytes);
 		ptr = nullptr;
 	};
 
