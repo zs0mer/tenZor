@@ -42,6 +42,7 @@ set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/headers")
 # # ##
 add_library(tenzor_cuda
     "${CUDA_SRC_DIR}/kernels.cu"
+    "${CUDA_SRC_DIR}/apply_inst.cu"
 )
 
 target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})

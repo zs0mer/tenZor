@@ -70,20 +70,20 @@ void memCopyGPU(void* to, void* from, const uint64_t bytes) {
 
 // # ---------------------------------------------
 
-template <typename T>
+template <class T>
 __device__ uint64_t computeLinearIdx(uint64_t flatIdx, const SimpleTensor<T>& a) {
 	uint64_t idx = a.offset;
 
 	for (uint8_t d = a.dim; d-- > 0;) {
-		uint64_t coord = flatIdx % shape[d];
-		flatIdx /= shape[d];
-		idx += coord * strides[d];
+		uint64_t coord = flatIdx % a.shape[d];
+		flatIdx /= a.shape[d];
+		idx += coord * a.strides[d];
 	}
 
 	return idx;
 }
 
-template <typename T, typename Func>
+template <class T, class Func>
 __global__ void applyKernel(SimpleTensor<T>& a, Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -99,7 +99,7 @@ __global__ void applyKernel(SimpleTensor<T>& a, Func func) {
 	}
 }
 
-template <typename T, typename Func>
+template <class T, class Func>
 __global__ void applyKernel(const SimpleTensor<T>& a, SimpleTensor<T>& b, Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -126,7 +126,7 @@ __global__ void applyKernel(const SimpleTensor<T>& a, SimpleTensor<T>& b, Func f
 	}
 }
 
-template <typename T, typename Func>
+template <class T, class Func>
 __global__ void applyKernel(const SimpleTensor<T>& a, const SimpleTensor<T>& b, SimpleTensor<T>& c,
                             Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
@@ -156,26 +156,26 @@ __global__ void applyKernel(const SimpleTensor<T>& a, const SimpleTensor<T>& b, 
 	}
 }
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(SimpleTensor<T> a, Func func) {
-	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
-	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+    int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
+	applyKernel<<<BLOCKSIZE, blockSize>>>(a, func);
 	sync();
 	CHECK_CUDA;
 }
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, SimpleTensor<T> b, Func func) {
-	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
-	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+    int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
+	applyKernel<<<BLOCKSIZE, blockSize>>>(a, b, func);
 	sync();
 	CHECK_CUDA;
 }
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c, Func func) {
-	int gridSize = min((a.size + BLOCKSIZE - 1) / BLOCKSIZE, MAXGRIDSIZE);
-	applyKernel<<<BLOCKSIZE, gridSize>>>(a, func);
+	int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
+	applyKernel<<<GRIDKSIZE, blockSize>>>(a, b, c, func);
 	sync();
 	CHECK_CUDA;
 }

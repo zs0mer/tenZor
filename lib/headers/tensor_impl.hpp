@@ -45,6 +45,9 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64
 		shape_[i] = shape[i];
 		strides_[i] = strides[i];
 	}
+
+	if (this->device() == GPU)
+		gpuMetadata_.init();
 }
 
 template <class T>
@@ -67,6 +70,9 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 	computeStrides();
 
 	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
+
+	if (this->device() == GPU)
+		gpuMetadata_.init();
 }
 
 template <class T>
@@ -100,6 +106,14 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(TensorIMPL<T>&& a) {
 	data_ = std::move(a.data_);
 
 	return *this;
+}
+
+template <class T>
+TensorIMPL<T>::~TensorIMPL() {
+	if (GpuMeta::d_shape)
+		mem::defaultAllocator(GPU).deallocate(GpuMeta::d_shape, dim() * sizeof(T));
+	if (GpuMeta::d_strides)
+		mem::defaultAllocator(GPU).deallocate(GpuMeta::d_strides, dim() * sizeof(T));
 }
 
 
@@ -175,25 +189,25 @@ uint64_t TensorIMPL<T>::offset() const {
 
 template <class T>
 bool TensorIMPL<T>::dense() const {
-	if (c_dense.cached)
-		return c_dense.value;
+	if (c_dense_.cached)
+		return c_dense_.value;
 
 
 	if (empty()) {
-		c_dense.set(true);
+		c_dense_.set(true);
 		return true;
 	}
 
 	uint64_t expected = 1;
 	for (int64_t i = dim_; i-- > 0;) {
 		if (strides_[i] != expected) {
-			c_dense.set(false);
+			c_dense_.set(false);
 			return false;
 		}
 
 		expected *= shape_[i];
 	}
-	c_dense.set(true);
+	c_dense_.set(true);
 
 	return true;
 }
@@ -364,6 +378,19 @@ const T& TensorIMPL<T>::get() const {
 
 
 // # ====================================================================================
+
+template <class T>
+void TensorIMPL<T>::GpuMeta::init(uint8_t dim, uint64_t* shape, uint64_t* strides, Device device) {
+	if (device != GPU)
+		return;
+	d_shape = static_cast<uint64_t*>(
+	    mem::defaultAllocator(GPU).allocate(dim * sizeof(uint64_t), mem::DEFAULT_ALIGNMENT));
+	d_strides = static_cast<uint64_t*>(
+	    mem::defaultAllocator(GPU).allocate(dim * sizeof(uint64_t), mem::DEFAULT_ALIGNMENT));
+
+	cuda::memCopyGPU(d_shape, shape, dim * sizeof(uint64_t));
+	cuda::memCopyGPU(d_strides, strides, dim * sizeof(uint64_t));
+}
 
 template <class T>
 void TensorIMPL<T>::computeStrides() {

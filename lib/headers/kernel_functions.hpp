@@ -12,10 +12,10 @@ namespace TZ::cuda {
 #endif
 // # -------------------------
 
-constexpr uint32_t BLOCKSIZE = 256;
-constexpr uint32_t MAXGRIDSIZE = 64;
+constexpr uint32_t GRIDKSIZE = 256;
+constexpr uint32_t MAXBLOCKSIZE = 64;
 
-// # ----------------
+// # -------------------------
 
 void* allocGPU(const uint64_t bytes, const uint8_t alignment = 64);
 
@@ -27,7 +27,7 @@ void copyToCPU(void* to, void* from, const uint64_t bytes);
 
 void memCopyGPU(void* to, void* from, const uint64_t bytes);
 
-// # ----------------
+// # -------------------------
 
 template <class T>
 struct SimpleTensor {
@@ -42,7 +42,7 @@ struct SimpleTensor {
 	bool dense_;
 };
 
-// # ----------------
+// # -------------------------
 
 template <class Func, class T>
 void applyGPU(SimpleTensor<T> a, Func func);

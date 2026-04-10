@@ -71,6 +71,8 @@ class TensorIMPL {
 
 	TensorIMPL<T>& operator=(TensorIMPL<T>&&);
 
+	~TensorIMPL();
+
 	// # metadata geters ==================================================================
 
 	// get the dimenson of the tensor
@@ -213,6 +215,17 @@ class TensorIMPL {
   protected:
 	// # metadata cache
 
+	// if device() == GPU
+	// shape_ and stride on VRAM
+	struct GpuMeta {
+		uint64_t* d_shape = nullptr;
+		uint64_t* d_strides = nullptr;
+
+		void init(uint8_t dim, uint64_t* shape, uint64_t* strides, Device device);
+	};
+
+	GpuMeta gpuMetadata_;
+
 	template <class K>
 	struct Cache {
 		bool cached = false;
@@ -229,7 +242,7 @@ class TensorIMPL {
 	};
 
 	mutable Cache<uint64_t> c_size_;
-	mutable Cache<bool> c_dense;
+	mutable Cache<bool> c_dense_;
 
 	// # helper functions
 
