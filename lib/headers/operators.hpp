@@ -98,7 +98,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
                           Func func) {
 	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
 	if (a.device() == GPU && b.device() == GPU && c.device() == GPU) {
-		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(b), func);
+		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(c), func);
 		return;
 	}
 

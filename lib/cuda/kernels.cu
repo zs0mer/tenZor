@@ -59,14 +59,17 @@ void freeGPU(void* ptr, const uint64_t bytes) {
 
 void copyToGPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyHostToDevice);
+	CHECK_CUDA;
 }
 
 void copyToCPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToHost);
+	CHECK_CUDA;
 }
 
-void memCopyGPU(void* to, const void* from, const uint64_t bytes) {
+void memCopyOnGPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToDevice);
+	CHECK_CUDA;
 }
 
 // # ---------------------------------------------

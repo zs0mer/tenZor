@@ -98,10 +98,15 @@ class Buffer {
 
   public:
 	// this buffer will become the new owner of the BufferIMPL
-	Buffer(BufferIMPL* buffer)
-	    : ptr_(buffer ? buffer
-	                  : static_cast<BufferIMPL*>(defaultAllocator(CPU).allocate(
-	                        sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+	Buffer(BufferIMPL* buffer) {
+		if (buffer) {
+			ptr_ = buffer;
+			return;
+		}
+
+
+		ptr_ = static_cast<BufferIMPL*>(
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
 		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &defaultAllocator());
 	}
 

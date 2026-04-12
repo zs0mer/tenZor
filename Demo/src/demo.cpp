@@ -11,9 +11,9 @@ int main() {
 
 	// k.row(0) = Tensor<float>::fromSTDVec(std::vector<float>{4, 4});
 	// Tensor<float> t = k.toTensor();
-	// m += m;
+	m += m;
 
-	// k = m.copyTo(CPU);
-	// std::cout << k;
+	k = m.copyTo(CPU);
+	std::cout << k;
 	//   calc();
 }

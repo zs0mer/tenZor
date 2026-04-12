@@ -71,8 +71,6 @@ class TensorIMPL {
 
 	TensorIMPL<T>& operator=(TensorIMPL<T>&&);
 
-	~TensorIMPL();
-
 	// # metadata geters ==================================================================
 
 	// get the dimenson of the tensor
@@ -216,15 +214,9 @@ class TensorIMPL {
 	// # metadata cache
 
 	// if device() == GPU
-	// shape_ and stride on VRAM
-	struct GpuMeta {
-		uint64_t* d_shape = nullptr;
-		uint64_t* d_strides = nullptr;
-
-		void init(uint8_t dim, uint64_t* shape, uint64_t* strides, Device device);
-	};
-
-	GpuMeta gpuMetadata_;
+	// shape_ and stride_ on VRAM
+	// structued |__shape__|__stride__|
+	mem::Buffer gpuMetadata_;
 
 	template <class K>
 	struct Cache {
@@ -251,6 +243,8 @@ class TensorIMPL {
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 
 	static cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T> t);
+
+	void gpuMetadatLazyInit();
 };
 
 } // namespace TZ::internal

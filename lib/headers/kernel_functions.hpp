@@ -25,7 +25,7 @@ void copyToGPU(void* to, const void* from, const uint64_t bytes);
 
 void copyToCPU(void* to, const void* from, const uint64_t bytes);
 
-void memCopyGPU(void* to, const void* from, const uint64_t bytes);
+void memCopyOnGPU(void* to, const void* from, const uint64_t bytes);
 
 // # -------------------------
 
