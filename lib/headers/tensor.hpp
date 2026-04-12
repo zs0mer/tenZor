@@ -250,7 +250,7 @@ class TensorIMPL {
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 
-	static cuda::SimpleTensor<T> getCudaTensor(const TensorIMPL<T>& t);
+	static cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T> t);
 };
 
 } // namespace TZ::internal

@@ -12,8 +12,8 @@ namespace TZ::cuda {
 #endif
 // # -------------------------
 
-constexpr uint32_t GRIDKSIZE = 256;
-constexpr uint32_t MAXBLOCKSIZE = 64;
+constexpr uint32_t THREADS = 256;
+constexpr uint32_t MAXBLOCKNUM = 64;
 
 // # -------------------------
 
@@ -21,36 +21,36 @@ void* allocGPU(const uint64_t bytes, const uint8_t alignment = 64);
 
 void freeGPU(void* ptr, const uint64_t bytes);
 
-void copyToGPU(void* to, void* from, const uint64_t bytes);
+void copyToGPU(void* to, const void* from, const uint64_t bytes);
 
-void copyToCPU(void* to, void* from, const uint64_t bytes);
+void copyToCPU(void* to, const void* from, const uint64_t bytes);
 
-void memCopyGPU(void* to, void* from, const uint64_t bytes);
+void memCopyGPU(void* to, const void* from, const uint64_t bytes);
 
 // # -------------------------
 
 template <class T>
 struct SimpleTensor {
-	uint8_t dim_;
-	uint64_t* shape_;
-	uint64_t* strides_;
-	uint64_t offset_;
-	T* data_;
+	uint8_t dim;
+	uint64_t* shape;
+	uint64_t* strides;
+	uint64_t offset;
+	T* data;
 
 	// chashed
-	uint64_t size_;
-	bool dense_;
+	uint64_t size;
+	bool dense;
 };
 
 // # -------------------------
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(SimpleTensor<T> a, Func func);
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, SimpleTensor<T> b, Func func);
 
-template <class Func, class T>
+template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c, Func func);
 
 }; // namespace TZ::cuda

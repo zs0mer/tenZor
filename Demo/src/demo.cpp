@@ -1,5 +1,4 @@
 #include "Tenzor.hpp"
-#include "math_classes.hpp"
 
 void calc();
 
@@ -12,9 +11,9 @@ int main() {
 
 	// k.row(0) = Tensor<float>::fromSTDVec(std::vector<float>{4, 4});
 	// Tensor<float> t = k.toTensor();
-	m += m;
+	// m += m;
 
-	k = m.copyTo(CPU);
-	std::cout << k;
-	//  calc();
+	// k = m.copyTo(CPU);
+	// std::cout << k;
+	//   calc();
 }

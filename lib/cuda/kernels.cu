@@ -3,9 +3,10 @@
 #include <chrono>
 #include <iomanip>
 #include <cstdint>
+#include <algorithm>
 
-#include "kernel_functions.hpp"
 #include "utils.hpp"
+#include "kernel_functions.hpp"
 
 namespace TZ::cuda {
 
@@ -24,7 +25,7 @@ inline void check_cuda(const char* file, int line, const char* func) {
 		std::time_t t_c = std::chrono::system_clock::to_time_t(now);
 
 		std::ostringstream oss;
-		oss << "Error: " << cudaGetErrorString(err) << "\n"
+		oss << "CUDA Error: " << cudaGetErrorString(err) << "\n"
 		    << "File: " << file << "\n"
 		    << "Line: " << line << "\n"
 		    << "Function: " << func << "\n"
@@ -56,22 +57,22 @@ void freeGPU(void* ptr, const uint64_t bytes) {
 	CHECK_CUDA;
 }
 
-void copyToGPU(void* to, void* from, const uint64_t bytes) {
+void copyToGPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyHostToDevice);
 }
 
-void copyToCPU(void* to, void* from, const uint64_t bytes) {
+void copyToCPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToHost);
 }
 
-void memCopyGPU(void* to, void* from, const uint64_t bytes) {
+void memCopyGPU(void* to, const void* from, const uint64_t bytes) {
 	cudaMemcpy(to, from, bytes, cudaMemcpyDeviceToDevice);
 }
 
 // # ---------------------------------------------
 
 template <class T>
-__device__ uint64_t computeLinearIdx(uint64_t flatIdx, const SimpleTensor<T>& a) {
+__device__ uint64_t computeLinearIdx(uint64_t flatIdx, const SimpleTensor<T> a) {
 	uint64_t idx = a.offset;
 
 	for (uint8_t d = a.dim; d-- > 0;) {
@@ -84,7 +85,7 @@ __device__ uint64_t computeLinearIdx(uint64_t flatIdx, const SimpleTensor<T>& a)
 }
 
 template <class T, class Func>
-__global__ void applyKernel(SimpleTensor<T>& a, Func func) {
+__global__ void applyKernel(SimpleTensor<T> a, Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
 	T* base = static_cast<T*>(a.data);
@@ -100,7 +101,7 @@ __global__ void applyKernel(SimpleTensor<T>& a, Func func) {
 }
 
 template <class T, class Func>
-__global__ void applyKernel(const SimpleTensor<T>& a, SimpleTensor<T>& b, Func func) {
+__global__ void applyKernel(const SimpleTensor<T> a, SimpleTensor<T> b, Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
 	const T* baseA = a.data;
@@ -127,7 +128,7 @@ __global__ void applyKernel(const SimpleTensor<T>& a, SimpleTensor<T>& b, Func f
 }
 
 template <class T, class Func>
-__global__ void applyKernel(const SimpleTensor<T>& a, const SimpleTensor<T>& b, SimpleTensor<T>& c,
+__global__ void applyKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c,
                             Func func) {
 	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -158,26 +159,74 @@ __global__ void applyKernel(const SimpleTensor<T>& a, const SimpleTensor<T>& b, 
 
 template <class T, class Func>
 void applyGPU(SimpleTensor<T> a, Func func) {
-    int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
-	applyKernel<<<BLOCKSIZE, blockSize>>>(a, func);
+	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
+	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
+	applyKernel<<<blocks, THREADS>>>(a, func);
 	sync();
 	CHECK_CUDA;
 }
 
 template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, SimpleTensor<T> b, Func func) {
-    int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
-	applyKernel<<<BLOCKSIZE, blockSize>>>(a, b, func);
+	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
+	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
+	applyKernel<<<blocks, THREADS>>>(a, b, func);
 	sync();
 	CHECK_CUDA;
 }
 
 template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c, Func func) {
-	int blockSize = min((a.size + GRIDKSIZE - 1) / GRIDKSIZE, MAXBLOCKSIZE);
-	applyKernel<<<GRIDKSIZE, blockSize>>>(a, b, c, func);
+	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
+	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
+	applyKernel<<<blocks, THREADS>>>(a, b, c, func);
 	sync();
 	CHECK_CUDA;
 }
+
+// # ============================================================================================
+
+using namespace TZ::internal;
+#define INSTANTIATE_UNARY_APPLY(T, Func)                                                           \
+	template void applyGPU<T, Func<T>>(SimpleTensor<T>, Func<T>)
+
+#define INSTANTIATE_BINARY_APPLY(T, Func)                                                          \
+	template void applyGPU<T, Func<T>>(const SimpleTensor<T>, SimpleTensor<T>, Func<T>)
+
+#define INSTANTIATE_TERNARY_APPLY(T, Func)                                                         \
+	template void applyGPU<T, Func<T>>(const SimpleTensor<T>, const SimpleTensor<T>,               \
+	                                   SimpleTensor<T>, Func<T>)
+
+
+#define INSTANTIATE_COMPUTE_LINEAR_IDX(T)                                                          \
+	template __device__ uint64_t computeLinearIdx<T>(uint64_t, const SimpleTensor<T>)
+
+
+#define INSTANTIATE_ALL(T)                                                                         \
+	INSTANTIATE_UNARY_APPLY(T, Negate);                                                            \
+	INSTANTIATE_UNARY_APPLY(T, Set);                                                               \
+                                                                                                   \
+	INSTANTIATE_BINARY_APPLY(T, Copy);                                                             \
+	INSTANTIATE_BINARY_APPLY(T, AddScalar);                                                        \
+	INSTANTIATE_BINARY_APPLY(T, SubtractScalar);                                                   \
+	INSTANTIATE_BINARY_APPLY(T, MultiplyScalar);                                                   \
+                                                                                                   \
+	INSTANTIATE_TERNARY_APPLY(T, Add);                                                             \
+	INSTANTIATE_TERNARY_APPLY(T, Subtract);                                                        \
+                                                                                                   \
+	INSTANTIATE_COMPUTE_LINEAR_IDX(T);
+
+// # --------------------
+
+INSTANTIATE_ALL(int32_t)
+
+INSTANTIATE_ALL(int64_t)
+
+INSTANTIATE_ALL(uint32_t)
+
+INSTANTIATE_ALL(uint64_t)
+
+INSTANTIATE_ALL(float)
+
 
 } // namespace TZ::cuda

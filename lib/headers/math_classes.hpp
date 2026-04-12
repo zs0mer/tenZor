@@ -175,7 +175,7 @@ class TensorWrapper {
 	}
 
 	Derived copyTo(Device device) {
-		return Derived(this->copyTo(device));
+		return Derived(this->t_.copyTo(device));
 	}
 };
 

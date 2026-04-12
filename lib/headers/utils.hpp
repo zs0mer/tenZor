@@ -22,6 +22,12 @@ namespace TZ::internal {
 #define TZ_CHECK_(expr) ((void)0)
 #endif
 
+#ifdef __CUDACC__
+#define TZ_HOST_DEVICE __host__ __device__
+#else
+#define TZ_HOST_DEVICE
+#endif
+
 // a function to make error handleing easier
 inline void check(const bool expr, const char* error, const char* file, int line,
                   const char* func) {
@@ -65,40 +71,28 @@ class Timer {
 
 template <typename T>
 struct Copy {
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, T& b) const {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a;
 	}
 };
 
 template <typename T>
 struct Add {
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, const T& b, T& c) const {
+	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
 		c = a + b;
 	}
 };
 
 template <typename T>
 struct Subtract {
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, const T& b, T& c) const {
+	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
 		c = a - b;
 	}
 };
 
 template <typename T>
 struct Negate {
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(T& a) const {
+	TZ_HOST_DEVICE void operator()(T& a) const {
 		a = -a;
 	}
 };
@@ -109,10 +103,7 @@ struct AddScalar {
 
 	AddScalar(const T& s) : val(s) {}
 
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, T& b) const {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a + val;
 	}
 };
@@ -123,10 +114,7 @@ struct SubtractScalar {
 
 	SubtractScalar(const T& s) : val(s) {}
 
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, T& b) const {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a - val;
 	}
 };
@@ -137,10 +125,7 @@ struct MultiplyScalar {
 
 	MultiplyScalar(const T& s) : val(s) {}
 
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(const T& a, T& b) const {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a * val;
 	}
 };
@@ -151,10 +136,7 @@ struct Set {
 
 	Set(const T& s) : val(s) {}
 
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(T& a) const {
+	TZ_HOST_DEVICE void operator()(T& a) const {
 		a = val;
 	}
 };
@@ -165,10 +147,7 @@ struct Sum {
 
 	Sum(T& s) : val(s) {}
 
-#ifdef CUDACC
-	__host__ __device__
-#endif
-	    void operator()(T& a) const {
+	TZ_HOST_DEVICE void operator()(T& a) const {
 		val += a;
 	}
 };

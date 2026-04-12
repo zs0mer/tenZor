@@ -14,6 +14,7 @@
 namespace TZ {
 namespace internal {
 
+// these are the CPU impl
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
@@ -47,6 +48,7 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	}
 }
 
+// these are the CPU impl
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
@@ -89,6 +91,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	}
 }
 
+// these are the CPU impl
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
