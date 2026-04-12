@@ -52,18 +52,18 @@ inline void check(const bool expr, const char* error, const char* file, int line
 
 class Timer {
   private:
-	std::chrono::_V2::system_clock::time_point start;
-	std::string s;
+	using Clock = std::chrono::high_resolution_clock;
+	Clock::time_point start;
+	std::string label;
 
   public:
-	Timer(std::string s_ = "timer") : s(s_) {
-		start = std::chrono::high_resolution_clock::now();
-	}
-	~Timer() {
-		std::chrono::_V2::system_clock::time_point end = std::chrono::high_resolution_clock::now();
+	explicit Timer(std::string s = "timer") : label(std::move(s)), start(Clock::now()) {}
 
-		std::chrono::duration duration = std::chrono::duration<double>(end - start);
-		std::cout << "> " << s << ": " << duration.count() << " seconds" << std::endl;
+	~Timer() {
+		auto end = Clock::now();
+		std::chrono::duration<double> duration = end - start;
+
+		std::cout << "> " << label << ": " << duration.count() << " seconds" << std::endl;
 	}
 };
 
@@ -147,7 +147,7 @@ struct Sum {
 
 	Sum(T& s) : val(s) {}
 
-	TZ_HOST_DEVICE void operator()(T& a) const {
+	void operator()(T& a) const {
 		val += a;
 	}
 };

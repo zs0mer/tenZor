@@ -5,15 +5,32 @@ void calc();
 using namespace TZ;
 
 int main() {
-	std::vector<std::vector<float>> a = {{1, 2}, {2, 3}};
-	Matrix<float> k = Tensor<float>::fromSTDVec(a);
+	Matrix<float> k(100000, 10000);
 	Matrix<float> m = k.copyTo(GPU);
 
 	// k.row(0) = Tensor<float>::fromSTDVec(std::vector<float>{4, 4});
 	// Tensor<float> t = k.toTensor();
-	m += m;
+	std::cout << "starting";
 
-	k = m.copyTo(CPU);
-	std::cout << k;
-	//   calc();
+	{
+		TZ::internal::Timer z("CPU");
+		k *= 2;
+		k *= 2;
+		k *= 2;
+		k *= 2;
+		k *= 2;
+	}
+
+	{
+		TZ::internal::Timer z("GPU");
+		m *= 2;
+		m *= 2;
+		m *= 2;
+		m *= 2;
+		m *= 2;
+	}
+
+	// k = m.copyTo(CPU);
+	//   std::cout << k;
+	//      calc();
 }

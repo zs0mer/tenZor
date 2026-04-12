@@ -164,7 +164,7 @@ class TensorWrapper {
 
 	// sets everything to a given value
 	void setAll(const T& s) {
-		internal::TensorIMPL<T>::apply(this->t_, internal::Set<T>(s.get()));
+		internal::TensorIMPL<T>::apply(this->t_, internal::Set<T>(s));
 	}
 
 	// sums everything
