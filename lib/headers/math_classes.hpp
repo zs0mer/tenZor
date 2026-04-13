@@ -168,6 +168,7 @@ class TensorWrapper {
 	}
 
 	// sums everything
+	// ! can't use on GPU
 	Scalar<T> sum() {
 		Scalar<T> s = 0;
 		internal::TensorIMPL<T>::apply(this->t_, internal::Sum<T>(s.get()));

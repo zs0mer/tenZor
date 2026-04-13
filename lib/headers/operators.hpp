@@ -53,6 +53,7 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	TZ_CHECK(!isSameShape(a, b), "not same size tensors in apply");
+	TZ_CHECK(a.device() != b.device(), "not same device tensors in apply");
 	if (a.device() == GPU) {
 		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), func);
 		return;
@@ -97,7 +98,9 @@ template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
 	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
-	if (a.device() == GPU && b.device() == GPU && c.device() == GPU) {
+	TZ_CHECK(a.device() != b.device() || b.device() != c.device(),
+	         "not same device tensors in apply");
+	if (a.device() == GPU) {
 		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(c), func);
 		return;
 	}
@@ -172,6 +175,10 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() != b.size(), "not the same size vectors in dot");
+	TZ_CHECK(a.device() != b.device(), "not same device tensors in dot");
+	if (a.device() == GPU)
+		return Scalar<T>(cuda::dot(getCudaTensor(a), getCudaTensor(b)));
+
 	Scalar<T> out(0);
 	uint64_t n = a.size();
 
@@ -213,6 +220,7 @@ Matrix<T> transpose(const Matrix<T>& m) {
 }
 
 // ! don't use with intregers
+// ! can't run on GPU
 // returns the determinant of the Matrix
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {

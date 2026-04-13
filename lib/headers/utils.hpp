@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <iomanip>
+#include <cassert>
 
 namespace TZ::internal {
 
@@ -147,7 +148,10 @@ struct Sum {
 
 	Sum(T& s) : val(s) {}
 
-	void operator()(T& a) const {
+	TZ_HOST_DEVICE void operator()(T& a) const {
+#ifdef __CUDA_ARCH__
+		assert(false);
+#endif
 		val += a;
 	}
 };

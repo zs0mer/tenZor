@@ -35,12 +35,28 @@ inline void check_cuda(const char* file, int line, const char* func) {
 	}
 }
 
-void sync() {
+inline void sync() {
 #if SYNCGPU
 	cudaDeviceSynchronize();
 #endif
 }
 
+
+template <typename T>
+__device__ inline void gpuAtomicAdd(T* address, T val) {
+	atomicAdd(address, val);
+}
+
+template <>
+__device__ inline void gpuAtomicAdd<uint64_t>(uint64_t* address, uint64_t val) {
+	atomicAdd(reinterpret_cast<unsigned long long int*>(address),
+	          static_cast<unsigned long long int>(val));
+}
+
+template <>
+__device__ inline void gpuAtomicAdd<int64_t>(int64_t* address, int64_t val) {
+	assert(false);
+}
 
 // # ---------------------------------------------
 
@@ -187,6 +203,49 @@ void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> 
 	CHECK_CUDA;
 }
 
+
+template <class T>
+__global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* out) {
+	T sum = 0;
+	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
+	T* baseA = a.data;
+	T* baseB = b.data;
+
+	if (a.dense && b.dense) {
+		while (i < a.size) {
+			sum += baseA[i + a.offset] * baseB[i + b.offset];
+			i += blockDim.x * gridDim.x;
+		}
+	} else {
+		while (i < a.size) {
+			uint64_t idxA = a.dense ? i + a.offset : computeLinearIdx(i, a);
+			uint64_t idxB = b.dense ? i + b.offset : computeLinearIdx(i, b);
+
+			sum += baseA[idxA] * baseB[idxB];
+			i += blockDim.x * gridDim.x;
+		}
+	}
+
+	gpuAtomicAdd(out, sum);
+}
+
+
+template <class T>
+T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
+	T p = 0;
+	T* out = static_cast<T*>(allocGPU(sizeof(T)));
+	copyToGPU(out, &p, sizeof(T));
+
+	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
+	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
+	dotKernel<<<blocks, THREADS>>>(a, b, out);
+
+	sync();
+	CHECK_CUDA;
+	copyToCPU(&p, out, sizeof(T));
+	return p;
+}
+
 // # ============================================================================================
 
 using namespace TZ::internal;
@@ -204,10 +263,13 @@ using namespace TZ::internal;
 #define INSTANTIATE_COMPUTE_LINEAR_IDX(T)                                                          \
 	template __device__ uint64_t computeLinearIdx<T>(uint64_t, const SimpleTensor<T>)
 
+#define INSTANTIATE_DOT(T) template T dot<T>(const SimpleTensor<T> a, const SimpleTensor<T> b)
+
 
 #define INSTANTIATE_ALL(T)                                                                         \
 	INSTANTIATE_UNARY_APPLY(T, Negate);                                                            \
 	INSTANTIATE_UNARY_APPLY(T, Set);                                                               \
+	INSTANTIATE_UNARY_APPLY(T, Sum);                                                               \
                                                                                                    \
 	INSTANTIATE_BINARY_APPLY(T, Copy);                                                             \
 	INSTANTIATE_BINARY_APPLY(T, AddScalar);                                                        \
@@ -217,7 +279,9 @@ using namespace TZ::internal;
 	INSTANTIATE_TERNARY_APPLY(T, Add);                                                             \
 	INSTANTIATE_TERNARY_APPLY(T, Subtract);                                                        \
                                                                                                    \
-	INSTANTIATE_COMPUTE_LINEAR_IDX(T);
+	INSTANTIATE_COMPUTE_LINEAR_IDX(T);                                                             \
+                                                                                                   \
+	INSTANTIATE_DOT(T);
 
 // # --------------------
 

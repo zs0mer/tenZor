@@ -5,3 +5,5 @@ TODO:
   make sure const works
   multy threading
   gooood tests
+  MEM leaks
+  Biig cuda mem alloc

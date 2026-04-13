@@ -17,18 +17,6 @@ constexpr uint32_t MAXBLOCKNUM = 64;
 
 // # -------------------------
 
-void* allocGPU(const uint64_t bytes, const uint8_t alignment = 64);
-
-void freeGPU(void* ptr, const uint64_t bytes);
-
-void copyToGPU(void* to, const void* from, const uint64_t bytes);
-
-void copyToCPU(void* to, const void* from, const uint64_t bytes);
-
-void memCopyOnGPU(void* to, const void* from, const uint64_t bytes);
-
-// # -------------------------
-
 template <class T>
 struct SimpleTensor {
 	uint8_t dim;
@@ -44,6 +32,18 @@ struct SimpleTensor {
 
 // # -------------------------
 
+void* allocGPU(const uint64_t bytes, const uint8_t alignment = 64);
+
+void freeGPU(void* ptr, const uint64_t bytes);
+
+void copyToGPU(void* to, const void* from, const uint64_t bytes);
+
+void copyToCPU(void* to, const void* from, const uint64_t bytes);
+
+void memCopyOnGPU(void* to, const void* from, const uint64_t bytes);
+
+// # -------------------------
+
 template <class T, class Func>
 void applyGPU(SimpleTensor<T> a, Func func);
 
@@ -52,5 +52,10 @@ void applyGPU(const SimpleTensor<T> a, SimpleTensor<T> b, Func func);
 
 template <class T, class Func>
 void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c, Func func);
+
+// # -------------------------
+
+template <class T>
+T dot(const SimpleTensor<T> a, const SimpleTensor<T> b);
 
 }; // namespace TZ::cuda
