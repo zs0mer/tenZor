@@ -402,7 +402,7 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 }
 
 template <class T>
-cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor(TensorIMPL<T> t) {
+const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor(TensorIMPL<T> t) {
 	t.gpuMetadatLazyInit();
 	return cuda::SimpleTensor<T>(
 	    {.dim = static_cast<uint8_t>(t.dim()),

@@ -177,7 +177,8 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() != b.size(), "not the same size vectors in dot");
 	TZ_CHECK(a.device() != b.device(), "not same device tensors in dot");
 	if (a.device() == GPU)
-		return Scalar<T>(cuda::dot(getCudaTensor(a), getCudaTensor(b)));
+		return Scalar<T>(cuda::dot(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
+		                           internal::TensorIMPL<T>::getCudaTensor(b.tensor_())));
 
 	Scalar<T> out(0);
 	uint64_t n = a.size();

@@ -79,12 +79,7 @@ class TensorWrapper {
 	// # geters ===========================================================================
 
 	// returns the inner tensor
-	internal::TensorIMPL<T>& tensor_() {
-		return t_;
-	}
-
-	// returns the inner tensor
-	const internal::TensorIMPL<T>& tensor_() const {
+	internal::TensorIMPL<T> tensor_() const {
 		return t_;
 	}
 

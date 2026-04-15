@@ -209,6 +209,9 @@ class TensorIMPL {
 	template <class Func>
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
+
+	static const cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T> t);
+
 	// # private ==========================================================================
   protected:
 	// # metadata cache
@@ -241,8 +244,6 @@ class TensorIMPL {
 	void computeStrides();
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
-
-	static cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T> t);
 
 	void gpuMetadatLazyInit();
 };
