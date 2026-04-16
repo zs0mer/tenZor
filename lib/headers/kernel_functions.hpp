@@ -58,4 +58,7 @@ void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> 
 template <class T>
 T dot(const SimpleTensor<T> a, const SimpleTensor<T> b);
 
+template <class T>
+void matmul(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c);
+
 }; // namespace TZ::cuda

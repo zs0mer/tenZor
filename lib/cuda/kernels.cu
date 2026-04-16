@@ -203,10 +203,12 @@ void applyGPU(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> 
 	CHECK_CUDA;
 }
 
+// # ---------------------------------------------
 
 template <class T>
 __global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* out) {
 	T sum = 0;
+	const uint64_t stride = blockDim.x * gridDim.x;
 	uint64_t i = blockIdx.x * blockDim.x + threadIdx.x;
 	T* baseA = a.data;
 	T* baseB = b.data;
@@ -214,7 +216,7 @@ __global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* o
 	if (a.dense && b.dense) {
 		while (i < a.size) {
 			sum += baseA[i + a.offset] * baseB[i + b.offset];
-			i += blockDim.x * gridDim.x;
+			i += stride;
 		}
 	} else {
 		while (i < a.size) {
@@ -222,7 +224,7 @@ __global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* o
 			uint64_t idxB = b.dense ? i + b.offset : computeLinearIdx(i, b);
 
 			sum += baseA[idxA] * baseB[idxB];
-			i += blockDim.x * gridDim.x;
+			i += stride;
 		}
 	}
 
@@ -246,6 +248,64 @@ T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
 	return p;
 }
 
+// # ---------------------------------------------
+
+template <class T>
+__device__ inline uint64_t computeLinearIdx2D(uint64_t row, uint64_t col,
+                                              const SimpleTensor<T>& t) {
+	// Formula: offset + (row * row_stride) + (col * col_stride)
+	// For a standard row-major tensor:
+	// row_stride = shape[1] (width), col_stride = 1
+
+	return t.offset + (row * t.strides[0]) + (col * t.strides[1]);
+}
+
+template <class T>
+__global__ void matmulKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c) {
+	// Determine the starting row and column for this thread
+	uint64_t row_start = blockIdx.y * blockDim.y + threadIdx.y;
+	uint64_t col_start = blockIdx.x * blockDim.x + threadIdx.x;
+
+	// Grid-stride increments
+	uint64_t row_stride = blockDim.y * gridDim.y;
+	uint64_t col_stride = blockDim.x * gridDim.x;
+
+	// Outer loops cover the height (M) and width (N) of output matrix C
+	for (uint64_t row = row_start; row < c.shape[0]; row += row_stride) {
+		for (uint64_t col = col_start; col < c.shape[1]; col += col_stride) {
+
+			T sum = 0;
+			// The inner loop iterates across the common dimension (K)
+			// K is a.shape[1] or b.shape[0]
+			uint64_t K = a.shape[1];
+
+			for (uint64_t k = 0; k < K; ++k) {
+				// Determine indices based on density
+				// We assume computeLinearIdx2D exists for non-dense tensors
+				uint64_t idxA = a.dense ? (row * K + k + a.offset) : computeLinearIdx2D(row, k, a);
+				uint64_t idxB =
+				    b.dense ? (k * c.shape[1] + col + b.offset) : computeLinearIdx2D(k, col, b);
+
+				sum += a.data[idxA] * b.data[idxB];
+			}
+
+			// Write the final dot product to the output matrix
+			uint64_t idxC =
+			    c.dense ? (row * c.shape[1] + col + c.offset) : computeLinearIdx2D(row, col, c);
+			c.data[idxC] = sum;
+		}
+	}
+}
+
+template <class T>
+void matmul(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> out) {
+	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
+	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
+	matmulKernel<<<blocks, THREADS>>>(a, b, out);
+	sync();
+	CHECK_CUDA;
+}
+
 // # ============================================================================================
 
 using namespace TZ::internal;
@@ -265,6 +325,9 @@ using namespace TZ::internal;
 
 #define INSTANTIATE_DOT(T) template T dot<T>(const SimpleTensor<T> a, const SimpleTensor<T> b)
 
+#define INSTANTIATE_MATMUL(T)                                                                      \
+	template void matmul<T>(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> out)
+
 
 #define INSTANTIATE_ALL(T)                                                                         \
 	INSTANTIATE_UNARY_APPLY(T, Negate);                                                            \
@@ -281,7 +344,9 @@ using namespace TZ::internal;
                                                                                                    \
 	INSTANTIATE_COMPUTE_LINEAR_IDX(T);                                                             \
                                                                                                    \
-	INSTANTIATE_DOT(T);
+	INSTANTIATE_DOT(T);                                                                            \
+                                                                                                   \
+	INSTANTIATE_MATMUL(T);
 
 // # --------------------
 

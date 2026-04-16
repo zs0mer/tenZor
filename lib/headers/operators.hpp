@@ -175,7 +175,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() != b.size(), "not the same size vectors in dot");
-	TZ_CHECK(a.device() != b.device(), "not same device tensors in dot");
+	TZ_CHECK(a.device() != b.device(), "not same device vectors in dot");
 	if (a.device() == GPU)
 		return Scalar<T>(cuda::dot(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
 		                           internal::TensorIMPL<T>::getCudaTensor(b.tensor_())));
@@ -201,7 +201,16 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
+	TZ_CHECK(a.device() != b.device(), "not same device matrixes in matmul");
 	Matrix<T> out(a.rows(), b.cols(), a.device());
+
+	if (a.device() == GPU) {
+		cuda::matmul(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
+		             internal::TensorIMPL<T>::getCudaTensor(b.tensor_()),
+		             internal::TensorIMPL<T>::getCudaTensor(out.tensor_()));
+		return out;
+	}
+
 
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {

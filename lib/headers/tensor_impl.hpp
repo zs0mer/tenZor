@@ -72,7 +72,7 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 template <class T>
 TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
 #if TZ_NORMAL_EQUAL
-	if (isSameShape(*this, a) && (!dense() || offset_ != 0)) {
+	if (isSameShape(*this, a) && a.device() == this->device()) {
 
 		apply(a, *this, Copy<T>{});
 
@@ -85,7 +85,7 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
 template <class T>
 TensorIMPL<T>& TensorIMPL<T>::operator=(TensorIMPL<T>&& a) {
 #if TZ_NORMAL_EQUAL
-	if (isSameShape(*this, a)) {
+	if (isSameShape(*this, a) && a.device() == this->device()) {
 
 		apply(a, *this, Copy<T>{});
 
