@@ -4,14 +4,6 @@
 
 namespace TZ::cuda {
 
-// # -------------------------
-#ifdef SYNCGPU
-// nothing
-#else
-#define SYNCGPU 1
-#endif
-// # -------------------------
-
 constexpr uint32_t THREADS = 256;
 constexpr uint32_t MAXBLOCKNUM = 64;
 

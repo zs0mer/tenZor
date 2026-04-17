@@ -367,10 +367,9 @@ const T& TensorIMPL<T>::get() const {
 
 template <class T>
 void TensorIMPL<T>::gpuMetadatLazyInit() {
-	if (device() != GPU || gpuMetadata_->data())
-		return;
+	if (device() != GPU || gpuMetadata_->data() || dim_ == 0)
 
-	gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
+		gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
 
 	TZ_CHECK_(!gpuMetadata_->data());
 	cuda::copyToGPU(gpuMetadata_->data(), shape_.data(), dim_ * sizeof(uint64_t));

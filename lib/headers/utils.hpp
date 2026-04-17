@@ -68,6 +68,46 @@ class Timer {
 	}
 };
 
+
+// # --------------------------------------------------
+// CUDA ONLY
+
+#ifdef __CUDACC__
+
+// # -------------------------
+#ifdef SYNCGPU
+// nothing
+#else
+#define SYNCGPU 1
+#endif
+// # -------------------------
+
+void check_cuda(const char* file, int line, const char* func);
+
+#if TZ_ERRORS
+#define CHECK_CUDA check_cuda(__FILE__, __LINE__, __func__)
+#else
+#define CHECK_CUDA ((void)0)
+#endif
+
+template <typename T>
+__device__ inline void gpuAtomicAdd(T* address, T val) {
+	atomicAdd(address, val);
+}
+
+template <>
+__device__ inline void gpuAtomicAdd<uint64_t>(uint64_t* address, uint64_t val) {
+	atomicAdd(reinterpret_cast<unsigned long long int*>(address),
+	          static_cast<unsigned long long int>(val));
+}
+
+template <>
+__device__ inline void gpuAtomicAdd<int64_t>(int64_t* address, int64_t val) {
+	assert(false);
+}
+
+#endif
+
 // # --------------------------------------------------
 
 template <typename T>
@@ -144,15 +184,16 @@ struct Set {
 
 template <typename T>
 struct Sum {
-	T& val;
+	T* val;
 
-	Sum(T& s) : val(s) {}
+	Sum(T* s) : val(s) {}
 
 	TZ_HOST_DEVICE void operator()(T& a) const {
 #ifdef __CUDA_ARCH__
-		assert(false);
+		gpuAtomicAdd(val, a);
+#else
+		*val += a;
 #endif
-		val += a;
 	}
 };
 

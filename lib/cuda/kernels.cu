@@ -10,15 +10,7 @@
 
 namespace TZ::cuda {
 
-// # ---------------------------------------------
-
-#if TZ_ERRORS
-#define CHECK_CUDA check_cuda(__FILE__, __LINE__, __func__)
-#else
-#define CHECK_CUDA ((void)0)
-#endif
-
-inline void check_cuda(const char* file, int line, const char* func) {
+void check_cuda(const char* file, int line, const char* func) {
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess) {
 		auto now = std::chrono::system_clock::now();
@@ -41,22 +33,6 @@ inline void sync() {
 #endif
 }
 
-
-template <typename T>
-__device__ inline void gpuAtomicAdd(T* address, T val) {
-	atomicAdd(address, val);
-}
-
-template <>
-__device__ inline void gpuAtomicAdd<uint64_t>(uint64_t* address, uint64_t val) {
-	atomicAdd(reinterpret_cast<unsigned long long int*>(address),
-	          static_cast<unsigned long long int>(val));
-}
-
-template <>
-__device__ inline void gpuAtomicAdd<int64_t>(int64_t* address, int64_t val) {
-	assert(false);
-}
 
 // # ---------------------------------------------
 
