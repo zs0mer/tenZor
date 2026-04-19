@@ -4,7 +4,7 @@
 
 // # TZ_START_MEM_SIZE : (10 * 1024 * 1024) -> uint64
 // # TZ_DEFAULT_ALIGNMENT : (64) -> uint8_t
-// # TZ_MAX_DIM : (64) -> uint8_t
+// # TZ_MAX_DIM : (4) -> uint8_t
 // # TZ_ERRORS : (1) -> bool
 // # TZ_NORMAL_EQUAL : (1) -> bool
 // # TZ_DEFAULT_ALLOCATOR :

@@ -49,12 +49,12 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64
 
 template <class T>
 void TensorIMPL<T>::set(const std::vector<uint64_t>& shape, Device device) {
-	set(shape.size(), shape.begin(), device);
+	set(shape.size(), shape.data(), device);
 }
 
 template <class T>
 void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device) {
-	TZ_CHECK(dim > MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+	TZ_CHECK(dim <= MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 	dim_ = dim;
 	offset_ = 0;
 
@@ -79,7 +79,14 @@ TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
 		return *this;
 	}
 #endif
-	return TensorIMPL<T>(a);
+
+	dim_ = a.dim_;
+	shape_ = a.shape_;
+	strides_ = a.strides_;
+	offset_ = a.offset_;
+	data_ = a.data_;
+
+	return *this;
 }
 
 template <class T>
@@ -238,14 +245,14 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 
 template <class T>
 T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
-	TZ_CHECK(device() != CPU, "not on the CPU");
-	TZ_CHECK(!indexable(), "not indexable");
-	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
+	TZ_CHECK(device() == CPU, "not on the CPU");
+	TZ_CHECK(indexable(), "not indexable");
+	TZ_CHECK(idx.size() == dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -254,14 +261,14 @@ T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
-	TZ_CHECK(device() != CPU, "not on the CPU");
-	TZ_CHECK(!indexable(), "not indexable");
-	TZ_CHECK(idx.size() != dim_, "incorrect number of indices");
+	TZ_CHECK(device() == CPU, "not on the CPU");
+	TZ_CHECK(indexable(), "not indexable");
+	TZ_CHECK(idx.size() == dim_, "incorrect number of indices");
 
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -270,11 +277,11 @@ const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 
 template <class T>
 T& TensorIMPL<T>::at(const uint64_t* idx) {
-	TZ_CHECK(device() != CPU, "not on the CPU");
+	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -283,11 +290,11 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const uint64_t* idx) const {
-	TZ_CHECK(device() != CPU, "not on the CPU");
+	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] >= shape_[i], "index out of bounds");
+		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
 
@@ -296,16 +303,16 @@ const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
-	TZ_CHECK(!indexable(), "not indexable");
-	TZ_CHECK(idx >= shape_[0], "index out of bounds");
+	TZ_CHECK(indexable(), "not indexable");
+	TZ_CHECK(idx < shape_[0], "index out of bounds");
 
 	return TensorIMPL<T>(dim_ - 1, &shape_[1], &strides_[1], offset_ + idx * strides_[0], data_);
 }
 
 template <class T>
 const TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
-	TZ_CHECK(!indexable(), "not indexable");
-	TZ_CHECK(idx >= shape_[0], "index out of bounds");
+	TZ_CHECK(indexable(), "not indexable");
+	TZ_CHECK(idx < shape_[0], "index out of bounds");
 
 	return TensorIMPL<T>(dim_ - 1, &shape_[1], &strides_[1], offset_ + idx * strides_[0], data_);
 }
@@ -350,15 +357,15 @@ TensorIMPL<T> TensorIMPL<T>::copyTo(Device toDevice) const {
 
 template <class T>
 T& TensorIMPL<T>::get() {
-	TZ_CHECK(device() != CPU, "not on the CPU");
-	TZ_CHECK(!scalar(), "Not a scalar");
+	TZ_CHECK(device() == CPU, "not on the CPU");
+	TZ_CHECK(scalar(), "Not a scalar");
 	return *(static_cast<T*>(data_->data()) + offset_);
 }
 
 template <class T>
 const T& TensorIMPL<T>::get() const {
-	TZ_CHECK(device() != CPU, "not on the CPU");
-	TZ_CHECK(!scalar(), "Not a scalar");
+	TZ_CHECK(device() == CPU, "not on the CPU");
+	TZ_CHECK(scalar(), "Not a scalar");
 	return *(static_cast<const T*>(data_->data()) + offset_);
 }
 
@@ -366,12 +373,13 @@ const T& TensorIMPL<T>::get() const {
 // # ====================================================================================
 
 template <class T>
-void TensorIMPL<T>::gpuMetadatLazyInit() {
+void TensorIMPL<T>::gpuMetadataLazyInit() {
 	if (device() != GPU || gpuMetadata_->data() || dim_ == 0)
+		return;
 
-		gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
+	gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
 
-	TZ_CHECK_(!gpuMetadata_->data());
+	TZ_CHECK_(gpuMetadata_->data());
 	cuda::copyToGPU(gpuMetadata_->data(), shape_.data(), dim_ * sizeof(uint64_t));
 	cuda::copyToGPU(reinterpret_cast<uint64_t*>(gpuMetadata_->data()) + dim_, strides_.data(),
 	                dim_ * sizeof(uint64_t));
@@ -402,7 +410,7 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 
 template <class T>
 const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor(TensorIMPL<T> t) {
-	t.gpuMetadatLazyInit();
+	t.gpuMetadataLazyInit();
 	return cuda::SimpleTensor<T>(
 	    {.dim = static_cast<uint8_t>(t.dim()),
 	     .shape = reinterpret_cast<uint64_t*>(t.gpuMetadata_->data()),

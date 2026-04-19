@@ -89,16 +89,16 @@ target_link_libraries(alloc_bench PRIVATE tenzor_cuda)
 # # ## ===========================================================================
 find_package(doctest REQUIRED)
 
-# # allocater ------------------------
-add_executable(Tallocater "${TEST_DIR}/allocater.cpp")
+# # allocator ------------------------
+add_executable(Tallocator "${TEST_DIR}/allocator.cpp")
 
-target_include_directories(Tallocater PUBLIC ${INCLUDE_DIR})
+target_include_directories(Tallocator PUBLIC ${INCLUDE_DIR})
 
-target_link_libraries(Tallocater
+target_link_libraries(Tallocator
     PRIVATE
     doctest::doctest
 )
-target_link_libraries(Tallocater PRIVATE tenzor_cuda)
+target_link_libraries(Tallocator PRIVATE tenzor_cuda)
 
 # # buffer ----------------------------
 add_executable(Tbuffer "${TEST_DIR}/buffer.cpp")
@@ -115,8 +115,8 @@ target_link_libraries(Tbuffer PRIVATE tenzor_cuda)
 enable_testing()
 
 add_test(
-    NAME allocater
-    COMMAND Tallocater --color=yes
+    NAME allocator
+    COMMAND Tallocator --color=yes
 )
 
 add_test(

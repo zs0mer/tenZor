@@ -34,7 +34,7 @@ int main() {
 
 		for (int k = 0; k < m; k++) {
 			for (int i = 0; i < n; i++)
-				space[i] = aalloc.allocate(v[i]);
+				space[i] = aalloc.allocate(v[i], TZ::mem::DEFAULT_ALIGNMENT);
 
 			for (int i = 0; i < n; i++)
 				aalloc.deallocate(space[i], v[i]);

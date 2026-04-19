@@ -14,7 +14,7 @@ namespace TZ::internal {
 #ifdef TZ_MAX_DIM
 const constexpr std::uint8_t MAX_DIM = TZ_MAX_DIM;
 #else
-const constexpr std::uint8_t MAX_DIM = 64;
+const constexpr std::uint8_t MAX_DIM = 4;
 #endif
 // # -------------------------
 
@@ -31,12 +31,12 @@ class TensorIMPL {
 	// ! The data may not be layed linearly in memory
 
 	// * the tensor can be:
-	// * - Normal - dimenson: anything   - shape: anything
-	// * - Scalar - dimenson: 0          - shape: {}
-	// * - Empty  - dimenson: 0          - shape: has at least one 0 in it
-	// * - Null   - dimenson: 0          - shape: {}
+	// * - Normal - dimension: anything   - shape: anything
+	// * - Scalar - dimension: 0          - shape: {}
+	// * - Empty  - dimension: 0          - shape: has at least one 0 in it
+	// * - Null   - dimension: 0          - shape: {}
 
-	// * normal index: array of the indexes to each dimenson
+	// * normal index: array of the indexes to each dimension
 	// * linear index: the way to index the memory, it only works with rawData()
 
   public:
@@ -45,7 +45,7 @@ class TensorIMPL {
 	TensorIMPL();
 
 	// standard constructor
-	// the first argument is the number of dimensons the tensor has
+	// the first argument is the number of dimensions the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device = CPU);
 
@@ -73,7 +73,7 @@ class TensorIMPL {
 
 	// # metadata geters ==================================================================
 
-	// get the dimenson of the tensor
+	// get the dimension of the tensor
 	uint64_t dim() const;
 
 	// get the shape of the tensor
@@ -148,12 +148,12 @@ class TensorIMPL {
 
 	// returns a Tensor containing the data in the given index
 	// its just a view
-	// if the remaining tensor is a scalar then it will return a saclar Tensor
+	// if the remaining tensor is a scalar then it will return a scalar Tensor
 	TensorIMPL<T> operator[](const uint64_t idx);
 
 	// returns a Tensor containing the data in the given index
 	// its just a view
-	// if the remaining tensor is a scalar then it will return a saclar Tensor
+	// if the remaining tensor is a scalar then it will return a scalar Tensor
 	const TensorIMPL<T> operator[](const uint64_t idx) const;
 
 	// makes a new tensor that has the same data as the old one
@@ -210,7 +210,7 @@ class TensorIMPL {
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
 
-	static const cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T> t);
+	static const cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T>);
 
 	// # private ==========================================================================
   protected:
@@ -245,7 +245,7 @@ class TensorIMPL {
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 
-	void gpuMetadatLazyInit();
+	void gpuMetadataLazyInit();
 };
 
 } // namespace TZ::internal

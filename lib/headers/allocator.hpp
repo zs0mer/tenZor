@@ -4,6 +4,7 @@
 #include <mutex>
 #include <cstdlib>
 #include <vector>
+#include <atomic>
 
 #include "kernel_functions.hpp"
 #include "utils.hpp"
@@ -64,6 +65,9 @@ class LargeAllocator {
 		LargeBlock* next = nullptr;
 	};
 
+	// always using 128 byte alignment so we know where the header is
+	const uint64_t STANDARD_ALINGNMENT = 64;
+
 	std::mutex mtx_;
 	LargeBlock* blocks_ = nullptr;
 
@@ -74,25 +78,21 @@ class LargeAllocator {
 		LargeBlock* last = nullptr;
 
 		while (ptr) {
-			uintptr_t raw = reinterpret_cast<uintptr_t>(ptr);
-			uintptr_t aligned = (raw + alignment - 1) & ~(alignment - 1);
-
-			if (aligned + bytes <= raw + ptr->size) {
+			if (bytes <= ptr->size) [[likely]] {
 				if (last)
 					last->next = ptr->next;
 				else
 					blocks_ = ptr->next;
 
-				return reinterpret_cast<void*>(aligned);
+				return ptr;
 			}
-			last = nullptr;
-			free(ptr);
+			last = ptr;
 			ptr = ptr->next;
 		}
 
 		uint32_t size = ((bytes + alignment - 1) / alignment) * alignment;
 
-		return std::aligned_alloc(alignment, size);
+		return std::aligned_alloc(STANDARD_ALINGNMENT, size);
 	}
 
 	void dealloc(void* ptr, const uint64_t bytes) {
@@ -127,7 +127,7 @@ class MediumAllocator {
   private:
 	struct MediumSlab {
 		uint8_t* freeMem = nullptr;
-		uint32_t allocatedBlocks = 0;
+		std::atomic<uint32_t> allocatedBlocks{0};
 		uint64_t idxInBin = 0;
 	};
 
@@ -158,7 +158,7 @@ class MediumAllocator {
 
 				slab->freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 				void* ptr = reinterpret_cast<void*>(alignedAddr);
-				slab->allocatedBlocks++;
+				slab->allocatedBlocks.fetch_add(1, std::memory_order_relaxed);
 				return ptr;
 			}
 			activeSlabIdx_++;
@@ -171,9 +171,7 @@ class MediumAllocator {
 		MediumSlab* slab =
 		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
-		slab->allocatedBlocks--;
-
-		if (slab->allocatedBlocks != 0)
+		if (slab->allocatedBlocks.fetch_sub(1, std::memory_order_acq_rel) != 1)
 			return;
 
 		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
@@ -197,7 +195,7 @@ class MediumAllocator {
 
 	~MediumAllocator() {
 		for (auto* i : bin_) {
-			if (i->allocatedBlocks == 0)
+			if (i->allocatedBlocks.load(std::memory_order_relaxed) == 0)
 				free(i);
 		}
 	}
@@ -216,10 +214,10 @@ class MediumAllocator {
 		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; ++i) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
-			TZ_CHECK_(!mem);
+			TZ_CHECK_(mem);
 
 			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
-			mem->allocatedBlocks = 0;
+			mem->allocatedBlocks.store(0, std::memory_order_relaxed);
 			mem->idxInBin = bin_.size();
 
 			bin_.push_back(mem);
@@ -240,12 +238,34 @@ class SmallAllocator {
 		FreeBlock* next = nullptr;
 	};
 
+	// * Treiber stack
+	struct BlockStack {
+		std::atomic<FreeBlock*> head{nullptr};
+
+		void push(FreeBlock* block) {
+			block->next = head.load(std::memory_order_relaxed);
+			while (!head.compare_exchange_weak(block->next, block, std::memory_order_release,
+			                                   std::memory_order_relaxed)) {
+				block->next = head.load(std::memory_order_relaxed);
+			}
+		}
+
+		FreeBlock* pop() {
+			FreeBlock* block = head.load(std::memory_order_acquire);
+			while (block &&
+			       !head.compare_exchange_weak(block, block->next, std::memory_order_acquire,
+			                                   std::memory_order_relaxed)) {
+			}
+			return block;
+		}
+	};
+
 	struct SmallSlab {
 		uint16_t blockSizeType = -1;
 		SmallSlab* nextSlab = nullptr;
-		FreeBlock* nextFreeBlock = nullptr;
-		uint32_t allocatedBlocks = 0;
-		bool notAvailable = false;
+		BlockStack nextFreeBlock;
+		std::atomic<uint32_t> allocatedBlocks{0};
+		std::atomic<bool> available{true};
 	};
 
 
@@ -275,22 +295,21 @@ class SmallAllocator {
 			}
 		}
 
-		TZ_CHECK_(sizeType == POOLTYPENUMBER);
+		TZ_CHECK_(sizeType != POOLTYPENUMBER);
 
 		while (true) {
 			SmallSlab* slab = bin_[sizeType];
 			if (slab) [[likely]] {
-				TZ_CHECK_(!slab->nextFreeBlock);
+				TZ_CHECK_(slab->nextFreeBlock.head.load(std::memory_order_relaxed));
 
-				void* block = slab->nextFreeBlock;
-				slab->nextFreeBlock = slab->nextFreeBlock->next;
-				slab->allocatedBlocks++;
-				if (!slab->nextFreeBlock) {
-					slab->notAvailable = true;
+				void* block = slab->nextFreeBlock.pop();
+				slab->allocatedBlocks.fetch_add(1, std::memory_order_relaxed);
+				if (!slab->nextFreeBlock.head.load(std::memory_order_relaxed)) {
+					slab->available.store(false, std::memory_order_release);
 					bin_[sizeType] = slab->nextSlab;
 				}
 
-				return block;
+				return static_cast<void*>(block);
 			}
 			fillPool(REFILLSIZE * SLABSIZE, sizeType);
 		}
@@ -298,20 +317,17 @@ class SmallAllocator {
 	}
 
 	void dealloc(void* ptr) {
-		TZ_CHECK(!ptr, "double free");
 		SmallSlab* slab =
 		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
 		FreeBlock* block = reinterpret_cast<FreeBlock*>(ptr);
-		block->next = slab->nextFreeBlock;
-		slab->nextFreeBlock = block;
+		slab->nextFreeBlock.push(block);
 
-		slab->allocatedBlocks--;
-
-		if (slab->allocatedBlocks != 0 || !slab->notAvailable)
+		if (slab->allocatedBlocks.fetch_sub(1, std::memory_order_acq_rel) != 1 ||
+		    slab->available.load(std::memory_order_acquire))
 			return;
 
-		slab->notAvailable = false;
+		slab->available.store(true, std::memory_order_relaxed);
 		slab->nextSlab = bin_[slab->blockSizeType];
 		bin_[slab->blockSizeType] = slab;
 	}
@@ -321,10 +337,10 @@ class SmallAllocator {
 			SmallSlab* slab = bin_[t];
 			while (slab) {
 				SmallSlab* next = slab->nextSlab;
-				if (slab->allocatedBlocks == 0)
+				if (slab->allocatedBlocks.load(std::memory_order_relaxed) == 0)
 					midAlloc_.dealloc(slab);
 				else
-					slab->notAvailable = true;
+					slab->available.store(false, std::memory_order_relaxed);
 				slab = next;
 			}
 		}
@@ -344,7 +360,7 @@ class SmallAllocator {
 	}
 
 	void fillPool(const uint32_t bites, const uint16_t sizeType) {
-		// * can be much faster
+		// * can be faster
 		// if the allocated space is to small for a slab round it up to 1
 		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
 
@@ -353,7 +369,7 @@ class SmallAllocator {
 			const uint32_t blockSize = std::max<uint32_t>(POOLSIZE[sizeType], sizeof(FreeBlock));
 			SmallSlab* slab = static_cast<SmallSlab*>(midAlloc_.alloc(SLABSIZE, SLABSIZE));
 
-			TZ_CHECK(!slab, "out of memory");
+			TZ_CHECK(slab, "out of memory");
 
 			new (slab) SmallSlab();
 
@@ -365,8 +381,9 @@ class SmallAllocator {
 			uint8_t* end = ptr + SLABSIZE - SLABHEADERSIZE;
 
 			while (ptr + blockSize <= end) {
-				reinterpret_cast<FreeBlock*>(ptr)->next = slab->nextFreeBlock;
-				slab->nextFreeBlock = reinterpret_cast<FreeBlock*>(ptr);
+				reinterpret_cast<FreeBlock*>(ptr)->next =
+				    slab->nextFreeBlock.head.load(std::memory_order_relaxed);
+				slab->nextFreeBlock.push(reinterpret_cast<FreeBlock*>(ptr));
 
 				ptr = ptr + blockSize;
 			}
@@ -416,7 +433,7 @@ class Salloc : public Allocator {
 	// if size < alignment, alignment will not be used
 	// alignment can be maximum 64 bytes
 	// alignment can only be powers of 2
-	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
 		if (bytes == 0)
 			return nullptr;
 		TZ_CHECK_(alignment > 64 || alignment == 0);
@@ -471,7 +488,7 @@ class Malloc : public Allocator {
 		return Device::CPU;
 	};
 
-	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
+	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
 		return aligned_alloc(alignment, bytes);
 	};
 
@@ -510,8 +527,8 @@ class Galloc : public Allocator {
 		return Device::GPU;
 	};
 
-	void* allocate(const uint64_t bytes, const uint8_t alignment = DEFAULT_ALIGNMENT) override {
-		return cuda::allocGPU(bytes, DEFAULT_ALIGNMENT);
+	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
+		return cuda::allocGPU(bytes, alignment);
 	};
 
 	void deallocate(void* ptr, const uint64_t bytes = 0) override {

@@ -238,39 +238,7 @@ __device__ inline uint64_t computeLinearIdx2D(uint64_t row, uint64_t col,
 
 template <class T>
 __global__ void matmulKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c) {
-	// Determine the starting row and column for this thread
-	uint64_t row_start = blockIdx.y * blockDim.y + threadIdx.y;
-	uint64_t col_start = blockIdx.x * blockDim.x + threadIdx.x;
-
-	// Grid-stride increments
-	uint64_t row_stride = blockDim.y * gridDim.y;
-	uint64_t col_stride = blockDim.x * gridDim.x;
-
-	// Outer loops cover the height (M) and width (N) of output matrix C
-	for (uint64_t row = row_start; row < c.shape[0]; row += row_stride) {
-		for (uint64_t col = col_start; col < c.shape[1]; col += col_stride) {
-
-			T sum = 0;
-			// The inner loop iterates across the common dimension (K)
-			// K is a.shape[1] or b.shape[0]
-			uint64_t K = a.shape[1];
-
-			for (uint64_t k = 0; k < K; ++k) {
-				// Determine indices based on density
-				// We assume computeLinearIdx2D exists for non-dense tensors
-				uint64_t idxA = a.dense ? (row * K + k + a.offset) : computeLinearIdx2D(row, k, a);
-				uint64_t idxB =
-				    b.dense ? (k * c.shape[1] + col + b.offset) : computeLinearIdx2D(k, col, b);
-
-				sum += a.data[idxA] * b.data[idxB];
-			}
-
-			// Write the final dot product to the output matrix
-			uint64_t idxC =
-			    c.dense ? (row * c.shape[1] + col + c.offset) : computeLinearIdx2D(row, col, c);
-			c.data[idxC] = sum;
-		}
-	}
+    // TODO
 }
 
 template <class T>
@@ -335,6 +303,8 @@ INSTANTIATE_ALL(uint32_t)
 INSTANTIATE_ALL(uint64_t)
 
 INSTANTIATE_ALL(float)
+
+INSTANTIATE_ALL(double)
 
 
 } // namespace TZ::cuda

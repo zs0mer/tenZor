@@ -52,8 +52,8 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
-	TZ_CHECK(!isSameShape(a, b), "not same size tensors in apply");
-	TZ_CHECK(a.device() != b.device(), "not same device tensors in apply");
+	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
+	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 	if (a.device() == GPU) {
 		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), func);
 		return;
@@ -97,8 +97,8 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
-	TZ_CHECK(!isSameShape(a, b) || !isSameShape(c, b), "not same size tensors in apply");
-	TZ_CHECK(a.device() != b.device() || b.device() != c.device(),
+	TZ_CHECK(isSameShape(a, b) && isSameShape(c, b), "not same size tensors in apply");
+	TZ_CHECK(a.device() == b.device() && b.device() == c.device(),
 	         "not same device tensors in apply");
 	if (a.device() == GPU) {
 		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(c), func);
@@ -174,8 +174,8 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 // does a normal dot product beetwen two vectors
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
-	TZ_CHECK(a.size() != b.size(), "not the same size vectors in dot");
-	TZ_CHECK(a.device() != b.device(), "not same device vectors in dot");
+	TZ_CHECK(a.size() == b.size(), "not the same size vectors in dot");
+	TZ_CHECK(a.device() == b.device(), "not same device vectors in dot");
 	if (a.device() == GPU)
 		return Scalar<T>(cuda::dot(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
 		                           internal::TensorIMPL<T>::getCudaTensor(b.tensor_())));
@@ -200,8 +200,8 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 // does a normal matrix multiplication
 template <class T>
 Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
-	TZ_CHECK(a.cols() != b.rows(), "can't multiply the matrixes");
-	TZ_CHECK(a.device() != b.device(), "not same device matrixes in matmul");
+	TZ_CHECK(a.cols() == b.rows(), "can't multiply the matrixes");
+	TZ_CHECK(a.device() == b.device(), "not same device matrixes in matmul");
 	Matrix<T> out(a.rows(), b.cols(), a.device());
 
 	if (a.device() == GPU) {
@@ -220,7 +220,7 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	return out;
 }
 
-// returns the transeposed Matrix
+// returns the transposed Matrix
 template <class T>
 Matrix<T> transpose(const Matrix<T>& m) {
 	std::array<uint64_t, 2> strides = {m.tensor_().strides()[1], m.tensor_().strides()[0]};
@@ -229,13 +229,13 @@ Matrix<T> transpose(const Matrix<T>& m) {
 	                                         m.tensor_().buffer()));
 }
 
-// ! don't use with intregers
+// ! don't use with integers
 // ! can't run on GPU
 // returns the determinant of the Matrix
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
 	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
-	TZ_CHECK(m.rows() != m.cols(), "matrix must be square");
+	TZ_CHECK(m.rows() == m.cols(), "matrix must be square");
 
 	const uint64_t n = m.rows();
 

@@ -132,29 +132,29 @@ class TensorWrapper {
 	}
 
 
-	Derived operator+=(const TensorWrapper& other) {
+	Derived& operator+=(const TensorWrapper& other) {
 		internal::TensorIMPL<T>::apply(other.t_, this->t_, this->t_, internal::Add<T>{});
-		return Derived(this->t_);
+		return *this;
 	}
 
-	Derived operator-=(const TensorWrapper& other) {
-		internal::TensorIMPL<T>::apply(other.t_, this->t_, this->t_, internal::SubtractScalar<T>{});
-		return Derived(this->t_);
+	Derived& operator-=(const TensorWrapper& other) {
+		internal::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, internal::Subtract<T>{});
+		return *this;
 	}
 
-	Derived operator+=(const Scalar<T>& s) {
+	Derived& operator+=(const Scalar<T>& s) {
 		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::AddScalar<T>(s.get()));
-		return Derived(this->t_);
+		return *this;
 	}
 
-	Derived operator-=(const Scalar<T>& s) {
+	Derived& operator-=(const Scalar<T>& s) {
 		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::SubtractScalar<T>(s.get()));
-		return Derived(this->t_);
+		return *this;
 	}
 
-	Derived operator*=(const Scalar<T>& s) {
+	Derived& operator*=(const Scalar<T>& s) {
 		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::MultiplyScalar<T>(s.get()));
-		return Derived(this->t_);
+		return *this;
 	}
 
 	// sets everything to a given value
@@ -163,7 +163,6 @@ class TensorWrapper {
 	}
 
 	// sums everything
-	// ! can't use on GPU
 	Scalar<T> sum() {
 		Scalar<T> s = TensorIMPL<T>(0, nullptr, device());
 		s.setAll(0);
@@ -223,7 +222,7 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 	template <class K>
 	static void getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
 		shape[currDim++] = v.size();
-		TZ_CHECK(currDim > internal::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+		TZ_CHECK(currDim <= internal::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 		if (v.empty())
 			return;
 		getSTDVecShape(v[0], shape, currDim);
@@ -254,17 +253,17 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 
 	// standard constructor with tensor
 	Scalar(internal::TensorIMPL<T>& t) : Base(t) {
-		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 	}
 
 	// standard constructor with tensor
 	Scalar(Tensor<T>& t) : Base(t.tensor_()) {
-		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 	}
 
 	// standard constructor with tensor
 	Scalar(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
-		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 	}
 
 	// standard constructor with a T class
@@ -277,7 +276,7 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	// makes a new scalar with the class T
 	void set(const T& val, Device device = CPU) {
 		this->t_.set(0, nullptr, device);
-		TZ_CHECK(this->t_.dim() != 0, "not a Scalar in the TZ::Scalar");
+		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 		this->t_.get() = val;
 	}
 
@@ -319,17 +318,17 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 
 	// standard constructor with tensor
 	Vector(const internal::TensorIMPL<T>& t) : Base(t) {
-		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
 	// standard constructor with tensor
 	Vector(const Tensor<T>& t) : Base(t.tensor_()) {
-		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
 	// standard constructor with tensor
 	Vector(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
-		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
 	// standard constructor with size of the Vector
@@ -342,18 +341,18 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	// standard set function
 	void set(const uint64_t size, Device device = CPU) {
 		this->t_.set(1, &size, device);
-		TZ_CHECK(this->t_.dim() != 1, "not a Vector in the TZ::Vector");
+		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t idx) {
-		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
+		TZ_CHECK(idx < size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t idx) const {
-		TZ_CHECK(idx >= size(), "index out of bounds in matrix");
+		TZ_CHECK(idx < size(), "index out of bounds in matrix");
 		return this->t_.data()[idx * this->t_.strides()[0]];
 	}
 
@@ -381,17 +380,17 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// standard constructor with tensor
 	Matrix(const internal::TensorIMPL<T>& t) : Base(t) {
-		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// standard constructor with tensor
 	Matrix(const Tensor<T>& t) : Base(t.tensor_()) {
-		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// standard constructor with tensor
 	Matrix(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
-		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// standard constructor with the size of the rows, and columns
@@ -405,18 +404,18 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	void set(const uint64_t rows, const uint64_t cols, Device device = CPU) {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		this->t_.set(2, shape.data(), device);
-		TZ_CHECK(this->t_.dim() != 2, "not a Matrix in the TZ::Matrix");
+		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
 	// returns the value at the given index
 	T& at(const uint64_t i, const uint64_t j) {
-		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
+		TZ_CHECK(i < rows() && j < cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
 	// returns the value at the given index
 	const T& at(const uint64_t i, const uint64_t j) const {
-		TZ_CHECK(i >= rows() || j >= cols(), "index out of bounds in matrix");
+		TZ_CHECK(i < rows() && j < cols(), "index out of bounds in matrix");
 		return this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]];
 	}
 
@@ -442,21 +441,21 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// returns the i'th row
 	Vector<T> row(const uint64_t i) {
-		TZ_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+		TZ_CHECK(i < this->t_.shape()[0], "row index out of bounds");
 
 		return Vector<T>(this->t_[i]);
 	}
 
 	// returns the i'th row
 	const Vector<T> row(const uint64_t i) const {
-		TZ_CHECK(i >= this->t_.shape()[0], "row index out of bounds");
+		TZ_CHECK(i < this->t_.shape()[0], "row index out of bounds");
 
 		return Vector<T>(this->t_[i]);
 	}
 
 	// returns the j'th collumn
 	Vector<T> col(const uint64_t j) {
-		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+		TZ_CHECK(j < this->t_.shape()[1], "column index out of bounds");
 
 		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
 		                                         j * this->t_.strides()[1] + this->t_.offset(),
@@ -465,7 +464,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// returns the j'th collumn
 	const Vector<T> col(const uint64_t j) const {
-		TZ_CHECK(j >= this->t_.shape()[1], "column index out of bounds");
+		TZ_CHECK(j < this->t_.shape()[1], "column index out of bounds");
 
 		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
 		                                         j * this->t_.strides()[1] + this->t_.offset(),
@@ -474,7 +473,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// swap two rows, given by the indexes
 	void swapRow(uint64_t i, uint64_t j) {
-		TZ_CHECK(i >= rows() || j >= rows(), "out of bounds index in swapRow");
+		TZ_CHECK(i < rows() || j >= rows(), "out of bounds index in swapRow");
 
 		if (i == j)
 			return;
@@ -485,13 +484,13 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// swap two collumns, given by the indexes
 	void swapCol(uint64_t i, uint64_t j) {
-		TZ_CHECK(i >= cols() || j >= cols(), "out of bounds index in swapCol");
+		TZ_CHECK(i < cols() || j >= cols(), "out of bounds index in swapCol");
 
 		if (i == j)
 			return;
 
 		for (uint64_t c = 0; c < rows(); c++)
-			std::swap(at(c, i), at(c, i));
+			std::swap(at(c, i), at(c, j));
 	}
 };
 

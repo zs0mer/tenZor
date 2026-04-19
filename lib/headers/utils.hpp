@@ -33,7 +33,7 @@ namespace TZ::internal {
 inline void check(const bool expr, const char* error, const char* file, int line,
                   const char* func) {
 
-	if (expr) {
+	if (!expr) {
 		auto now = std::chrono::system_clock::now();
 		std::time_t t_c = std::chrono::system_clock::to_time_t(now);
 
@@ -103,7 +103,15 @@ __device__ inline void gpuAtomicAdd<uint64_t>(uint64_t* address, uint64_t val) {
 
 template <>
 __device__ inline void gpuAtomicAdd<int64_t>(int64_t* address, int64_t val) {
-	assert(false);
+	unsigned long long int* addressUll = (unsigned long long int*)address;
+	unsigned long long int old = *addressUll;
+	unsigned long long int assumed;
+
+	// loop neded for to remove race conditions
+	do {
+		assumed = old;
+		old = atomicCAS(addressUll, assumed, (unsigned long long int)((int64_t)assumed + val));
+	} while (assumed != old);
 }
 
 #endif

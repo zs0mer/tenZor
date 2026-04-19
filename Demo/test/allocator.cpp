@@ -1,3 +1,4 @@
+#include "allocator.hpp"
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <Tenzor.hpp>
@@ -14,7 +15,7 @@ TEST_CASE("alloc_little1") {
 	int n = 1000;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 4)) + 1;
-		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
+		uint8_t* a = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);
 	}
@@ -27,7 +28,7 @@ TEST_CASE("alloc_little2") {
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 4)) + 1;
-		v[i] = static_cast<uint8_t*>(s.allocate(p));
+		v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(v[i] + p - 1) = 255;
 		sizee[i] = p;
 	}
@@ -46,7 +47,7 @@ TEST_CASE("alloc_little3") {
 	for (int j = 0; j < k; j++) {
 		for (int i = 0; i < n; i++) {
 			int p = (rng() % (1024 * 4)) + 1;
-			v[i] = static_cast<uint8_t*>(s.allocate(p));
+			v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 			*(v[i] + p - 1) = 255;
 			sizee[i] = p;
 		}
@@ -70,7 +71,7 @@ TEST_CASE("alloc_little_multy1") {
 		for (int j = 0; j < k; j++) {
 			for (int i = 0; i < n; i++) {
 				int p = (rng() % (1024 * 4)) + 1;
-				v[i] = static_cast<uint8_t*>(s.allocate(p));
+				v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 				*(v[i] + p - 1) = 255;
 				sizee[i] = p;
 			}
@@ -100,7 +101,7 @@ TEST_CASE("alloc_little_multy2") {
 		std::thread producer([&] {
 			for (int i = 0; i < n; ++i) {
 				int sz = (rng() % (1024 * 4)) + 1;
-				shared[i] = s.allocate(sz);
+				shared[i] = s.allocate(sz, TZ::mem::DEFAULT_ALIGNMENT);
 				sizes[i] = sz;
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
@@ -124,7 +125,7 @@ TEST_CASE("alloc_middle1") {
 	int n = 500;
 	for (int i = 0; i < n; i++) {
 		int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
-		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
+		uint8_t* a = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);
 	}
@@ -137,7 +138,7 @@ TEST_CASE("alloc_middle2") {
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-		v[i] = static_cast<uint8_t*>(s.allocate(p));
+		v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(v[i] + p - 1) = 255;
 		sizee[i] = p;
 	}
@@ -156,7 +157,7 @@ TEST_CASE("alloc_middle3") {
 	for (int j = 0; j < k; j++) {
 		for (int i = 0; i < n; i++) {
 			int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-			v[i] = static_cast<uint8_t*>(s.allocate(p));
+			v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 			*(v[i] + p - 1) = 255;
 			sizee[i] = p;
 		}
@@ -180,7 +181,7 @@ TEST_CASE("alloc_middle_multy1") {
 		for (int j = 0; j < k; j++) {
 			for (int i = 0; i < n; i++) {
 				int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-				v[i] = static_cast<uint8_t*>(s.allocate(p));
+				v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 				*(v[i] + p - 1) = 255;
 				sizee[i] = p;
 			}
@@ -210,7 +211,7 @@ TEST_CASE("alloc_middle_multy2") {
 		std::thread producer([&] {
 			for (int i = 0; i < n; ++i) {
 				int sz = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
-				shared[i] = s.allocate(sz);
+				shared[i] = s.allocate(sz, TZ::mem::DEFAULT_ALIGNMENT);
 				sizes[i] = sz;
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
@@ -234,7 +235,7 @@ TEST_CASE("alloc_large1") {
 	int n = 40;
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
-		uint8_t* a = static_cast<uint8_t*>(s.allocate(p));
+		uint8_t* a = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);
 	}
@@ -247,7 +248,7 @@ TEST_CASE("alloc_large2") {
 	std::vector<int> sizee(n);
 	for (int i = 0; i < n; i++) {
 		int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
-		v[i] = static_cast<uint8_t*>(s.allocate(p));
+		v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(v[i] + p - 1) = 255;
 		sizee[i] = p;
 	}
@@ -266,7 +267,7 @@ TEST_CASE("alloc_large3") {
 	for (int j = 0; j < k; j++) {
 		for (int i = 0; i < n; i++) {
 			int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
-			v[i] = static_cast<uint8_t*>(s.allocate(p));
+			v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 			*(v[i] + p - 1) = 255;
 			sizee[i] = p;
 		}
@@ -290,7 +291,7 @@ TEST_CASE("alloc_large_multy1") {
 		for (int j = 0; j < k; j++) {
 			for (int i = 0; i < n; i++) {
 				int p = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
-				v[i] = static_cast<uint8_t*>(s.allocate(p));
+				v[i] = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 				*(v[i] + p - 1) = 255;
 				sizee[i] = p;
 			}
@@ -320,7 +321,7 @@ TEST_CASE("alloc_large_multy2") {
 		std::thread producer([&] {
 			for (int i = 0; i < n; ++i) {
 				int sz = (rng() % (1024 * 1024 * 500)) + 1024 * 1024 + 1;
-				shared[i] = s.allocate(sz);
+				shared[i] = s.allocate(sz, TZ::mem::DEFAULT_ALIGNMENT);
 				sizes[i] = sz;
 				static_cast<uint8_t*>(shared[i])[sz - 1] = 0xAA;
 			}
@@ -342,7 +343,7 @@ TEST_CASE("alloc_large_multy2") {
 TEST_CASE("alloc_zero") {
 	auto& s = TZ::mem::Salloc::instance();
 
-	void* p = s.allocate(0);
+	void* p = s.allocate(0, TZ::mem::DEFAULT_ALIGNMENT);
 	CHECK(p == nullptr);
 }
 
@@ -383,7 +384,7 @@ TEST_CASE("alloc_size_boundaries") {
 	    16 + 1,  32 + 1,  64 + 1,  128 + 1,  256 + 1,  512 + 1,  1024 + 1, 2048 + 1, 4096 + 1};
 
 	for (size_t sz : sizes) {
-		void* p = s.allocate(sz);
+		void* p = s.allocate(sz, TZ::mem::DEFAULT_ALIGNMENT);
 		reinterpret_cast<uint8_t*>(p)[sz - 1] = 0xAA;
 		s.deallocate(p, sz);
 	}
