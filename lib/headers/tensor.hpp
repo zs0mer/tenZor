@@ -39,6 +39,7 @@ class TensorIMPL {
 	// * normal index: array of the indexes to each dimension
 	// * linear index: the way to index the memory, it only works with rawData()
 
+
   public:
 	// # seters ===========================================================================
 
@@ -47,28 +48,38 @@ class TensorIMPL {
 	// standard constructor
 	// the first argument is the number of dimensions the tensor has
 	// the second argument is a pointer to a C style array containing the shape of the tensor
-	TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device = CPU);
+	TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device);
 
 	// standard constructor
-	TensorIMPL(const std::vector<uint64_t>& shape, Device device = CPU);
+	TensorIMPL(const std::vector<uint64_t>& shape, Device device);
 
 	// constructor, should only use it with caution
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
 	           const uint64_t offset, mem::Buffer data);
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape, Device device = CPU);
+	void set(const std::vector<uint64_t>& shape, Device device);
 
 	// makes a new Tensor
-	void set(const uint64_t dim, const uint64_t* shape, Device device = CPU);
+	void set(const uint64_t dim, const uint64_t* shape, Device device);
+
+	// makes a new Tensor
+	void set(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
+	         const uint64_t offset, mem::Buffer data);
 
 
 	TensorIMPL(const TensorIMPL&) = default;
 
+	// * if TZ_NORMAL_EQUAL is 1:
+	// * if the tensors have the same shape and are on the same device,
+	// * it will just copy the data
 	TensorIMPL<T>& operator=(const TensorIMPL<T>&);
 
 	TensorIMPL(TensorIMPL&&) = default;
 
+	// * if TZ_NORMAL_EQUAL is 1:
+	// * if the tensors have the same shape and are on the same device,
+	// * it will just copy the data
 	TensorIMPL<T>& operator=(TensorIMPL<T>&&);
 
 	// # metadata geters ==================================================================
@@ -222,24 +233,50 @@ class TensorIMPL {
 	mem::Buffer gpuMetadata_;
 
 	template <class K>
-	struct Cache {
-		bool cached = false;
-		K value;
+	class Cache {
+	  private:
+		std::atomic<bool> cached{false};
+		K value{};
+
+	  public:
+		Cache() = default;
+
+		Cache(const Cache&) {}
+
+		Cache& operator=(const Cache&) {
+			return *this;
+		}
+
+		Cache(Cache&&) {}
+
+		Cache& operator=(Cache&&) {
+			return *this;
+		}
+
+
+		bool isCached() const {
+			return cached.load(std::memory_order_relaxed);
+		}
 
 		void set(const K& data) {
 			value = data;
-			cached = true;
+			cached.store(true, std::memory_order_relaxed);
+		}
+
+		const K& get() {
+			TZ_CHECK(isCached(), "cache is not set");
+			return value;
 		}
 
 		void reset() {
-			cached = false;
+			cached.store(false, std::memory_order_relaxed);
 		}
 	};
 
 	mutable Cache<uint64_t> c_size_;
 	mutable Cache<bool> c_dense_;
 
-	// # helper functions
+	// # helper functions ---------------------
 
 	void computeStrides();
 

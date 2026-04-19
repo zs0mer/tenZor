@@ -170,7 +170,7 @@ class Buffer {
 	// makes a new buffer with the same data
 	Buffer clone() const {
 		BufferIMPL* p = static_cast<BufferIMPL*>(
-		    ptr_->allocator()->allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
 		new (p) BufferIMPL(*ptr_);
 		return Buffer(p);
 	}

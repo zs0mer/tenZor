@@ -473,7 +473,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// swap two rows, given by the indexes
 	void swapRow(uint64_t i, uint64_t j) {
-		TZ_CHECK(i < rows() || j >= rows(), "out of bounds index in swapRow");
+		TZ_CHECK(i < rows() && j < rows(), "out of bounds index in swapRow");
 
 		if (i == j)
 			return;

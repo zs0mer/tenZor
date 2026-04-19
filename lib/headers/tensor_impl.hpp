@@ -39,12 +39,8 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, Device devic
 
 template <class T>
 TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
-                          const uint64_t offset, mem::Buffer data)
-    : dim_(dim), offset_(offset), data_(data) {
-	for (uint8_t i = 0; i < dim; i++) {
-		shape_[i] = shape[i];
-		strides_[i] = strides[i];
-	}
+                          const uint64_t offset, mem::Buffer data) {
+	set(dim, shape, strides, offset, data);
 }
 
 template <class T>
@@ -67,6 +63,18 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 	computeStrides();
 
 	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
+}
+
+template <class T>
+void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
+                        const uint64_t offset, mem::Buffer data) {
+	dim_ = dim;
+	offset_ = offset;
+	data_ = data;
+	for (uint8_t i = 0; i < dim; i++) {
+		shape_[i] = shape[i];
+		strides_[i] = strides[i];
+	}
 }
 
 template <class T>
@@ -129,8 +137,8 @@ const uint64_t* TensorIMPL<T>::strides() const {
 
 template <class T>
 uint64_t TensorIMPL<T>::size() const {
-	if (c_size_.cached)
-		return c_size_.value;
+	if (c_size_.isCached())
+		return c_size_.get();
 
 	if (dim_ == 0 && !data_->data()) {
 		c_size_.set(0);
@@ -182,8 +190,8 @@ uint64_t TensorIMPL<T>::offset() const {
 
 template <class T>
 bool TensorIMPL<T>::dense() const {
-	if (c_dense_.cached)
-		return c_dense_.value;
+	if (c_dense_.isCached())
+		return c_dense_.get();
 
 
 	if (empty()) {
