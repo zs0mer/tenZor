@@ -32,7 +32,9 @@ class BufferIMPL {
 	BufferIMPL(const BufferIMPL& other)
 	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
 	      data_(allocator_->allocate(size_, alignment_)) {
-		memcpy(data_, other.data_, size_);
+		if (size_ != 0 && other.data_) {
+			memcpy(data_, other.data_, size_);
+		}
 	}
 
 	BufferIMPL& operator=(const BufferIMPL&) = delete;
@@ -40,24 +42,6 @@ class BufferIMPL {
 	BufferIMPL(BufferIMPL&&) = delete;
 
 	BufferIMPL& operator=(BufferIMPL&&) = delete;
-
-	// # lifetime----
-
-	// increment the reference count
-	void retain() noexcept {
-		refCount_.fetch_add(1, std::memory_order_relaxed);
-	}
-
-	// decrement the reference count
-	// if 0 deallocate
-	bool release() noexcept {
-		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-			if (data_)
-				allocator_->deallocate(data_, size_);
-			return true;
-		}
-		return false;
-	}
 
 	// # data--------
 
@@ -86,6 +70,27 @@ class BufferIMPL {
 	// returns the allocator that this buffer is using
 	Allocator* allocator() const noexcept {
 		return allocator_;
+	}
+
+  private:
+	// # lifetime----
+
+	friend class Buffer;
+
+	// increment the reference count
+	void retain() noexcept {
+		refCount_.fetch_add(1, std::memory_order_relaxed);
+	}
+
+	// decrement the reference count
+	// if 0 deallocate
+	bool release() noexcept {
+		if (refCount_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+			if (data_)
+				allocator_->deallocate(data_, size_);
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -159,16 +164,19 @@ class Buffer {
 		clear();
 	}
 
-	BufferIMPL* operator->() {
+	BufferIMPL* operator->() noexcept {
 		return ptr_;
 	}
 
-	const BufferIMPL* operator->() const {
+	const BufferIMPL* operator->() const noexcept {
 		return ptr_;
 	}
 
 	// makes a new buffer with the same data
 	Buffer clone() const {
+		if (!ptr_)
+			return Buffer();
+
 		BufferIMPL* p = static_cast<BufferIMPL*>(
 		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
 		new (p) BufferIMPL(*ptr_);
@@ -177,9 +185,12 @@ class Buffer {
 
   private:
 	void clear() {
-		if (ptr_)
-			if (ptr_->release())
+		if (ptr_) {
+			if (ptr_->release()) {
+				ptr_->~BufferIMPL();
 				defaultAllocator(CPU).deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
+			}
+		}
 	}
 };
 

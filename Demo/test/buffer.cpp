@@ -80,10 +80,6 @@ TEST_CASE("bufferimpl_custom_allocator") {
 TEST_CASE("bufferimpl_retain_and_release") {
 	const uint64_t size = 64;
 	TZ::mem::BufferIMPL* buf = new TZ::mem::BufferIMPL(size);
-
-	buf->retain();
-	CHECK(buf->release() == false);
-	CHECK(buf->release() == true);
 }
 
 // ============================================================

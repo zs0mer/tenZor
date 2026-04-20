@@ -12,8 +12,8 @@ constexpr uint32_t MAXBLOCKNUM = 64;
 template <class T>
 struct SimpleTensor {
 	uint8_t dim;
-	uint64_t* shape;
-	uint64_t* strides;
+	const uint64_t* shape;
+	const uint64_t* strides;
 	uint64_t offset;
 	T* data;
 

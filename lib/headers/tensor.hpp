@@ -39,6 +39,8 @@ class TensorIMPL {
 	// * normal index: array of the indexes to each dimension
 	// * linear index: the way to index the memory, it only works with rawData()
 
+	// ! you can bypass the const correctness with the buffer()
+	// ! or with the copy constructor and the move constructor
 
   public:
 	// # seters ===========================================================================
@@ -135,6 +137,7 @@ class TensorIMPL {
 	mem::Buffer buffer();
 
 	// returns the TZ::mem::Buffer object, that has the memory
+	// ! with this method you modify the data for a const Tensor
 	const mem::Buffer buffer() const;
 
 	// # geters ===========================================================================
@@ -174,13 +177,11 @@ class TensorIMPL {
 	// can be on a new device
 	TensorIMPL<T> copyTo(Device device) const;
 
-	// IF the tensor is scalar
-	// returns that one element
+	// IF the tensor is scalar it returns the one element
 	// cant do on the GPU
 	T& get();
 
-	// IF the tensor is scalar
-	// returns that one element
+	// IF the tensor is scalar it returns the one element
 	// cant do on the GPU
 	const T& get() const;
 
@@ -221,8 +222,6 @@ class TensorIMPL {
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
 
-	static const cuda::SimpleTensor<T> getCudaTensor(TensorIMPL<T>);
-
 	// # private ==========================================================================
   protected:
 	// # metadata cache
@@ -230,7 +229,7 @@ class TensorIMPL {
 	// if device() == GPU
 	// shape_ and stride_ on VRAM
 	// structued |__shape__|__stride__|
-	mem::Buffer gpuMetadata_;
+	mutable mem::Buffer gpuMetadata_;
 
 	template <class K>
 	class Cache {
@@ -282,7 +281,11 @@ class TensorIMPL {
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 
-	void gpuMetadataLazyInit();
+	void gpuMetadataLazyInit() const;
+
+	cuda::SimpleTensor<T> getCudaTensor();
+
+	const cuda::SimpleTensor<T> getCudaTensor() const;
 };
 
 } // namespace TZ::internal

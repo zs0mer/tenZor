@@ -381,7 +381,7 @@ const T& TensorIMPL<T>::get() const {
 // # ====================================================================================
 
 template <class T>
-void TensorIMPL<T>::gpuMetadataLazyInit() {
+void TensorIMPL<T>::gpuMetadataLazyInit() const {
 	if (device() != GPU || gpuMetadata_->data() || dim_ == 0)
 		return;
 
@@ -417,16 +417,30 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 }
 
 template <class T>
-const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor(TensorIMPL<T> t) {
-	t.gpuMetadataLazyInit();
-	return cuda::SimpleTensor<T>(
-	    {.dim = static_cast<uint8_t>(t.dim()),
-	     .shape = reinterpret_cast<uint64_t*>(t.gpuMetadata_->data()),
-	     .strides = reinterpret_cast<uint64_t*>(t.gpuMetadata_->data()) + t.dim_,
-	     .offset = t.offset(),
-	     .data = reinterpret_cast<T*>(t.rawData()),
-	     .size = t.size(),
-	     .dense = t.dense()});
+cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
+	gpuMetadataLazyInit();
+	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
+	                             .shape = reinterpret_cast<uint64_t*>(gpuMetadata_->data()),
+	                             .strides =
+	                                 reinterpret_cast<uint64_t*>(gpuMetadata_->data()) + dim_,
+	                             .offset = offset_,
+	                             .data = reinterpret_cast<T*>(data_->data()),
+	                             .size = this->size(),
+	                             .dense = this->dense()};
+}
+
+template <class T>
+const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
+	gpuMetadataLazyInit();
+	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
+	                             .shape = reinterpret_cast<const uint64_t*>(gpuMetadata_->data()),
+	                             .strides =
+	                                 reinterpret_cast<const uint64_t*>(gpuMetadata_->data()) + dim_,
+	                             .offset = offset_,
+	                             // ! const_cast is needed
+	                             .data = const_cast<T*>(reinterpret_cast<const T*>(data_->data())),
+	                             .size = this->size(),
+	                             .dense = this->dense()};
 }
 
 template <class T>

@@ -19,7 +19,7 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	if (a.device() == GPU) {
-		cuda::applyGPU(getCudaTensor(a), func);
+		cuda::applyGPU(a.getCudaTensor(), func);
 		return;
 	}
 
@@ -55,7 +55,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
 	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 	if (a.device() == GPU) {
-		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), func);
+		cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), func);
 		return;
 	}
 
@@ -101,7 +101,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	TZ_CHECK(a.device() == b.device() && b.device() == c.device(),
 	         "not same device tensors in apply");
 	if (a.device() == GPU) {
-		cuda::applyGPU(getCudaTensor(a), getCudaTensor(b), getCudaTensor(c), func);
+		cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), c.getCudaTensor(), func);
 		return;
 	}
 
@@ -177,8 +177,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() == b.size(), "not the same size vectors in dot");
 	TZ_CHECK(a.device() == b.device(), "not same device vectors in dot");
 	if (a.device() == GPU)
-		return Scalar<T>(cuda::dot(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
-		                           internal::TensorIMPL<T>::getCudaTensor(b.tensor_())));
+		return Scalar<T>(cuda::dot(a.tensor_().getCudaTensor(), b.tensor_().getCudaTensor()));
 
 	Scalar<T> out(0);
 	uint64_t n = a.size();
@@ -205,9 +204,8 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	Matrix<T> out(a.rows(), b.cols(), a.device());
 
 	if (a.device() == GPU) {
-		cuda::matmul(internal::TensorIMPL<T>::getCudaTensor(a.tensor_()),
-		             internal::TensorIMPL<T>::getCudaTensor(b.tensor_()),
-		             internal::TensorIMPL<T>::getCudaTensor(out.tensor_()));
+		cuda::matmul(a.tensor_().getCudaTensor(), b.tensor_().getCudaTensor(),
+		             out.tensor_().getCudaTensor());
 		return out;
 	}
 

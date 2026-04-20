@@ -66,7 +66,7 @@ class LargeAllocator {
 	};
 
 	// always using 128 byte alignment so we know where the header is
-	const uint64_t STANDARD_ALINGNMENT = 64;
+	static constexpr uint64_t STANDARD_ALINGNMENT = 64;
 
 	std::mutex mtx_;
 	LargeBlock* blocks_ = nullptr;
