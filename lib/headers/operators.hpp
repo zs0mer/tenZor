@@ -36,7 +36,7 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 		if (a.dense())
 			linearIdx++;
 		else {
-			for (uint8_t d = a.dim_ && !a.dense(); d-- > 0;) {
+			for (uint8_t d = a.dim_; d-- > 0;) {
 				linearIdx += a.strides_[d];
 				if (++counters[d] < a.shape_[d])
 					break;

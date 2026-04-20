@@ -484,7 +484,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// swap two collumns, given by the indexes
 	void swapCol(uint64_t i, uint64_t j) {
-		TZ_CHECK(i < cols() || j >= cols(), "out of bounds index in swapCol");
+		TZ_CHECK(i < cols() && j < cols(), "out of bounds index in swapCol");
 
 		if (i == j)
 			return;

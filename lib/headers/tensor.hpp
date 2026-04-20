@@ -112,6 +112,7 @@ class TensorIMPL {
 	// this will not necessarily start where the data is located
 	const T* rawData() const;
 
+	// returns the offset of the first element of the tensor in the buffer
 	uint64_t offset() const;
 
 	// the tensor is layed out flat in memory

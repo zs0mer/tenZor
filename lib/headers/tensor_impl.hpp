@@ -63,6 +63,8 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 	computeStrides();
 
 	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
+	c_size_.reset();
+	c_dense_.reset();
 }
 
 template <class T>
@@ -75,6 +77,8 @@ void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t
 		shape_[i] = shape[i];
 		strides_[i] = strides[i];
 	}
+	c_size_.reset();
+	c_dense_.reset();
 }
 
 template <class T>
@@ -351,14 +355,14 @@ TensorIMPL<T> TensorIMPL<T>::copyTo(Device toDevice) const {
 	if (!dense())
 		t = t.clone();
 
-	mem::Buffer buff;
-	if (toDevice == GPU) {
-		buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
-		cuda::copyToGPU(buff->data(), t.data(), t.data_->size());
-	} else if (toDevice == CPU) {
-		buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
-		cuda::copyToCPU(buff->data(), t.data(), t.data_->size());
-	}
+	mem::Buffer buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
+	uint64_t byteSize = t.size() * sizeof(T);
+
+	if (toDevice == GPU)
+		cuda::copyToGPU(buff->data(), t.data(), byteSize);
+	else if (toDevice == CPU)
+		cuda::copyToCPU(buff->data(), t.data(), byteSize);
+
 
 	return TensorIMPL<T>(dim_, shape_.data(), strides_.data(), 0, buff);
 }

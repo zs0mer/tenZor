@@ -221,6 +221,7 @@ T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
 	sync();
 	CHECK_CUDA;
 	copyToCPU(&p, out, sizeof(T));
+	freeGPU(out, sizeof(T));
 	return p;
 }
 

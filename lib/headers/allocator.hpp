@@ -90,7 +90,8 @@ class LargeAllocator {
 			ptr = ptr->next;
 		}
 
-		uint32_t size = ((bytes + alignment - 1) / alignment) * alignment;
+		uint64_t size =
+		    ((bytes + STANDARD_ALINGNMENT - 1) / STANDARD_ALINGNMENT) * STANDARD_ALINGNMENT;
 
 		return std::aligned_alloc(STANDARD_ALINGNMENT, size);
 	}
@@ -436,7 +437,7 @@ class Salloc : public Allocator {
 	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
 		if (bytes == 0)
 			return nullptr;
-		TZ_CHECK_(alignment > 64 || alignment == 0);
+		TZ_CHECK(alignment <= 64, "alignment exceeds maximum of 64");
 		if (bytes <= 4 * 1024) {                  //~ 0b
 			return sa_().alloc(bytes);            //~
 		} else if (bytes <= 1024 * 1024) {        //~ 4KB
