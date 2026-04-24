@@ -45,7 +45,7 @@ add_library(tenzor_cuda
 )
 
 target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})
-target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart)
+target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 
 # # ##
 # # Application executable

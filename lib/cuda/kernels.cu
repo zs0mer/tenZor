@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <cstdint>
 #include <algorithm>
+#include <cublas_v2.h>
 
 #include "utils.hpp"
 #include "kernel_functions.hpp"
@@ -33,6 +34,13 @@ inline void sync() {
 #endif
 }
 
+cublasHandle_t getCublasHandle() {
+	thread_local cublasHandle_t handle = nullptr;
+	if (!handle) {
+		cublasCreate(&handle);
+	}
+	return handle;
+}
 
 // # ---------------------------------------------
 
@@ -207,6 +215,38 @@ __global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* o
 	gpuAtomicAdd(out, sum);
 }
 
+// cuBLAS specialization for float dot product
+template <>
+float dot<float>(const SimpleTensor<float> a, const SimpleTensor<float> b) {
+    float result = 0.0f;
+    int incx = a.dense ? 1 : a.strides[0];
+    int incy = b.dense ? 1 : a.strides[0];
+
+    cublasSdot(getCublasHandle(),
+               a.size,
+               a.data, incx,
+               b.data, incy,
+               &result);
+
+    return result;
+}
+
+// cuBLAS specialization for double dot product
+template <>
+double dot<double>(const SimpleTensor<double> a, const SimpleTensor<double> b) {
+    double result = 0.0;
+    int incx = a.dense ? 1 : a.strides[0];
+    int incy = b.dense ? 1 : a.strides[0];
+
+    cublasDdot(getCublasHandle(),
+               a.size,
+               a.data, incx,
+               b.data, incy,
+               &result);
+
+    return result;
+}
+
 
 template <class T>
 T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
@@ -228,25 +268,67 @@ T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
 // # ---------------------------------------------
 
 template <class T>
-__device__ inline uint64_t computeLinearIdx2D(uint64_t row, uint64_t col,
-                                              const SimpleTensor<T>& t) {
-	// Formula: offset + (row * row_stride) + (col * col_stride)
-	// For a standard row-major tensor:
-	// row_stride = shape[1] (width), col_stride = 1
-
-	return t.offset + (row * t.strides[0]) + (col * t.strides[1]);
+void matmulSpecialisation(const SimpleTensor<T>& A, const SimpleTensor<T>& B, SimpleTensor<T>& C) {
+	TZ_CHECK(false, "matmul is only implemented for float and double types.");
 }
 
-template <class T>
-__global__ void matmulKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c) {
-    // TODO
+// cuBLAS specialization for float (fp32)
+template <>
+void matmulSpecialisation(const SimpleTensor<float>& A, const SimpleTensor<float>& B,
+                          SimpleTensor<float>& C) {
+    float alpha = 1.0f;
+    float beta = 0.0f;
+
+    int m = A.shape[0];
+    int k = A.shape[1];
+    int n = B.shape[1];
+
+    int lda = A.strides[0];
+    int ldb = B.strides[0];
+    int ldc = C.strides[0];
+
+
+    cublasSgemm(getCublasHandle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                n, m, k,
+                &alpha,
+                B.data, ldb,
+                A.data, lda,
+                &beta,
+                C.data, ldc);
 }
+
+// cuBLAS specialization for double (fp64)
+template <>
+void matmulSpecialisation(const SimpleTensor<double>& A, const SimpleTensor<double>& B,
+                          SimpleTensor<double>& C) {
+	double alpha = 1.0;
+	double beta = 0.0;
+
+    int m = A.shape[0];
+    int k = A.shape[1];
+    int n = B.shape[1];
+
+    int lda = A.strides[0];
+    int ldb = B.strides[0];
+    int ldc = C.strides[0];
+
+
+    cublasDgemm(getCublasHandle(),
+                CUBLAS_OP_N, CUBLAS_OP_N,
+                n, m, k,
+                &alpha,
+                B.data, ldb,
+                A.data, lda,
+                &beta,
+                C.data, ldc);
+}
+
 
 template <class T>
 void matmul(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> out) {
-	uint64_t blocks = (a.size + THREADS - 1) / THREADS;
-	blocks = (blocks < MAXBLOCKNUM) ? blocks : MAXBLOCKNUM;
-	matmulKernel<<<blocks, THREADS>>>(a, b, out);
+
+	matmulSpecialisation(a, b, out);
 	sync();
 	CHECK_CUDA;
 }

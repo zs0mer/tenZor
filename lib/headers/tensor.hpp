@@ -2,21 +2,12 @@
 
 #include <array>
 #include <cstdint>
-#include <vector>
 
 #include "allocator.hpp"
 #include "buffer.hpp"
 #include "kernel_functions.hpp"
 
 namespace TZ::internal {
-
-// # -------------------------
-#ifdef TZ_MAX_DIM
-const constexpr std::uint8_t MAX_DIM = TZ_MAX_DIM;
-#else
-const constexpr std::uint8_t MAX_DIM = 4;
-#endif
-// # -------------------------
 
 template <class T>
 // standard tensor class
@@ -56,14 +47,14 @@ class TensorIMPL {
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, Device device);
 
 	// standard constructor
-	TensorIMPL(const std::vector<uint64_t>& shape, Device device);
+	TensorIMPL(const std::initializer_list<uint64_t>& shape, Device device);
 
 	// constructor, should only use it with caution
 	TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
 	           const uint64_t offset, mem::Buffer data);
 
 	// makes a new Tensor
-	void set(const std::vector<uint64_t>& shape, Device device);
+	void set(const std::initializer_list<uint64_t>& shape, Device device);
 
 	// makes a new Tensor
 	void set(const uint64_t dim, const uint64_t* shape, Device device);
@@ -226,26 +217,19 @@ class TensorIMPL {
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
 
+	cuda::SimpleTensor<T> getCudaTensor();
+
+	const cuda::SimpleTensor<T> getCudaTensor() const;
+
 	// # private ==========================================================================
   protected:
-	// # metadata cache
-
-	// if device() == GPU
-	// shape_ and stride_ on VRAM
-	// structued |__shape__|__stride__|
-	mem::Buffer gpuMetadata_;
-
 	// # helper functions ---------------------
+
+	void computeStrides();
 
 	void computeMetadata();
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
-
-	void gpuMetadataLazyInit() const;
-
-	cuda::SimpleTensor<T> getCudaTensor();
-
-	const cuda::SimpleTensor<T> getCudaTensor() const;
 };
 
 } // namespace TZ::internal

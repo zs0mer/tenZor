@@ -211,7 +211,14 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 	Matrix<T> out(a.rows(), b.cols(), a.device());
 
 	if (a.device() == GPU) {
-		cuda::matmul(a.tensor_().getCudaTensor(), b.tensor_().getCudaTensor(),
+		Matrix<T> inA = a;
+		Matrix<T> inB = b;
+		if (a.tensor_().strides()[1] != 1)
+			inA = transpose(a);
+		if (b.tensor_().strides()[1] != 1)
+			inA = transpose(b);
+
+		cuda::matmul(inA.tensor_().getCudaTensor(), inB.tensor_().getCudaTensor(),
 		             out.tensor_().getCudaTensor());
 		return out;
 	}

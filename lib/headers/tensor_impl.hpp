@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cstdint>
-#include <vector>
 #include <cstring>
 #include <iostream>
 
@@ -28,7 +27,7 @@ template <class T>
 TensorIMPL<T>::TensorIMPL() : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr) {}
 
 template <class T>
-TensorIMPL<T>::TensorIMPL(const std::vector<uint64_t>& shape, Device device) {
+TensorIMPL<T>::TensorIMPL(const std::initializer_list<uint64_t>& shape, Device device) {
 	set(shape, device);
 }
 
@@ -44,8 +43,8 @@ TensorIMPL<T>::TensorIMPL(const uint8_t dim, const uint64_t* shape, const uint64
 }
 
 template <class T>
-void TensorIMPL<T>::set(const std::vector<uint64_t>& shape, Device device) {
-	set(shape.size(), shape.data(), device);
+void TensorIMPL<T>::set(const std::initializer_list<uint64_t>& shape, Device device) {
+	set(shape.size(), shape.begin(), device);
 }
 
 template <class T>
@@ -62,6 +61,7 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 
 
 	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
+	computeStrides();
 	computeMetadata();
 }
 
@@ -75,6 +75,7 @@ void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t
 		shape_[i] = shape[i];
 		strides_[i] = strides[i];
 	}
+	computeMetadata();
 }
 
 template <class T>
@@ -346,13 +347,17 @@ const T& TensorIMPL<T>::get() const {
 // # ====================================================================================
 
 template <class T>
-void TensorIMPL<T>::computeMetadata() {
+void TensorIMPL<T>::computeStrides() {
 	uint64_t k = 1;
 
 	for (int64_t i = dim_; i-- > 0;) {
 		strides_[i] = k;
 		k *= shape_[i];
 	}
+}
+
+template <class T>
+void TensorIMPL<T>::computeMetadata() {
 
 	if (!data_->data()) {
 		size_ = 0;
@@ -377,16 +382,6 @@ void TensorIMPL<T>::computeMetadata() {
 		expected *= shape_[i];
 	}
 	dense_ = true;
-
-	if (device() != GPU || dim_ == 0)
-		return;
-
-	gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
-
-	TZ_CHECK_(gpuMetadata_->data());
-	cuda::copyToGPU(gpuMetadata_->data(), shape_.data(), dim_ * sizeof(uint64_t));
-	cuda::copyToGPU(reinterpret_cast<uint64_t*>(gpuMetadata_->data()) + dim_, strides_.data(),
-	                dim_ * sizeof(uint64_t));
 }
 
 
@@ -404,27 +399,38 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 
 template <class T>
 cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
-	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
-	                             .shape = reinterpret_cast<uint64_t*>(gpuMetadata_->data()),
-	                             .strides =
-	                                 reinterpret_cast<uint64_t*>(gpuMetadata_->data()) + dim_,
-	                             .offset = offset_,
-	                             .data = reinterpret_cast<T*>(data_->data()),
-	                             .size = this->size(),
-	                             .dense = this->dense()};
+	cuda::SimpleTensor<T> out;
+	out.dim = static_cast<uint8_t>(dim_);
+	out.offset = offset_;
+	out.data = reinterpret_cast<T*>(data_->data());
+	out.size = this->size();
+	out.dense = this->dense();
+
+	// Just copy the small metadata directly into the struct
+	for (uint8_t i = 0; i < dim_; i++) {
+		out.shape[i] = shape_[i];
+		out.strides[i] = strides_[i];
+	}
+
+	return out;
 }
 
 template <class T>
 const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
-	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
-	                             .shape = reinterpret_cast<const uint64_t*>(gpuMetadata_->data()),
-	                             .strides =
-	                                 reinterpret_cast<const uint64_t*>(gpuMetadata_->data()) + dim_,
-	                             .offset = offset_,
-	                             // ! const_cast is needed
-	                             .data = const_cast<T*>(reinterpret_cast<const T*>(data_->data())),
-	                             .size = this->size(),
-	                             .dense = this->dense()};
+	cuda::SimpleTensor<T> out;
+	out.dim = static_cast<uint8_t>(dim_);
+	out.offset = offset_;
+	out.data = const_cast<T*>(reinterpret_cast<const T*>(data_->data()));
+	out.size = this->size();
+	out.dense = this->dense();
+
+	// Just copy the small metadata directly into the struct
+	for (uint8_t i = 0; i < dim_; i++) {
+		out.shape[i] = shape_[i];
+		out.strides[i] = strides_[i];
+	}
+
+	return out;
 }
 
 template <class T>
