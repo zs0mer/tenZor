@@ -60,11 +60,9 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 		capacity *= shape[i];
 	}
 
-	computeStrides();
 
 	data_ = mem::Buffer(capacity * sizeof(T), &mem::defaultAllocator(device));
-	c_size_.reset();
-	c_dense_.reset();
+	computeMetadata();
 }
 
 template <class T>
@@ -77,8 +75,6 @@ void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t
 		shape_[i] = shape[i];
 		strides_[i] = strides[i];
 	}
-	c_size_.reset();
-	c_dense_.reset();
 }
 
 template <class T>
@@ -141,22 +137,7 @@ const uint64_t* TensorIMPL<T>::strides() const {
 
 template <class T>
 uint64_t TensorIMPL<T>::size() const {
-	if (c_size_.isCached())
-		return c_size_.get();
-
-	if (dim_ == 0 && !data_->data()) {
-		c_size_.set(0);
-		return 0;
-	}
-
-	uint64_t elements = 1;
-
-	for (uint8_t i = 0; i < dim_; i++)
-		elements *= shape_[i];
-
-	c_size_.set(elements);
-
-	return elements;
+	return size_;
 };
 
 template <class T>
@@ -194,27 +175,7 @@ uint64_t TensorIMPL<T>::offset() const {
 
 template <class T>
 bool TensorIMPL<T>::dense() const {
-	if (c_dense_.isCached())
-		return c_dense_.get();
-
-
-	if (empty()) {
-		c_dense_.set(true);
-		return true;
-	}
-
-	uint64_t expected = 1;
-	for (int64_t i = dim_; i-- > 0;) {
-		if (strides_[i] != expected) {
-			c_dense_.set(false);
-			return false;
-		}
-
-		expected *= shape_[i];
-	}
-	c_dense_.set(true);
-
-	return true;
+	return dense_;
 }
 
 template <class T>
@@ -364,7 +325,7 @@ TensorIMPL<T> TensorIMPL<T>::copyTo(Device toDevice) const {
 		cuda::copyToCPU(buff->data(), t.data(), byteSize);
 
 
-	return TensorIMPL<T>(dim_, shape_.data(), strides_.data(), 0, buff);
+	return TensorIMPL<T>(dim_, t.shape_.data(), t.strides_.data(), 0, buff);
 }
 
 template <class T>
@@ -385,8 +346,39 @@ const T& TensorIMPL<T>::get() const {
 // # ====================================================================================
 
 template <class T>
-void TensorIMPL<T>::gpuMetadataLazyInit() const {
-	if (device() != GPU || gpuMetadata_->data() || dim_ == 0)
+void TensorIMPL<T>::computeMetadata() {
+	uint64_t k = 1;
+
+	for (int64_t i = dim_; i-- > 0;) {
+		strides_[i] = k;
+		k *= shape_[i];
+	}
+
+	if (!data_->data()) {
+		size_ = 0;
+		dense_ = true;
+		return;
+	}
+
+	uint64_t elements = 1;
+
+	for (uint8_t i = 0; i < dim_; i++)
+		elements *= shape_[i];
+
+	size_ = elements;
+
+	uint64_t expected = 1;
+	for (int64_t i = dim_; i-- > 0;) {
+		if (strides_[i] != expected) {
+			dense_ = false;
+			return;
+		}
+
+		expected *= shape_[i];
+	}
+	dense_ = true;
+
+	if (device() != GPU || dim_ == 0)
 		return;
 
 	gpuMetadata_ = mem::Buffer(2 * dim_ * sizeof(uint64_t), &mem::defaultAllocator(GPU));
@@ -395,16 +387,6 @@ void TensorIMPL<T>::gpuMetadataLazyInit() const {
 	cuda::copyToGPU(gpuMetadata_->data(), shape_.data(), dim_ * sizeof(uint64_t));
 	cuda::copyToGPU(reinterpret_cast<uint64_t*>(gpuMetadata_->data()) + dim_, strides_.data(),
 	                dim_ * sizeof(uint64_t));
-}
-
-template <class T>
-void TensorIMPL<T>::computeStrides() {
-	uint64_t k = 1;
-
-	for (int64_t i = dim_; i-- > 0;) {
-		strides_[i] = k;
-		k *= shape_[i];
-	}
 }
 
 
@@ -422,7 +404,6 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 
 template <class T>
 cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
-	gpuMetadataLazyInit();
 	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
 	                             .shape = reinterpret_cast<uint64_t*>(gpuMetadata_->data()),
 	                             .strides =
@@ -435,7 +416,6 @@ cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
 
 template <class T>
 const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
-	gpuMetadataLazyInit();
 	return cuda::SimpleTensor<T>{.dim = static_cast<uint8_t>(dim_),
 	                             .shape = reinterpret_cast<const uint64_t*>(gpuMetadata_->data()),
 	                             .strides =

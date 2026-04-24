@@ -28,6 +28,9 @@ class TensorIMPL {
 	uint64_t offset_;
 	mem::Buffer data_;
 
+	uint64_t size_;
+	bool dense_;
+
 	// ! The data may not be layed linearly in memory
 
 	// * the tensor can be:
@@ -230,55 +233,11 @@ class TensorIMPL {
 	// if device() == GPU
 	// shape_ and stride_ on VRAM
 	// structued |__shape__|__stride__|
-	mutable mem::Buffer gpuMetadata_;
-
-	template <class K>
-	class Cache {
-	  private:
-		std::atomic<bool> cached{false};
-		K value{};
-
-	  public:
-		Cache() = default;
-
-		Cache(const Cache&) {}
-
-		Cache& operator=(const Cache&) {
-			return *this;
-		}
-
-		Cache(Cache&&) {}
-
-		Cache& operator=(Cache&&) {
-			return *this;
-		}
-
-
-		bool isCached() const {
-			return cached.load(std::memory_order_relaxed);
-		}
-
-		void set(const K& data) {
-			value = data;
-			cached.store(true, std::memory_order_relaxed);
-		}
-
-		const K& get() {
-			TZ_CHECK(isCached(), "cache is not set");
-			return value;
-		}
-
-		void reset() {
-			cached.store(false, std::memory_order_relaxed);
-		}
-	};
-
-	mutable Cache<uint64_t> c_size_;
-	mutable Cache<bool> c_dense_;
+	mem::Buffer gpuMetadata_;
 
 	// # helper functions ---------------------
 
-	void computeStrides();
+	void computeMetadata();
 
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 

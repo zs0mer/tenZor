@@ -18,6 +18,8 @@ namespace internal {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
+	if (a.empty())
+		return;
 	if (a.device() == GPU) {
 		cuda::applyGPU(a.getCudaTensor(), func);
 		return;
@@ -29,11 +31,12 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 
 	T* base = a.rawData();
 	uint64_t linearIdx = a.offset_;
+	bool dense = a.dense();
 
 	for (uint64_t i = 0; i < n; i++) {
 		func(base[linearIdx]);
 
-		if (a.dense())
+		if (dense)
 			linearIdx++;
 		else {
 			for (uint8_t d = a.dim_; d-- > 0;) {
@@ -52,6 +55,8 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
+	if (a.empty())
+		return;
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
 	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 	if (a.device() == GPU) {
@@ -97,6 +102,8 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
+	if (a.empty())
+		return;
 	TZ_CHECK(isSameShape(a, b) && isSameShape(c, b), "not same size tensors in apply");
 	TZ_CHECK(a.device() == b.device() && b.device() == c.device(),
 	         "not same device tensors in apply");

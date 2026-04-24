@@ -33,7 +33,10 @@ class BufferIMPL {
 	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
 	      data_(allocator_->allocate(size_, alignment_)) {
 		if (size_ != 0 && other.data_) {
-			memcpy(data_, other.data_, size_);
+			if (allocator_->device() == CPU)
+				memcpy(data_, other.data_, size_);
+			if (allocator_->device() == GPU)
+				cuda::memCopyOnGPU(data_, other.data_, size_);
 		}
 	}
 

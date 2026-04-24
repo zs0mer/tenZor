@@ -196,10 +196,11 @@ struct Sum {
 
 	Sum(T* s) : val(s) {}
 
-	TZ_HOST_DEVICE void operator()(T& a) const {
+	TZ_HOST_DEVICE void operator()(const T& a) {
 #ifdef __CUDA_ARCH__
 		gpuAtomicAdd(val, a);
 #else
+		// this is singel threaded (for now)
 		*val += a;
 #endif
 	}

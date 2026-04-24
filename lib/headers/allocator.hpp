@@ -28,6 +28,12 @@ const constexpr std::uint8_t DEFAULT_ALIGNMENT = TZ_DEFAULT_ALIGNMENT;
 const constexpr std::uint8_t DEFAULT_ALIGNMENT = 64;
 #endif
 // # -------------------------
+#ifdef TZ_CTD
+// nothing
+#else
+#define TZ_CTD 1
+#endif
+// # -------------------------
 
 // an abstract class
 // this declears an interface for allocating
@@ -65,9 +71,6 @@ class LargeAllocator {
 		LargeBlock* next = nullptr;
 	};
 
-	// always using 128 byte alignment so we know where the header is
-	static constexpr uint64_t STANDARD_ALINGNMENT = 64;
-
 	std::mutex mtx_;
 	LargeBlock* blocks_ = nullptr;
 
@@ -90,16 +93,17 @@ class LargeAllocator {
 			ptr = ptr->next;
 		}
 
-		uint64_t size =
-		    ((bytes + STANDARD_ALINGNMENT - 1) / STANDARD_ALINGNMENT) * STANDARD_ALINGNMENT;
+		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
 
-		return std::aligned_alloc(STANDARD_ALINGNMENT, size);
+		return std::aligned_alloc(DEFAULT_ALIGNMENT, size);
 	}
 
 	void dealloc(void* ptr, const uint64_t bytes) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* currBlock = reinterpret_cast<LargeBlock*>(ptr);
-		currBlock->size = bytes;
+		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+
+		currBlock->size = size;
 		currBlock->next = blocks_;
 		blocks_ = currBlock;
 	}
@@ -178,9 +182,17 @@ class MediumAllocator {
 		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 
 		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
+			// ! cross flowing thread deallocation is not supported
+			// ! but this is not safe IF the two threds are flowing AT THE SAME TIME
+
+#if TZ_CTD
 			slab->idxInBin = bin_.size();
 			bin_.push_back(slab);
 			return;
+#else
+			TZ_CHECK(false, "invalid pointer passed to MediumAllocator::dealloc, \ncross thread "
+			                "deallocation is not supported");
+#endif
 		}
 
 		if (activeSlabIdx_ == 0)
@@ -262,7 +274,7 @@ class SmallAllocator {
 	};
 
 	struct SmallSlab {
-		uint16_t blockSizeType = -1;
+		uint16_t blockSizeType = UINT16_MAX;
 		SmallSlab* nextSlab = nullptr;
 		BlockStack nextFreeBlock;
 		std::atomic<uint32_t> allocatedBlocks{0};
@@ -296,7 +308,7 @@ class SmallAllocator {
 			}
 		}
 
-		TZ_CHECK_(sizeType != POOLTYPENUMBER);
+		TZ_CHECK_(sizeType < POOLTYPENUMBER);
 
 		while (true) {
 			SmallSlab* slab = bin_[sizeType];
@@ -402,7 +414,7 @@ class SmallAllocator {
 // alignment can only be 2^n
 class Salloc : public Allocator {
   private:
-	// percentiges of the allocators
+	// percentiges of the allocators (small, medium)
 	// ! has to add up to 100%
 	const static constexpr uint16_t INITRATIO[2] = {50, 50};
 
@@ -431,9 +443,10 @@ class Salloc : public Allocator {
 		return Device::CPU;
 	};
 
-	// if size < alignment, alignment will not be used
-	// alignment can be maximum 64 bytes
-	// alignment can only be powers of 2
+	// * if size < alignment, alignment will not be used
+	// * alignment can be maximum 64 bytes
+	// * alignment can only be powers of 2
+	// * cross FLOWING thread deallocation is not supported
 	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
 		if (bytes == 0)
 			return nullptr;
@@ -490,7 +503,9 @@ class Malloc : public Allocator {
 	};
 
 	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
-		return aligned_alloc(alignment, bytes);
+		uint64_t size = ((bytes + alignment - 1) / alignment) * alignment;
+
+		return aligned_alloc(alignment, size);
 	};
 
 	void deallocate(void* ptr, const uint64_t bytes = 0) override {
