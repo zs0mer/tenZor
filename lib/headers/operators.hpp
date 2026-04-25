@@ -1,15 +1,15 @@
 #pragma once
 
-#include <cstdint>
 #include <array>
 #include <cmath>
+#include <cstdint>
 
 #include "allocator.hpp"
 #include "kernel_functions.hpp"
-#include "tensor_impl.hpp"
-#include "tensor.hpp"
-#include "utils.hpp"
 #include "math_classes.hpp"
+#include "tensor.hpp"
+#include "tensor_impl.hpp"
+#include "utils.hpp"
 
 namespace TZ {
 namespace internal {
@@ -26,19 +26,22 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	}
 
 	const uint64_t n = a.size();
-
-	std::array<uint64_t, MAX_DIM> counters = {};
-
 	T* base = a.rawData();
-	uint64_t linearIdx = a.offset_;
-	bool dense = a.dense();
+	uint64_t offset = a.offset_;
 
-	for (uint64_t i = 0; i < n; i++) {
-		func(base[linearIdx]);
+	if (a.dense()) {
+#pragma omp parallel for if (n > 1000)
+		for (uint64_t i = 0; i < n; i++) {
+			func(base[offset + i]);
+		}
+	} else {
+		std::array<uint64_t, MAX_DIM> counters = {};
+		uint64_t linearIdx = offset;
 
-		if (dense)
-			linearIdx++;
-		else {
+		for (uint64_t i = 0; i < n; i++) {
+			func(base[linearIdx]);
+
+
 			for (uint8_t d = a.dim_; d-- > 0;) {
 				linearIdx += a.strides_[d];
 				if (++counters[d] < a.shape_[d])
@@ -65,23 +68,23 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	}
 
 	const uint64_t n = a.size();
-
-	std::array<uint64_t, MAX_DIM> counters = {};
-
 	const T* baseA = a.rawData();
 	T* baseB = b.rawData();
-	uint64_t linearIdxA = a.offset_;
-	uint64_t linearIdxB = b.offset_;
 
-	bool dense = a.dense() && b.dense();
 
-	for (uint64_t i = 0; i < n; i++) {
-		func(baseA[linearIdxA], baseB[linearIdxB]);
+	if (a.dense() && b.dense()) {
+#pragma omp parallel for if (n > 10000)
+		for (uint64_t i = 0; i < n; i++) {
+			func(baseA[a.offset_ + i], baseB[b.offset_ + i]);
+		}
+	} else {
+		std::array<uint64_t, MAX_DIM> counters = {};
+		uint64_t linearIdxA = a.offset_;
+		uint64_t linearIdxB = b.offset_;
 
-		if (dense) {
-			linearIdxA++;
-			linearIdxB++;
-		} else {
+		for (uint64_t i = 0; i < n; i++) {
+			func(baseA[linearIdxA], baseB[linearIdxB]);
+
 			for (uint8_t d = a.dim_; d-- > 0;) {
 				linearIdxA += a.strides_[d];
 				linearIdxB += b.strides_[d];
@@ -113,28 +116,24 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	}
 
 	const uint64_t n = a.size();
-
-	std::array<uint64_t, MAX_DIM> counters = {};
-
 	const T* baseA = a.rawData();
 	const T* baseB = b.rawData();
 	T* baseC = c.rawData();
 
-	uint64_t linearIdxA = a.offset_;
-	uint64_t linearIdxB = b.offset_;
-	uint64_t linearIdxC = c.offset_;
+	if (a.dense() && b.dense() && c.dense()) {
+#pragma omp parallel for if (n > 10000)
+		for (uint64_t i = 0; i < n; i++) {
+			func(baseA[a.offset_ + i], baseB[b.offset_ + i], baseC[c.offset_ + i]);
+		}
+	} else {
+		std::array<uint64_t, MAX_DIM> counters = {};
+		uint64_t linearIdxA = a.offset_;
+		uint64_t linearIdxB = b.offset_;
+		uint64_t linearIdxC = c.offset_;
 
-	bool dense = a.dense() && b.dense() && c.dense();
+		for (uint64_t i = 0; i < n; i++) {
+			func(baseA[linearIdxA], baseB[linearIdxB], baseC[linearIdxC]);
 
-
-	for (uint64_t i = 0; i < n; i++) {
-		func(baseA[linearIdxA], baseB[linearIdxB], baseC[linearIdxC]);
-
-		if (dense) {
-			linearIdxA++;
-			linearIdxB++;
-			linearIdxC++;
-		} else {
 			for (uint8_t d = a.dim_; d-- > 0;) {
 				linearIdxA += a.strides_[d];
 				linearIdxB += b.strides_[d];
@@ -177,7 +176,6 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func f
 
 // # ===========================================================================
 
-
 // does a normal dot product beetwen two vectors
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
@@ -188,19 +186,22 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 
 	Scalar<T> out(0);
 	uint64_t n = a.size();
+	T sum = 0;
 
 	if (a.tensor_().dense() && b.tensor_().dense()) {
 		const T* ap = a.tensor_().data();
 		const T* bp = b.tensor_().data();
 
-		for (uint64_t i = 0; i < n; i++)
-			out.get() += ap[i] * bp[i];
+#pragma omp parallel for reduction(+ : sum)
+		for (uint64_t i = 0; i < n; i++) {
+			sum += ap[i] * bp[i];
+		}
 	} else {
 		for (uint64_t i = 0; i < n; i++)
-			out.get() += a.at(i) * b.at(i);
+			sum += a.at(i) * b.at(i);
 	}
 
-	return out;
+	return out(sum);
 }
 
 // does a normal matrix multiplication
@@ -223,10 +224,15 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		return out;
 	}
 
-
+#pragma omp parallel for
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
-			out[i][j] = dot(a.row(i), b.col(j));
+			out.at(i, j) = 0;
+		}
+		for (uint64_t k = 0; k < a.cols(); k++) {
+			for (uint64_t j = 0; j < b.cols(); j++) {
+				out.at(i, j) += a.at(i, k) * b.at(k, j);
+			}
 		}
 	}
 	return out;
@@ -276,6 +282,7 @@ Scalar<T> det(const Matrix<T>& m) {
 		}
 
 		// 4. Eliminate below rows k-th column
+#pragma omp parallel for
 		for (uint64_t i = k + 1; i < n; i++) {
 			T factor = A.at(i, k) / A.at(k, k);
 

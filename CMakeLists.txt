@@ -12,6 +12,9 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(CUDAToolkit REQUIRED)
 
+# # OpenMP package
+find_package(OpenMP REQUIRED)
+
 # ! THIS DEPENDS ON GPU
 set(CMAKE_CUDA_ARCHITECTURES 61)
 
@@ -56,7 +59,7 @@ file(GLOB APP_SOURCES
 
 add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
-target_link_libraries(demo PRIVATE tenzor_cuda)
+target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 add_executable(bench "${SRC_DIR}/bench.cpp")
 target_include_directories(bench PRIVATE ${INCLUDE_DIR})
@@ -69,7 +72,7 @@ target_compile_options(bench PRIVATE
     # -fopt-info-vec
     # -fno-omit-frame-pointer
 )
-target_link_libraries(bench PRIVATE tenzor_cuda)
+target_link_libraries(bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 add_executable(alloc_bench "${SRC_DIR}/alloc_bench.cpp")
 target_include_directories(alloc_bench PRIVATE ${INCLUDE_DIR})
@@ -82,7 +85,7 @@ target_compile_options(alloc_bench PRIVATE
     # -fopt-info-vec
     # -fno-omit-frame-pointer
 )
-target_link_libraries(alloc_bench PRIVATE tenzor_cuda)
+target_link_libraries(alloc_bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 # # ## ===========================================================================
 # # Testing =====================================================================
@@ -97,8 +100,9 @@ target_include_directories(Tallocator PUBLIC ${INCLUDE_DIR})
 target_link_libraries(Tallocator
     PRIVATE
     doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
 )
-target_link_libraries(Tallocator PRIVATE tenzor_cuda)
 
 # # buffer ----------------------------
 add_executable(Tbuffer "${TEST_DIR}/buffer.cpp")
@@ -108,8 +112,9 @@ target_include_directories(Tbuffer PUBLIC ${INCLUDE_DIR})
 target_link_libraries(Tbuffer
     PRIVATE
     doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
 )
-target_link_libraries(Tbuffer PRIVATE tenzor_cuda)
 
 # # ---------------------------------
 enable_testing()
