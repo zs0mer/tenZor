@@ -24,7 +24,8 @@ namespace TZ::internal {
 
 
 template <class T>
-TensorIMPL<T>::TensorIMPL() : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr) {}
+TensorIMPL<T>::TensorIMPL()
+    : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr), size_(0), dense_(true) {}
 
 template <class T>
 TensorIMPL<T>::TensorIMPL(const std::initializer_list<uint64_t>& shape, Device device) {

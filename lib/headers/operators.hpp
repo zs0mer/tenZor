@@ -184,7 +184,6 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	if (a.device() == GPU)
 		return Scalar<T>(cuda::dot(a.tensor_().getCudaTensor(), b.tensor_().getCudaTensor()));
 
-	Scalar<T> out(0);
 	uint64_t n = a.size();
 	T sum = 0;
 
@@ -201,7 +200,7 @@ Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 			sum += a.at(i) * b.at(i);
 	}
 
-	return out(sum);
+	return Scalar<T>(sum);
 }
 
 // does a normal matrix multiplication

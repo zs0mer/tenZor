@@ -132,28 +132,28 @@ class TensorWrapper {
 
 
 	Derived& operator+=(const TensorWrapper& other) {
-		this->t_.apply(other.t_, this->t_, internal::Add<T>{});
-		return *this;
+		internal::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, internal::Add<T>{});
+		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const TensorWrapper& other) {
-		this->t_.apply(other.t_, this->t_, internal::Subtract<T>{});
-		return *this;
+		internal::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, internal::Subtract<T>{});
+		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator+=(const Scalar<T>& s) {
-		this->t_.apply(internal::AddScalar<T>(s.get()));
-		return *this;
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::AddScalar<T>(s.get()));
+		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const Scalar<T>& s) {
-		this->t_.apply(internal::SubtractScalar<T>(s.get()));
-		return *this;
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::SubtractScalar<T>(s.get()));
+		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator*=(const Scalar<T>& s) {
-		this->t_.apply(internal::MultiplyScalar<T>(s.get()));
-		return *this;
+		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::MultiplyScalar<T>(s.get()));
+		return static_cast<Derived&>(*this);
 	}
 
 	// sets everything to a given value

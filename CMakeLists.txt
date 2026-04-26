@@ -116,6 +116,42 @@ target_link_libraries(Tbuffer
     OpenMP::OpenMP_CXX
 )
 
+# # tensor ----------------------------
+add_executable(Ttensor "${TEST_DIR}/tensor.cpp")
+
+target_include_directories(Ttensor PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(Ttensor
+    PRIVATE
+    doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
+)
+
+# # math classes ----------------------------
+add_executable(Tother_classes "${TEST_DIR}/other_classes.cpp")
+
+target_include_directories(Tother_classes PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(Tother_classes
+    PRIVATE
+    doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
+)
+
+# # operations ----------------------------
+add_executable(Toperations "${TEST_DIR}/operations.cpp")
+
+target_include_directories(Toperations PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(Toperations
+    PRIVATE
+    doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
+)
+
 # # ---------------------------------
 enable_testing()
 

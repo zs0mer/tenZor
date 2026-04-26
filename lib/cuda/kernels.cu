@@ -218,33 +218,25 @@ __global__ void dotKernel(const SimpleTensor<T> a, const SimpleTensor<T> b, T* o
 // cuBLAS specialization for float dot product
 template <>
 float dot<float>(const SimpleTensor<float> a, const SimpleTensor<float> b) {
-    float result = 0.0f;
-    int incx = a.dense ? 1 : a.strides[0];
-    int incy = b.dense ? 1 : a.strides[0];
+	float result = 0.0f;
+	int incx = a.dense ? 1 : a.strides[0];
+	int incy = b.dense ? 1 : a.strides[0];
 
-    cublasSdot(getCublasHandle(),
-               a.size,
-               a.data, incx,
-               b.data, incy,
-               &result);
+	cublasSdot(getCublasHandle(), a.size, a.data, incx, b.data, incy, &result);
 
-    return result;
+	return result;
 }
 
 // cuBLAS specialization for double dot product
 template <>
 double dot<double>(const SimpleTensor<double> a, const SimpleTensor<double> b) {
-    double result = 0.0;
-    int incx = a.dense ? 1 : a.strides[0];
-    int incy = b.dense ? 1 : a.strides[0];
+	double result = 0.0;
+	int incx = a.dense ? 1 : a.strides[0];
+	int incy = b.dense ? 1 : a.strides[0];
 
-    cublasDdot(getCublasHandle(),
-               a.size,
-               a.data, incx,
-               b.data, incy,
-               &result);
+	cublasDdot(getCublasHandle(), a.size, a.data, incx, b.data, incy, &result);
 
-    return result;
+	return result;
 }
 
 
@@ -267,70 +259,47 @@ T dot(const SimpleTensor<T> a, const SimpleTensor<T> b) {
 
 // # ---------------------------------------------
 
-template <class T>
-void matmulSpecialisation(const SimpleTensor<T>& A, const SimpleTensor<T>& B, SimpleTensor<T>& C) {
-	TZ_CHECK(false, "matmul is only implemented for float and double types.");
-}
-
 // cuBLAS specialization for float (fp32)
 template <>
-void matmulSpecialisation(const SimpleTensor<float>& A, const SimpleTensor<float>& B,
-                          SimpleTensor<float>& C) {
-    float alpha = 1.0f;
-    float beta = 0.0f;
+void matmul(const SimpleTensor<float> A, const SimpleTensor<float> B, SimpleTensor<float> C) {
+	float alpha = 1.0f;
+	float beta = 0.0f;
 
-    int m = A.shape[0];
-    int k = A.shape[1];
-    int n = B.shape[1];
+	int m = A.shape[0];
+	int k = A.shape[1];
+	int n = B.shape[1];
 
-    int lda = A.strides[0];
-    int ldb = B.strides[0];
-    int ldc = C.strides[0];
+	int lda = A.strides[0];
+	int ldb = B.strides[0];
+	int ldc = C.strides[0];
 
 
-    cublasSgemm(getCublasHandle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n, m, k,
-                &alpha,
-                B.data, ldb,
-                A.data, lda,
-                &beta,
-                C.data, ldc);
+	cublasSgemm(getCublasHandle(), CUBLAS_OP_N, CUBLAS_OP_N, n, m, k, &alpha, B.data, ldb, A.data,
+	            lda, &beta, C.data, ldc);
 }
 
 // cuBLAS specialization for double (fp64)
 template <>
-void matmulSpecialisation(const SimpleTensor<double>& A, const SimpleTensor<double>& B,
-                          SimpleTensor<double>& C) {
+void matmul(const SimpleTensor<double> A, const SimpleTensor<double> B, SimpleTensor<double> C) {
 	double alpha = 1.0;
 	double beta = 0.0;
 
-    int m = A.shape[0];
-    int k = A.shape[1];
-    int n = B.shape[1];
+	int m = A.shape[0];
+	int k = A.shape[1];
+	int n = B.shape[1];
 
-    int lda = A.strides[0];
-    int ldb = B.strides[0];
-    int ldc = C.strides[0];
+	int lda = A.strides[0];
+	int ldb = B.strides[0];
+	int ldc = C.strides[0];
 
 
-    cublasDgemm(getCublasHandle(),
-                CUBLAS_OP_N, CUBLAS_OP_N,
-                n, m, k,
-                &alpha,
-                B.data, ldb,
-                A.data, lda,
-                &beta,
-                C.data, ldc);
+	cublasDgemm(getCublasHandle(), CUBLAS_OP_N, CUBLAS_OP_N, n, m, k, &alpha, B.data, ldb, A.data,
+	            lda, &beta, C.data, ldc);
 }
 
-
 template <class T>
-void matmul(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> out) {
-
-	matmulSpecialisation(a, b, out);
-	sync();
-	CHECK_CUDA;
+void matmul(const SimpleTensor<T> A, const SimpleTensor<T> B, SimpleTensor<T> C) {
+	TZ_CHECK(false, "matmul is not yet implemented for float and double types.");
 }
 
 // # ============================================================================================

@@ -36,8 +36,8 @@ int main() {
 	std::cout << "--- cuBLAS Matrix Multiplication Demo ---\n\n";
 
 	// 1. Create two matrices on the CPU so we can easily fill them with data
-	Matrix<float> A_cpu(500, 500, CPU);
-	Matrix<float> B_cpu(500, 500, CPU);
+	Matrix<float> A_cpu(20000, 20000, CPU);
+	Matrix<float> B_cpu(20000, 20000, CPU);
 
 	std::cout << "Matrix A (CPU):\n" << "A_cpu" << "\n\n";
 	std::cout << "Matrix B (CPU):\n" << "B_cpu" << "\n\n";
@@ -53,7 +53,7 @@ int main() {
 	Matrix<float> C_gpu;
 	{
 		internal::Timer timer("GPU Matmul");
-		C_gpu = matmul(A_cpu, B_cpu);
+		C_gpu = matmul(A_gpu, A_gpu);
 	}
 
 	// 4. Copy the result back to the CPU to print it
