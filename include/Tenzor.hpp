@@ -8,6 +8,7 @@
 // flowing thread deallocation is not supported:
 // this is not safe if the two threads are flowing at the same time)
 // # TZ_MAX_DIM : (4) -> uint8_t
+// # TZ_UNMUTABLE_BRODCASTS : (0) -> bool (cant apply on brodcasted tensors)
 // # TZ_ERRORS : (1) -> bool
 // # TZ_NORMAL_EQUAL : (1) -> bool
 // # TZ_DEFAULT_ALLOCATOR :

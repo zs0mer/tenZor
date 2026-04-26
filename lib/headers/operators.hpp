@@ -18,6 +18,9 @@ namespace internal {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(!a.brodcasted(), "cant apply on brodcasted tensors");
+#endif
 	if (a.empty())
 		return;
 	if (a.device() == GPU) {
@@ -58,6 +61,9 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(!a.brodcasted() && !b.brodcasted(), "cant apply on brodcasted tensors");
+#endif
 	if (a.empty())
 		return;
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
@@ -105,6 +111,11 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(!a.brodcasted() && !b.brodcasted() && !c.brodcasted(),
+	         "cant apply on brodcasted tensors");
+#endif
+
 	if (a.empty())
 		return;
 	TZ_CHECK(isSameShape(a, b) && isSameShape(c, b), "not same size tensors in apply");
@@ -170,6 +181,40 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func) {
 	TensorIMPL<T>::apply(a, b, *this, func);
+}
+
+// # --------------------
+
+template <class T>
+TensorIMPL<T> TensorIMPL<T>::broadcast(const std::initializer_list<uint64_t>& targetShape) const {
+	uint8_t newDim = targetShape.size();
+	uint64_t* targetShapePtr = const_cast<uint64_t*>(targetShape.begin());
+	TZ_CHECK(newDim >= dim_, "Target shape cannot have fewer dimensions");
+	TZ_CHECK(newDim <= MAX_DIM, "Target shape exceeds MAX_DIM");
+
+	std::array<uint64_t, MAX_DIM> newShape = {};
+	std::array<uint64_t, MAX_DIM> newStrides = {};
+
+	uint64_t dimDiff = newDim - dim_;
+
+	for (uint64_t i = newDim; i-- > 0;) {
+		newShape[i] = targetShapePtr[i];
+
+		if (i >= dimDiff) {
+			uint64_t oldi = i - dimDiff;
+			if (shape_[oldi] == targetShapePtr[i]) {
+				newStrides[i] = strides_[oldi]; // Dimensions match
+			} else if (shape_[oldi] == 1) {
+				newStrides[i] = 0; // Broadcast!
+			} else {
+				TZ_CHECK(false, "Shapes are not broadcastable");
+			}
+		} else {
+			newStrides[i] = 0; // Broadcast!
+		}
+	}
+
+	return TensorIMPL<T>(newDim, newShape.data(), newStrides.data(), offset_, data_);
 }
 
 }; // namespace internal

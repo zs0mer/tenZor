@@ -271,6 +271,11 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 		set(val, device);
 	}
 
+	Scalar(const uint8_t dim, const uint64_t* shape, Device device = CPU)
+	    : Base(dim, shape, device) {
+		TZ_CHECK(dim == 0, "not a Scalar in the TZ::Scalar");
+	}
+
 	// # methods --------------------
 
 	// makes a new scalar with the class T
@@ -302,6 +307,20 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 
 	operator T() const {
 		return this->t_.get();
+	}
+
+	Vector<T> broadcast(uint64_t size) const {
+		std::array<uint64_t, 1> shape = {size};
+		std::array<uint64_t, 1> strides = {0};
+		return Vector<T>(internal::TensorIMPL<T>(1, shape.data(), strides.data(), this->t_.offset(),
+		                                         this->t_.buffer()));
+	}
+
+	Matrix<T> broadcast(uint64_t rows, uint64_t cols) const {
+		std::array<uint64_t, 2> shape = {rows, cols};
+		std::array<uint64_t, 2> strides = {0, 0};
+		return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
+		                                         this->t_.buffer()));
 	}
 };
 
@@ -347,6 +366,11 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 		TZ_CHECK(t.cols() == 1, "not a convertable Matrix in the TZ::Vector constructor");
 	}
 
+	Vector(const uint8_t dim, const uint64_t* shape, Device device = CPU)
+	    : Base(dim, shape, device) {
+		TZ_CHECK(dim == 1, "not a Scalar in the TZ::Vector");
+	}
+
 	// # methods --------------------
 
 	// standard set function
@@ -386,6 +410,13 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 		std::array<uint64_t, 2> shape = {1, this->size()};
 		return Matrix<T>(internal::TensorIMPL<T>(
 		    2, shape.data(), strides.data(), this->tensor_().offset(), this->tensor_().buffer()));
+	}
+
+	Matrix<T> broadcast(uint64_t rows, uint64_t cols) const {
+		std::array<uint64_t, 2> shape = {rows, cols};
+		std::array<uint64_t, 2> strides = {0, this->t_.strides()[0]};
+		return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
+		                                         this->t_.buffer()));
 	}
 };
 
@@ -429,6 +460,11 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 	// initializer with a Vector
 	Matrix(const Vector<T>& t) : Base(t.transpose().transpose().tensor_()) {}
+
+	Matrix(const uint8_t dim, const uint64_t* shape, Device device = CPU)
+	    : Base(dim, shape, device) {
+		TZ_CHECK(dim == 2, "not a Scalar in the TZ::Matrix");
+	}
 
 	// # methods --------------------
 

@@ -220,6 +220,9 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 
 template <class T>
 T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+#endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx.size() == dim_, "incorrect number of indices");
@@ -236,6 +239,9 @@ T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+#endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx.size() == dim_, "incorrect number of indices");
@@ -252,6 +258,9 @@ const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 
 template <class T>
 T& TensorIMPL<T>::at(const uint64_t* idx) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+#endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
@@ -265,6 +274,9 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const uint64_t* idx) const {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+#endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
@@ -278,6 +290,9 @@ const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use operator[] on brodcasted tensors");
+#endif
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx < shape_[0], "index out of bounds");
 
@@ -285,7 +300,10 @@ TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
 }
 
 template <class T>
-const TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
+TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
+#if TZ_UNMUTABLE_BRODCASTS
+	TZ_CHECK(brodcasted(), "can't use operator[] on brodcasted tensors");
+#endif
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx < shape_[0], "index out of bounds");
 
@@ -363,13 +381,18 @@ void TensorIMPL<T>::computeMetadata() {
 	if (!data_->data()) {
 		size_ = 0;
 		dense_ = true;
+		brodcasted_ = false;
 		return;
 	}
 
 	uint64_t elements = 1;
+	brodcasted_ = false;
 
-	for (uint8_t i = 0; i < dim_; i++)
+	for (uint8_t i = 0; i < dim_; i++) {
 		elements *= shape_[i];
+		if (strides_[i] == 0)
+			brodcasted_ = true;
+	}
 
 	size_ = elements;
 
@@ -446,9 +469,12 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 		return os;
 	}
 
+	if (t.size() > 1000)
+		return os << "[To many elements to print: " << t.size() << " elements]\n";
+
 	if (t.dim() == 1) {
 		os << "\n[";
-		for (int i = 0; i < t.size() - 1; i++)
+		for (uint64_t i = 0; i < t.size() - 1; i++)
 			os << t[i].get() << ", ";
 
 		os << t[t.size() - 1].get() << "]";
@@ -456,7 +482,7 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 	}
 
 	os << "[";
-	for (int i = 0; i < t.shape()[0] - 1; i++)
+	for (uint64_t i = 0; i < t.shape()[0] - 1; i++)
 		os << t[i] << ",";
 	os << t[t.shape()[0] - 1] << "\n]";
 	return os;

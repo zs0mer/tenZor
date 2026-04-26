@@ -2,12 +2,21 @@
 
 #include <array>
 #include <cstdint>
+#include <initializer_list>
 
 #include "allocator.hpp"
 #include "buffer.hpp"
 #include "kernel_functions.hpp"
 
 namespace TZ::internal {
+
+// # -------------------------
+#ifdef TZ_UNMUTABLE_BRODCASTS
+// nothing
+#else
+#define TZ_UNMUTABLE_BRODCASTS 0
+#endif
+// # -------------------------
 
 template <class T>
 // standard tensor class
@@ -21,14 +30,16 @@ class TensorIMPL {
 
 	uint64_t size_;
 	bool dense_;
+	bool brodcasted_;
 
 	// ! The data may not be layed linearly in memory
 
 	// * the tensor can be:
-	// * - Normal - dimension: anything   - shape: anything
-	// * - Scalar - dimension: 0          - shape: {}
-	// * - Empty  - dimension: 0          - shape: has at least one 0 in it
-	// * - Null   - dimension: 0          - shape: {}
+	// * - Normal      - dimension: anything   - shape: anything
+	// * - Scalar      - dimension: 0          - shape: {}
+	// * - Empty       - dimension: anything   - shape: has at least one 0 in it
+	// * - Null        - dimension: 0          - shape: {}
+	// * - Broadcasted - dimension: anything   - shape: anything - strides: has at least one 0 in it
 
 	// * normal index: array of the indexes to each dimension
 	// * linear index: the way to index the memory, it only works with rawData()
@@ -122,6 +133,10 @@ class TensorIMPL {
 	// returns true if the tensor is normal
 	bool indexable() const;
 
+	// returns true the tensor is brodcasted
+	// has at least one stride that is 0, and its size is not 0
+	bool brodcasted() const;
+
 	// returns the allocator, what allocated this buffer
 	mem::Allocator& allocator() const;
 
@@ -163,7 +178,7 @@ class TensorIMPL {
 	// returns a Tensor containing the data in the given index
 	// its just a view
 	// if the remaining tensor is a scalar then it will return a scalar Tensor
-	const TensorIMPL<T> operator[](const uint64_t idx) const;
+	TensorIMPL<T> operator[](const uint64_t idx) const;
 
 	// makes a new tensor that has the same data as the old one
 	TensorIMPL<T> clone() const;
@@ -216,6 +231,8 @@ class TensorIMPL {
 	template <class Func>
 	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
+	// Broadcasts the tensor to the target shape, if possible
+	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;
 
 	cuda::SimpleTensor<T> getCudaTensor();
 

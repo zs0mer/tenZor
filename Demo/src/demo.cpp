@@ -38,7 +38,7 @@ int main() {
 	// 1. Create two matrices on the CPU so we can easily fill them with data
 	Vector<float> A({1, 2, 3, 4, 5}, CPU);
 
-	std::cout << Vector(Matrix(A)) << "\n";
+	std::cout << A.broadcast(6, 5).transpose() << "\n";
 
 	return 0;
 }
