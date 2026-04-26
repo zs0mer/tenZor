@@ -36,33 +36,9 @@ int main() {
 	std::cout << "--- cuBLAS Matrix Multiplication Demo ---\n\n";
 
 	// 1. Create two matrices on the CPU so we can easily fill them with data
-	Matrix<float> A_cpu(20000, 20000, CPU);
-	Matrix<float> B_cpu(20000, 20000, CPU);
+	Vector<float> A({1, 2, 3, 4, 5}, CPU);
 
-	std::cout << "Matrix A (CPU):\n" << "A_cpu" << "\n\n";
-	std::cout << "Matrix B (CPU):\n" << "B_cpu" << "\n\n";
-
-	// 2. Move the matrices to the GPU
-	// (Assuming Matrix wrapper allows accessing the underlying tensor to copy)
-	Matrix<float> A_gpu(A_cpu.copyTo(GPU));
-	Matrix<float> B_gpu(B_cpu.copyTo(GPU));
-
-	// 3. Perform Matrix Multiplication on the GPU
-	// This will route to your GPU matmul (and cuBLAS if you implemented the wrapper)
-	std::cout << "Calculating A * B on GPU...\n\n";
-	Matrix<float> C_gpu;
-	{
-		internal::Timer timer("GPU Matmul");
-		C_gpu = matmul(A_gpu, A_gpu);
-	}
-
-	// 4. Copy the result back to the CPU to print it
-	Matrix<float> C_cpu(C_gpu.copyTo(CPU));
-
-	// Expected Result:
-	// [58,  64 ]
-	// [139, 154]
-	std::cout << "Result Matrix C (CPU):\n" << "C_cpu" << "\n";
+	std::cout << Vector(Matrix(A)) << "\n";
 
 	return 0;
 }

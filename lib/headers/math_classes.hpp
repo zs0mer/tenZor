@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <array>
+#include <initializer_list>
 
 #include "allocator.hpp"
 #include "tensor.hpp"
@@ -39,7 +40,8 @@ class TensorWrapper {
 
 	TensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
 
-	TensorWrapper(const std::vector<uint64_t>& shape, Device device = CPU) : t_(shape, device) {}
+	TensorWrapper(const std::initializer_list<uint64_t>& shape, Device device = CPU)
+	    : t_(shape, device) {}
 
 	TensorWrapper(const uint8_t dim, const uint64_t* shape, Device device = CPU)
 	    : t_(dim, shape, device) {}
@@ -192,6 +194,7 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
   public:
 	using Base::Base;
 
+
 	// un-nests a nested std::vector to a Tensor
 	// has to be right shape
 	// the device can only be the CPU
@@ -246,8 +249,6 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	using Base = internal::TensorWrapper<Scalar<T>, T>;
 
   public:
-	using Base::Base;
-
 	// # constructors ---------------
 
 	// standard constructor with tensor
@@ -311,9 +312,13 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	using Base = internal::TensorWrapper<Vector<T>, T>;
 
   public:
-	using Base::Base;
-
 	// # constructors ---------------
+
+	// initializer list constructor
+	Vector(const std::initializer_list<T>& t, Device d = CPU) : Base({t.size()}, d) {
+		for (uint64_t i = 0; i < t.size(); i++)
+			this->t_.data()[i * this->t_.strides()[0]] = t.begin()[i];
+	}
 
 	// standard constructor with tensor
 	Vector(const internal::TensorIMPL<T>& t) : Base(t) {
@@ -333,6 +338,13 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	// standard constructor with size of the Vector
 	Vector(const uint64_t size, Device device = CPU) {
 		set(size, device);
+	}
+
+	// initializer with matrix, the matrix has to be a column vector
+	Vector(const Matrix<T>& t)
+	    : Base(internal::TensorIMPL<T>(1, t.shape(), t.tensor_().strides(), t.tensor_().offset(),
+	                                   t.tensor_().buffer())) {
+		TZ_CHECK(t.cols() == 1, "not a convertable Matrix in the TZ::Vector constructor");
 	}
 
 	// # methods --------------------
@@ -364,6 +376,17 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	uint64_t size() const {
 		return this->shape()[0];
 	}
+
+	// returns a transposed Matrix view of the Vector
+	Matrix<T> transpose() const {
+		uint64_t stride = this->t_.strides()[0];
+
+		// this->size() * stride because we want the new tensor to be dense
+		std::array<uint64_t, 2> strides = {this->size() * stride, stride};
+		std::array<uint64_t, 2> shape = {1, this->size()};
+		return Matrix<T>(internal::TensorIMPL<T>(
+		    2, shape.data(), strides.data(), this->tensor_().offset(), this->tensor_().buffer()));
+	}
 };
 
 // # Matrix =====================================================================
@@ -373,9 +396,16 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	using Base = internal::TensorWrapper<Matrix<T>, T>;
 
   public:
-	using Base::Base;
-
 	// # constructors ---------------
+
+	// initializer list constructor
+	Matrix(const std::initializer_list<std::initializer_list<T>>& t, Device d = CPU)
+	    : Base({t.size(), t.size() == 0 ? 0 : t.begin()[0].size()}, d) {
+		for (uint64_t i = 0; i < t.size(); i++)
+			for (uint64_t j = 0; j < t.begin()[i].size(); j++)
+				this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]] =
+				    t.begin()[i].begin()[j];
+	}
 
 	// standard constructor with tensor
 	Matrix(const internal::TensorIMPL<T>& t) : Base(t) {
@@ -396,6 +426,9 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	Matrix(const uint64_t rows, const uint64_t cols, Device device = CPU) {
 		set(rows, cols, device);
 	}
+
+	// initializer with a Vector
+	Matrix(const Vector<T>& t) : Base(t.transpose().transpose().tensor_()) {}
 
 	// # methods --------------------
 
@@ -490,6 +523,15 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 
 		for (uint64_t c = 0; c < rows(); c++)
 			std::swap(at(c, i), at(c, j));
+	}
+
+	// returns the transposed Matrix
+	Matrix<T> transpose() const {
+		std::array<uint64_t, 2> strides = {this->tensor_().strides()[1],
+		                                   this->tensor_().strides()[0]};
+		std::array<uint64_t, 2> shape = {this->cols(), this->rows()};
+		return Matrix<T>(internal::TensorIMPL<T>(
+		    2, shape.data(), strides.data(), this->tensor_().offset(), this->tensor_().buffer()));
 	}
 };
 

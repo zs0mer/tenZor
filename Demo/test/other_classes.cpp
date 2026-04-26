@@ -153,6 +153,46 @@ TEST_CASE("math_classes_tensor_from_std_vec") {
 	CHECK(m.at(1, 2) == 6);
 }
 
+TEST_CASE("math_classes_initializer_lists") {
+	Vector<int> v = {1, 2, 3};
+	CHECK(v.dim() == 1);
+	CHECK(v.size() == 3);
+	CHECK(v.at(0) == 1);
+	CHECK(v.at(1) == 2);
+	CHECK(v.at(2) == 3);
+
+	Matrix<int> m = {{1, 2, 3}, {4, 5, 6}};
+	CHECK(m.dim() == 2);
+	CHECK(m.rows() == 2);
+	CHECK(m.cols() == 3);
+	CHECK(m.at(0, 0) == 1);
+	CHECK(m.at(0, 1) == 2);
+	CHECK(m.at(0, 2) == 3);
+	CHECK(m.at(1, 0) == 4);
+	CHECK(m.at(1, 1) == 5);
+	CHECK(m.at(1, 2) == 6);
+}
+
+TEST_CASE("math_classes_conversions") {
+	Vector<int> v = {1, 2, 3};
+	Matrix<int> m(v); // row matrix (1x3)
+	CHECK(m.rows() == 1);
+	CHECK(m.cols() == 3);
+	CHECK(m.at(0, 0) == 1);
+	CHECK(m.at(0, 1) == 2);
+	CHECK(m.at(0, 2) == 3);
+
+	Matrix<int> mt = m.transpose(); // column matrix (3x1)
+	CHECK(mt.rows() == 3);
+	CHECK(mt.cols() == 1);
+
+	Vector<int> v2(mt);
+	CHECK(v2.size() == 3);
+	CHECK(v2.at(0) == 1);
+	CHECK(v2.at(1) == 2);
+	CHECK(v2.at(2) == 3);
+}
+
 TEST_CASE("math_classes_exceptions") {
 	Vector<int> v(3, CPU);
 	CHECK_THROWS_AS(v.at(3), std::runtime_error);
@@ -168,8 +208,8 @@ TEST_CASE("math_classes_exceptions") {
 	CHECK_THROWS_AS(m.swapCol(2, 0), std::runtime_error);
 
 	TZ::internal::TensorIMPL<int> t_1d({3}, CPU);
-	CHECK_THROWS_AS(Matrix<int>(t_1d), std::runtime_error);
+	CHECK_THROWS_AS([=]() { Matrix<int> m(t_1d); }(), std::runtime_error);
 
 	TZ::internal::TensorIMPL<int> t_2d({2, 2}, CPU);
-	CHECK_THROWS_AS(Vector<int>(t_2d), std::runtime_error);
+	CHECK_THROWS_AS([=]() { Vector<int> v(t_2d); }(), std::runtime_error);
 }

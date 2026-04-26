@@ -346,7 +346,7 @@ class SmallAllocator {
 	}
 
 	~SmallAllocator() {
-		for (int t = 0; t < POOLTYPENUMBER; t++) {
+		for (uint16_t t = 0; t < POOLTYPENUMBER; t++) {
 			SmallSlab* slab = bin_[t];
 			while (slab) {
 				SmallSlab* next = slab->nextSlab;

@@ -73,7 +73,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 
 
 	if (a.dense() && b.dense()) {
-#pragma omp parallel for if (n > 10000)
+#pragma omp parallel for if (n > 1000)
 		for (uint64_t i = 0; i < n; i++) {
 			func(baseA[a.offset_ + i], baseB[b.offset_ + i]);
 		}
@@ -121,7 +121,7 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	T* baseC = c.rawData();
 
 	if (a.dense() && b.dense() && c.dense()) {
-#pragma omp parallel for if (n > 10000)
+#pragma omp parallel for if (n > 1000)
 		for (uint64_t i = 0; i < n; i++) {
 			func(baseA[a.offset_ + i], baseB[b.offset_ + i], baseC[c.offset_ + i]);
 		}
@@ -214,15 +214,14 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		Matrix<T> inA = a;
 		Matrix<T> inB = b;
 		if (a.tensor_().strides()[1] != 1)
-			inA = transpose(a);
+			inA = a.transpose();
 		if (b.tensor_().strides()[1] != 1)
-			inA = transpose(b);
+			inA = b.transpose();
 
 		cuda::matmul(inA.tensor_().getCudaTensor(), inB.tensor_().getCudaTensor(),
 		             out.tensor_().getCudaTensor());
 		return out;
 	}
-
 #pragma omp parallel for
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
@@ -235,15 +234,6 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		}
 	}
 	return out;
-}
-
-// returns the transposed Matrix
-template <class T>
-Matrix<T> transpose(const Matrix<T>& m) {
-	std::array<uint64_t, 2> strides = {m.tensor_().strides()[1], m.tensor_().strides()[0]};
-	std::array<uint64_t, 2> shape = {m.cols(), m.rows()};
-	return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), m.tensor_().offset(),
-	                                         m.tensor_().buffer()));
 }
 
 // ! don't use with integers

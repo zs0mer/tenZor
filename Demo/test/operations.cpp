@@ -4,7 +4,6 @@
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
-#include <vector>
 
 using namespace TZ;
 using namespace TZ::internal;
@@ -121,7 +120,7 @@ TEST_CASE("operators_math_transpose") {
 	m.at(1, 1) = 5;
 	m.at(1, 2) = 6;
 
-	Matrix<int> mt = transpose(m);
+	Matrix<int> mt = m.transpose();
 
 	CHECK(mt.rows() == 3);
 	CHECK(mt.cols() == 2);
@@ -166,7 +165,7 @@ TEST_CASE("operators_apply_unary_non_dense") {
 		m.tensor_().rawData()[i] = i + 1;
 	}
 
-	Matrix<int> mt = transpose(m);
+	Matrix<int> mt = m.transpose();
 	CHECK(mt.tensor_().dense() == false);
 
 	auto t_mt = mt.tensor_();
@@ -191,7 +190,7 @@ TEST_CASE("operators_apply_binary_non_dense") {
 	Matrix<int> m2(2, 2, CPU);
 	m2.setAll(0);
 
-	Matrix<int> m1t = transpose(m1);
+	Matrix<int> m1t = m1.transpose();
 	auto t_m1t = m1t.tensor_();
 	auto t_m2 = m2.tensor_();
 	TZ::internal::TensorIMPL<int>::apply(t_m1t, t_m2, Copy<int>{});
@@ -215,7 +214,7 @@ TEST_CASE("operators_apply_ternary_non_dense") {
 	Matrix<int> c(2, 2, CPU);
 	c.setAll(0);
 
-	Matrix<int> at = transpose(a);
+	Matrix<int> at = a.transpose();
 	// at is: [1, 3]
 	//        [2, 4]
 
