@@ -226,7 +226,7 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 // # ====================================================================================
 
 template <class T>
-T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
+T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) {
 #if TZ_UNMUTABLE_BRODCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
@@ -237,15 +237,15 @@ T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
-		linearIdx += idx[i] * strides_[i];
+		TZ_CHECK(idx.begin()[i] < shape_[i], "index out of bounds");
+		linearIdx += idx.begin()[i] * strides_[i];
 	}
 
 	return static_cast<T*>(data_->data())[linearIdx];
 }
 
 template <class T>
-const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
+const T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) const {
 #if TZ_UNMUTABLE_BRODCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
@@ -256,8 +256,8 @@ const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 	uint64_t linearIdx = offset_;
 
 	for (size_t i = 0; i < dim_; ++i) {
-		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
-		linearIdx += idx[i] * strides_[i];
+		TZ_CHECK(idx.begin()[i] < shape_[i], "index out of bounds");
+		linearIdx += idx.begin()[i] * strides_[i];
 	}
 
 	return static_cast<const T*>(data_->data())[linearIdx];

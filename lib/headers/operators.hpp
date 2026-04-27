@@ -166,26 +166,6 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 // # --------------------
 
 template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(Func func) {
-	TensorIMPL<T>::apply(*this, func);
-}
-
-template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func) {
-	TensorIMPL<T>::apply(a, *this, func);
-}
-
-template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func) {
-	TensorIMPL<T>::apply(a, b, *this, func);
-}
-
-// # --------------------
-
-template <class T>
 TensorIMPL<T> TensorIMPL<T>::broadcast(const std::initializer_list<uint64_t>& targetShape) const {
 	uint8_t newDim = targetShape.size();
 	uint64_t* targetShapePtr = const_cast<uint64_t*>(targetShape.begin());

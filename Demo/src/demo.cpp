@@ -34,9 +34,8 @@ using namespace TZ;
 
 int main() {
 
-	Scalar<float> A(1, CPU);
-
-	std::cout << A.broadcast(600, 500).transpose().sum() << "\n";
-
+	Vector<int> v = {1, 2, 3};
+	Matrix<int> m(v);
+	std::cout << m << m.rows();
 	return 0;
 }

@@ -154,11 +154,11 @@ class TensorIMPL {
 
 	// returns the data containing in the given index
 	// cant do on the GPU
-	T& at(const std::vector<uint64_t>& idx);
+	T& at(const std::initializer_list<uint64_t>& idx);
 
 	// returns the data containing in the given index
 	// cant do on the GPU
-	const T& at(const std::vector<uint64_t>& idx) const;
+	const T& at(const std::initializer_list<uint64_t>& idx) const;
 
 	// returns the data containing in the given index
 	// the input is a C style array containing dim number of indexes
@@ -214,22 +214,6 @@ class TensorIMPL {
 	// you can modify c
 	template <class Func>
 	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func);
-
-
-	// calls func(this[i]) for all elements of the tensor
-	// you can modify "this[i]"
-	template <class Func>
-	void apply(Func func);
-
-	// calls func(a[i], this[i]) for all elements of the tensor
-	// you can modify "this[i]"
-	template <class Func>
-	void apply(const TensorIMPL<T>& a, Func func);
-
-	// calls func(a[i], b[i], this[i]) for all elements of the tensor
-	// you can modify "this[i]"
-	template <class Func>
-	void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
 
 	// Broadcasts the tensor to the target shape, if possible
 	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;
