@@ -80,7 +80,12 @@ class TensorWrapper {
 	// # geters ===========================================================================
 
 	// returns the inner tensor
-	internal::TensorIMPL<T> tensor_() const {
+	const internal::TensorIMPL<T>& tensor_() const {
+		return t_;
+	}
+
+	// returns the inner tensor
+	internal::TensorIMPL<T>& tensor_() {
 		return t_;
 	}
 
@@ -209,7 +214,7 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 		internal::TensorIMPL<T> t(currDim, shape.data(), device);
 
 		uint64_t offset = 0;
-		falttenSTDVec(v, t.data(), offset);
+		flattenSTDVec(v, t.data(), offset);
 		return Tensor<T>(t);
 	}
 
@@ -231,14 +236,14 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 	}
 	// base case
 	template <class K>
-	static void falttenSTDVec(const K& k, T* dst, uint64_t& offset) {
+	static void flattenSTDVec(const K& k, T* dst, uint64_t& offset) {
 		dst[offset++] = static_cast<T>(k);
 	}
 
 	template <class K>
-	static void falttenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset) {
+	static void flattenSTDVec(const std::vector<K>& v, T* dst, uint64_t& offset) {
 		for (const auto& i : v)
-			falttenSTDVec(i, dst, offset);
+			flattenSTDVec(i, dst, offset);
 	}
 };
 

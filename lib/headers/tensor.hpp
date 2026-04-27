@@ -30,7 +30,7 @@ class TensorIMPL {
 
 	uint64_t size_;
 	bool dense_;
-	bool brodcasted_;
+	bool broadcasted_;
 
 	// ! The data may not be layed linearly in memory
 
@@ -133,9 +133,9 @@ class TensorIMPL {
 	// returns true if the tensor is normal
 	bool indexable() const;
 
-	// returns true the tensor is brodcasted
+	// returns true the tensor is broadcasted
 	// has at least one stride that is 0, and its size is not 0
-	bool brodcasted() const;
+	bool broadcasted() const;
 
 	// returns the allocator, what allocated this buffer
 	mem::Allocator& allocator() const;

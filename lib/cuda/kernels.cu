@@ -220,7 +220,7 @@ template <>
 float dot<float>(const SimpleTensor<float> a, const SimpleTensor<float> b) {
 	float result = 0.0f;
 	int incx = a.dense ? 1 : a.strides[0];
-	int incy = b.dense ? 1 : a.strides[0];
+	int incy = b.dense ? 1 : b.strides[0];
 
 	cublasSdot(getCublasHandle(), a.size, a.data, incx, b.data, incy, &result);
 
@@ -232,7 +232,7 @@ template <>
 double dot<double>(const SimpleTensor<double> a, const SimpleTensor<double> b) {
 	double result = 0.0;
 	int incx = a.dense ? 1 : a.strides[0];
-	int incy = b.dense ? 1 : a.strides[0];
+	int incy = b.dense ? 1 : b.strides[0];
 
 	cublasDdot(getCublasHandle(), a.size, a.data, incx, b.data, incy, &result);
 

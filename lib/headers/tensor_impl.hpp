@@ -25,7 +25,8 @@ namespace TZ::internal {
 
 template <class T>
 TensorIMPL<T>::TensorIMPL()
-    : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr), size_(0), dense_(true) {}
+    : dim_(0), offset_(0), shape_({}), strides_({}), data_(nullptr), size_(0), dense_(true),
+      broadcasted_(false) {}
 
 template <class T>
 TensorIMPL<T>::TensorIMPL(const std::initializer_list<uint64_t>& shape, Device device) {
@@ -196,6 +197,12 @@ bool TensorIMPL<T>::indexable() const {
 }
 
 template <class T>
+bool TensorIMPL<T>::broadcasted() const {
+	return broadcasted_;
+}
+
+
+template <class T>
 mem::Allocator& TensorIMPL<T>::allocator() const {
 	return *data_->allocator();
 }
@@ -221,7 +228,7 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 template <class T>
 T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	TZ_CHECK(indexable(), "not indexable");
@@ -240,7 +247,7 @@ T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) {
 template <class T>
 const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	TZ_CHECK(indexable(), "not indexable");
@@ -259,7 +266,7 @@ const T& TensorIMPL<T>::at(const std::vector<uint64_t>& idx) const {
 template <class T>
 T& TensorIMPL<T>::at(const uint64_t* idx) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
@@ -275,7 +282,7 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 template <class T>
 const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use at() on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
@@ -291,7 +298,7 @@ const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use operator[] on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use operator[] on broadcasted tensors");
 #endif
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx < shape_[0], "index out of bounds");
@@ -302,7 +309,7 @@ TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(brodcasted(), "can't use operator[] on brodcasted tensors");
+	TZ_CHECK(!broadcasted(), "can't use operator[] on broadcasted tensors");
 #endif
 	TZ_CHECK(indexable(), "not indexable");
 	TZ_CHECK(idx < shape_[0], "index out of bounds");
@@ -381,17 +388,17 @@ void TensorIMPL<T>::computeMetadata() {
 	if (!data_->data()) {
 		size_ = 0;
 		dense_ = true;
-		brodcasted_ = false;
+		broadcasted_ = false;
 		return;
 	}
 
 	uint64_t elements = 1;
-	brodcasted_ = false;
+	broadcasted_ = false;
 
 	for (uint8_t i = 0; i < dim_; i++) {
 		elements *= shape_[i];
 		if (strides_[i] == 0)
-			brodcasted_ = true;
+			broadcasted_ = true;
 	}
 
 	size_ = elements;

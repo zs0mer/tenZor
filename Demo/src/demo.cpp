@@ -33,12 +33,10 @@ int main() {
 using namespace TZ;
 
 int main() {
-	std::cout << "--- cuBLAS Matrix Multiplication Demo ---\n\n";
 
-	// 1. Create two matrices on the CPU so we can easily fill them with data
-	Vector<float> A({1, 2, 3, 4, 5}, CPU);
+	Scalar<float> A(1, CPU);
 
-	std::cout << A.broadcast(6, 5).transpose() << "\n";
+	std::cout << A.broadcast(600, 500).transpose().sum() << "\n";
 
 	return 0;
 }

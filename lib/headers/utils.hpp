@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iomanip>
 #include <cassert>
+#include <sstream>
 
 namespace TZ::internal {
 
@@ -200,7 +201,7 @@ struct Sum {
 #ifdef __CUDA_ARCH__
 		gpuAtomicAdd(val, a);
 #else
-		// this is singel threaded (for now)
+#pragma omp atomic
 		*val += a;
 #endif
 	}

@@ -81,7 +81,7 @@ class LargeAllocator {
 		LargeBlock* last = nullptr;
 
 		while (ptr) {
-			if (bytes <= ptr->size) [[likely]] {
+			if (bytes <= ptr->size) {
 				if (last)
 					last->next = ptr->next;
 				else
@@ -367,15 +367,15 @@ class SmallAllocator {
 		fillPool(startPoolSize);
 	}
 
-	void fillPool(const uint32_t bites) {
+	void fillPool(const uint32_t bytes) {
 		for (uint32_t i = 0; i < POOLTYPENUMBER; i++)
-			fillPool((bites * POOLWEIGHT[i]) / 100, i);
+			fillPool((bytes * POOLWEIGHT[i]) / 100, i);
 	}
 
-	void fillPool(const uint32_t bites, const uint16_t sizeType) {
+	void fillPool(const uint32_t bytes, const uint16_t sizeType) {
 		// * can be faster
 		// if the allocated space is to small for a slab round it up to 1
-		uint32_t numSlabs = (bites + SLABSIZE - 1) / SLABSIZE;
+		uint32_t numSlabs = (bytes + SLABSIZE - 1) / SLABSIZE;
 
 
 		for (uint32_t i = 0; i < numSlabs; i++) {

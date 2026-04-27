@@ -19,7 +19,7 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(!a.brodcasted(), "cant apply on brodcasted tensors");
+	TZ_CHECK(!a.broadcasted(), "cant apply on broadcasted tensors");
 #endif
 	if (a.empty())
 		return;
@@ -62,7 +62,7 @@ template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(!a.brodcasted() && !b.brodcasted(), "cant apply on brodcasted tensors");
+	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "cant apply on broadcasted tensors");
 #endif
 	if (a.empty())
 		return;
@@ -112,8 +112,8 @@ template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
 #if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(!a.brodcasted() && !b.brodcasted() && !c.brodcasted(),
-	         "cant apply on brodcasted tensors");
+	TZ_CHECK(!a.broadcasted() && !b.broadcasted() && !c.broadcasted(),
+	         "cant apply on broadcasted tensors");
 #endif
 
 	if (a.empty())
@@ -261,7 +261,7 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		if (a.tensor_().strides()[1] != 1)
 			inA = a.transpose();
 		if (b.tensor_().strides()[1] != 1)
-			inA = b.transpose();
+			inB = b.transpose();
 
 		cuda::matmul(inA.tensor_().getCudaTensor(), inB.tensor_().getCudaTensor(),
 		             out.tensor_().getCudaTensor());

@@ -1,5 +1,5 @@
-This is a tensor libary for the cpu (for now).
-This is a header libary.
+This is a tensor library for the cpu (for now).
+This is a header library.
 
 TODO:
   gooood tests
