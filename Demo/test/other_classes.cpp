@@ -101,7 +101,7 @@ TEST_CASE("scalar_broadcast_to_vector") {
 	CHECK(v.tensor_().strides()[0] == 0); // zero stride = broadcast
 
 	// Every element must read back as the scalar's value
-	for (uint64_t i = 0; i < 5; ++i)
+	for (uint64_t i = 0; i < 5; i++)
 		CHECK(v.at(i) == 9);
 }
 
@@ -114,8 +114,8 @@ TEST_CASE("scalar_broadcast_to_matrix") {
 	CHECK(m.tensor_().strides()[0] == 0);
 	CHECK(m.tensor_().strides()[1] == 0);
 
-	for (uint64_t i = 0; i < 4; ++i)
-		for (uint64_t j = 0; j < 5; ++j)
+	for (uint64_t i = 0; i < 4; i++)
+		for (uint64_t j = 0; j < 5; j++)
 			CHECK(m.at(i, j) == 3);
 }
 
@@ -180,7 +180,7 @@ TEST_CASE("vector_subscript_returns_scalar_view") {
 TEST_CASE("vector_set_all_and_sum") {
 	Vector<int> v(4, CPU);
 	v.setAll(5);
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; i++)
 		CHECK(v.at(i) == 5);
 
 	Scalar<int> s = v.sum();
@@ -243,7 +243,7 @@ TEST_CASE("vector_transpose_to_row_matrix") {
 	CHECK(mt.cols() == 4);
 
 	// The strides let it navigate the same underlying data
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; i++)
 		CHECK(mt.at(0, i) == i + 1);
 
 	// It is a view — modification propagates back
@@ -261,8 +261,8 @@ TEST_CASE("vector_broadcast_to_matrix") {
 	CHECK(m.tensor_().strides()[0] == 0); // row stride is broadcast
 	CHECK(m.tensor_().strides()[1] == 1);
 
-	for (uint64_t r = 0; r < 4; ++r)
-		for (uint64_t c = 0; c < 3; ++c)
+	for (uint64_t r = 0; r < 4; r++)
+		for (uint64_t c = 0; c < 3; c++)
 			CHECK(m.at(r, c) == (int)(c + 1));
 }
 
@@ -427,16 +427,16 @@ TEST_CASE("matrix_double_transpose_is_original") {
 
 	CHECK(mtt.rows() == m.rows());
 	CHECK(mtt.cols() == m.cols());
-	for (uint64_t i = 0; i < 2; ++i)
-		for (uint64_t j = 0; j < 3; ++j)
+	for (uint64_t i = 0; i < 2; i++)
+		for (uint64_t j = 0; j < 3; j++)
 			CHECK(mtt.at(i, j) == m.at(i, j));
 }
 
 TEST_CASE("matrix_set_all_and_sum") {
 	Matrix<int> m(3, 3, CPU);
 	m.setAll(4);
-	for (uint64_t i = 0; i < 3; ++i)
-		for (uint64_t j = 0; j < 3; ++j)
+	for (uint64_t i = 0; i < 3; i++)
+		for (uint64_t j = 0; j < 3; j++)
 			CHECK(m.at(i, j) == 4);
 
 	Scalar<int> s = m.sum();
@@ -547,7 +547,7 @@ TEST_CASE("tensor_class_from_std_vec_3d") {
 
 TEST_CASE("tensor_class_operator_subscript_returns_tensor") {
 	Tensor<int> t({3, 4}, CPU);
-	for (int i = 0; i < 12; ++i)
+	for (int i = 0; i < 12; i++)
 		t.tensor_().rawData()[i] = i;
 
 	// operator[] on Tensor<T> returns a Tensor<T>

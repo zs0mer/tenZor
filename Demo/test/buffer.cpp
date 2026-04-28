@@ -81,9 +81,9 @@ TEST_CASE("buffer_constructor") {
 	CHECK(b->data() != nullptr);
 
 	uint8_t* p = static_cast<uint8_t*>(b->data());
-	for (uint64_t i = 0; i < sz; ++i)
+	for (uint64_t i = 0; i < sz; i++)
 		p[i] = static_cast<uint8_t>(i % 256);
-	for (uint64_t i = 0; i < sz; ++i)
+	for (uint64_t i = 0; i < sz; i++)
 		CHECK(p[i] == static_cast<uint8_t>(i % 256));
 }
 
@@ -170,7 +170,7 @@ TEST_CASE("buffer_clone") {
 	const uint64_t sz = 1024;
 	Buffer b1(sz);
 	uint8_t* p1 = static_cast<uint8_t*>(b1->data());
-	for (uint64_t i = 0; i < sz; ++i)
+	for (uint64_t i = 0; i < sz; i++)
 		p1[i] = static_cast<uint8_t>((i * 7 + 3) % 256);
 
 	Buffer b2 = b1.clone();
@@ -178,7 +178,7 @@ TEST_CASE("buffer_clone") {
 	CHECK(b2->data() != b1->data());
 	CHECK(b2->size() == sz);
 	uint8_t* p2 = static_cast<uint8_t*>(b2->data());
-	for (uint64_t i = 0; i < sz; ++i)
+	for (uint64_t i = 0; i < sz; i++)
 		CHECK(p2[i] == p1[i]);
 
 	p2[0] = ~p2[0];
@@ -200,7 +200,7 @@ TEST_CASE("buffer_reference_counting1") {
 	void* first = b0->data();
 
 	std::vector<Buffer> copies;
-	for (int i = 0; i < 200; ++i)
+	for (int i = 0; i < 200; i++)
 		copies.push_back(b0);
 
 	for (auto& c : copies) {

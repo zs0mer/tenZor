@@ -14,7 +14,7 @@ using namespace TZ::impl;
 
 TEST_CASE("ops_apply1_negate_dense") {
 	TensorIMPL<int> t({4}, CPU);
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; i++)
 		t.rawData()[i] = i;
 
 	TensorIMPL<int>::apply(t, Negate<int>{});
@@ -28,7 +28,7 @@ TEST_CASE("ops_apply1_negate_dense") {
 TEST_CASE("ops_apply1_set_functor") {
 	TensorIMPL<float> t({3, 3}, CPU);
 	TensorIMPL<float>::apply(t, Set<float>(7.f));
-	for (int i = 0; i < 9; ++i)
+	for (int i = 0; i < 9; i++)
 		CHECK(t.rawData()[i] == doctest::Approx(7.f));
 }
 
@@ -50,7 +50,7 @@ TEST_CASE("ops_apply1_nondense_transposed") {
 	// The transposed view shares the same buffer, so the negation
 	// is visible through the original.
 	TensorIMPL<int> t({2, 3}, CPU);
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 6; i++)
 		t.rawData()[i] = i + 1; // [1..6]
 
 	uint64_t sh[] = {3, 2}, st[] = {1, 3};
@@ -59,7 +59,7 @@ TEST_CASE("ops_apply1_nondense_transposed") {
 
 	TensorIMPL<int>::apply(tr, Negate<int>{});
 
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 6; i++)
 		CHECK(t.rawData()[i] == -(i + 1));
 }
 
@@ -70,33 +70,33 @@ TEST_CASE("ops_apply1_nondense_transposed") {
 TEST_CASE("ops_apply2_copy_dense") {
 	TensorIMPL<int> a({4}, CPU);
 	TensorIMPL<int> b({4}, CPU);
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < 4; i++) {
 		a.rawData()[i] = i * 3;
 		b.rawData()[i] = 0;
 	}
 
 	TensorIMPL<int>::apply(a, b, Copy<int>{});
 
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; i++)
 		CHECK(b.rawData()[i] == i * 3);
 }
 
 TEST_CASE("ops_apply2_add_scalar_functor") {
 	TensorIMPL<int> a({5}, CPU);
 	TensorIMPL<int> b({5}, CPU);
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 5; i++)
 		a.rawData()[i] = i;
 
 	TensorIMPL<int>::apply(a, b, AddScalar<int>(100));
 
-	for (int i = 0; i < 5; ++i)
+	for (int i = 0; i < 5; i++)
 		CHECK(b.rawData()[i] == i + 100);
 }
 
 TEST_CASE("ops_apply2_subtract_scalar_functor") {
 	TensorIMPL<int> a({3}, CPU);
 	TensorIMPL<int> b({3}, CPU);
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 3; i++)
 		a.rawData()[i] = i + 10;
 
 	TensorIMPL<int>::apply(a, b, SubtractScalar<int>(5));
@@ -109,7 +109,7 @@ TEST_CASE("ops_apply2_subtract_scalar_functor") {
 TEST_CASE("ops_apply2_multiply_scalar_functor") {
 	TensorIMPL<float> a({4}, CPU);
 	TensorIMPL<float> b({4}, CPU);
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < 4; i++)
 		a.rawData()[i] = static_cast<float>(i + 1);
 
 	TensorIMPL<float>::apply(a, b, MultiplyScalar<float>(3.f));
@@ -123,7 +123,7 @@ TEST_CASE("ops_apply2_multiply_scalar_functor") {
 TEST_CASE("ops_apply2_nondense_source") {
 	// Source is a transposed (non-dense) matrix; Copy should still work.
 	TensorIMPL<int> src({2, 3}, CPU);
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 6; i++)
 		src.rawData()[i] = i;
 	// src row-major: [[0,1,2],[3,4,5]]
 
@@ -145,7 +145,7 @@ TEST_CASE("ops_apply2_nondense_source") {
 TEST_CASE("ops_apply2_nondense_dest") {
 	// Destination is a non-standard-strided buffer (column-major write).
 	TensorIMPL<int> src({2, 3}, CPU);
-	for (int i = 0; i < 6; ++i)
+	for (int i = 0; i < 6; i++)
 		src.rawData()[i] = i + 1;
 
 	mem::Buffer dbuf(6 * sizeof(int));
@@ -159,8 +159,8 @@ TEST_CASE("ops_apply2_nondense_dest") {
 
 	// (r,c) in dst is stored at r*1 + c*2
 	// src (r,c) = r*3 + c + 1
-	for (uint64_t r = 0; r < 2; ++r)
-		for (uint64_t c = 0; c < 3; ++c)
+	for (uint64_t r = 0; r < 2; r++)
+		for (uint64_t c = 0; c < 3; c++)
 			CHECK(dst.at({r, c}) == src.at({r, c}));
 }
 
@@ -180,8 +180,8 @@ TEST_CASE("ops_apply2_broadcasted_source_fills_dest") {
 	TensorIMPL<int> dst({4, 3}, CPU);
 	TensorIMPL<int>::apply(bcast, dst, Copy<int>{});
 
-	for (uint64_t r = 0; r < 4; ++r)
-		for (uint64_t c = 0; c < 3; ++c)
+	for (uint64_t r = 0; r < 4; r++)
+		for (uint64_t c = 0; c < 3; c++)
 			CHECK(dst.at({r, c}) == (int)(c + 1));
 }
 
@@ -200,7 +200,7 @@ TEST_CASE("ops_apply3_add_dense") {
 	TensorIMPL<int> b({2, 2}, CPU);
 	TensorIMPL<int> c({2, 2}, CPU);
 
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < 4; i++) {
 		a.rawData()[i] = i;
 		b.rawData()[i] = i * 2;
 	}
@@ -274,7 +274,7 @@ TEST_CASE("ops_apply3_shape_mismatch_throws") {
 
 TEST_CASE("ops_sum_functor_accumulates") {
 	TensorIMPL<int> t({5}, CPU);
-	for (int i = 1; i <= 5; ++i)
+	for (int i = 1; i <= 5; i++)
 		t.rawData()[i - 1] = i; // [1,2,3,4,5]
 
 	TensorIMPL<int> acc(0, nullptr, CPU);
@@ -287,7 +287,7 @@ TEST_CASE("ops_sum_functor_accumulates") {
 
 TEST_CASE("ops_sum_functor_on_2d") {
 	TensorIMPL<int> t({3, 3}, CPU);
-	for (int i = 0; i < 9; ++i)
+	for (int i = 0; i < 9; i++)
 		t.rawData()[i] = i + 1; // 1..9
 
 	TensorIMPL<int> acc(0, nullptr, CPU);
@@ -381,8 +381,8 @@ TEST_CASE("ops_matmul_by_identity") {
 	id.at(2, 2) = 1;
 
 	Matrix<int> c = matmul(a, id);
-	for (uint64_t i = 0; i < 3; ++i)
-		for (uint64_t j = 0; j < 3; ++j)
+	for (uint64_t i = 0; i < 3; i++)
+		for (uint64_t j = 0; j < 3; j++)
 			CHECK(c.at(i, j) == a.at(i, j));
 }
 

@@ -236,7 +236,7 @@ T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) {
 
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < dim_; ++i) {
+	for (size_t i = 0; i < dim_; i++) {
 		TZ_CHECK(idx.begin()[i] < shape_[i], "index out of bounds");
 		linearIdx += idx.begin()[i] * strides_[i];
 	}
@@ -255,7 +255,7 @@ const T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) const {
 
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < dim_; ++i) {
+	for (size_t i = 0; i < dim_; i++) {
 		TZ_CHECK(idx.begin()[i] < shape_[i], "index out of bounds");
 		linearIdx += idx.begin()[i] * strides_[i];
 	}
@@ -271,7 +271,7 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < dim_; ++i) {
+	for (size_t i = 0; i < dim_; i++) {
 		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}
@@ -287,7 +287,7 @@ const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 	TZ_CHECK(device() == CPU, "not on the CPU");
 	uint64_t linearIdx = offset_;
 
-	for (size_t i = 0; i < dim_; ++i) {
+	for (size_t i = 0; i < dim_; i++) {
 		TZ_CHECK(idx[i] < shape_[i], "index out of bounds");
 		linearIdx += idx[i] * strides_[i];
 	}

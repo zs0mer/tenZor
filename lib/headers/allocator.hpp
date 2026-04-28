@@ -225,7 +225,7 @@ class MediumAllocator {
 
 	void fillSlabs(const uint16_t slabNum) {
 		bin_.reserve(bin_.size() + slabNum);
-		for (uint32_t i = 0; i < slabNum; ++i) {
+		for (uint32_t i = 0; i < slabNum; i++) {
 			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
 			TZ_CHECK_(mem);
 
@@ -301,7 +301,7 @@ class SmallAllocator {
 	void* alloc(const uint64_t bytes) {
 		// determening the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
-		for (uint16_t i = 0; i < POOLTYPENUMBER; ++i) {
+		for (uint16_t i = 0; i < POOLTYPENUMBER; i++) {
 			if (bytes <= POOLSIZE[i]) {
 				sizeType = i;
 				break;
