@@ -22,23 +22,23 @@ class Matrix;
 template <typename T>
 class Tensor;
 
-namespace internal {
+namespace impl {
 
 // # tensorWrapper =============================================================
 
 template <typename Derived, typename T>
 class TensorWrapper {
   protected:
-	internal::TensorIMPL<T> t_;
+	impl::TensorIMPL<T> t_;
 
   public:
 	// # seters ===========================================================================
 
 	TensorWrapper() = default;
 
-	TensorWrapper(const internal::TensorIMPL<T>& t) : t_(t) {}
+	TensorWrapper(const impl::TensorIMPL<T>& t) : t_(t) {}
 
-	TensorWrapper(internal::TensorIMPL<T>&& t) : t_(std::move(t)) {}
+	TensorWrapper(impl::TensorIMPL<T>&& t) : t_(std::move(t)) {}
 
 	TensorWrapper(const std::initializer_list<uint64_t>& shape, Device device = CPU)
 	    : t_(shape, device) {}
@@ -80,12 +80,12 @@ class TensorWrapper {
 	// # geters ===========================================================================
 
 	// returns the inner tensor
-	const internal::TensorIMPL<T>& tensor_() const {
+	const impl::TensorIMPL<T>& tensor_() const {
 		return t_;
 	}
 
 	// returns the inner tensor
-	internal::TensorIMPL<T>& tensor_() {
+	impl::TensorIMPL<T>& tensor_() {
 		return t_;
 	}
 
@@ -102,77 +102,77 @@ class TensorWrapper {
 
 	Derived operator+(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, internal::Add<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Add<T>{});
 		return out;
 	}
 
 	Derived operator-(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, internal::Subtract<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Subtract<T>{});
 		return out;
 	}
 
 	Derived operator-() const {
 		Derived out = this->clone();
-		internal::TensorIMPL<T>::apply(out.t_, internal::Negate<T>{});
+		impl::TensorIMPL<T>::apply(out.t_, impl::Negate<T>{});
 		return out;
 	}
 
 
 	Derived operator+(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::AddScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::AddScalar<T>(s.get()));
 		return out;
 	}
 
 	Derived operator-(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::SubtractScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::SubtractScalar<T>(s.get()));
 		return out;
 	}
 
 	Derived operator*(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		internal::TensorIMPL<T>::apply(this->t_, out.t_, internal::MultiplyScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::MultiplyScalar<T>(s.get()));
 		return out;
 	}
 
 
 	Derived& operator+=(const TensorWrapper& other) {
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, internal::Add<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Add<T>{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const TensorWrapper& other) {
-		internal::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, internal::Subtract<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Subtract<T>{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator+=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::AddScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::AddScalar<T>(s.get()));
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::SubtractScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::SubtractScalar<T>(s.get()));
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator*=(const Scalar<T>& s) {
-		internal::TensorIMPL<T>::apply(this->t_, this->t_, internal::MultiplyScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::MultiplyScalar<T>(s.get()));
 		return static_cast<Derived&>(*this);
 	}
 
 	// sets everything to a given value
 	void setAll(const T& s) {
-		internal::TensorIMPL<T>::apply(this->t_, internal::Set<T>(s));
+		impl::TensorIMPL<T>::apply(this->t_, impl::Set<T>(s));
 	}
 
 	// sums everything
 	Scalar<T> sum() {
 		Scalar<T> s = TensorIMPL<T>(0, nullptr, device());
 		s.setAll(0);
-		internal::TensorIMPL<T>::apply(this->t_, internal::Sum<T>(s.tensor_().data()));
+		impl::TensorIMPL<T>::apply(this->t_, impl::Sum<T>(s.tensor_().data()));
 		return s;
 	}
 
@@ -188,13 +188,13 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 	return os;
 }
 
-}; // namespace internal
+}; // namespace impl
 
 // # Tensor =============================================================
 
 template <typename T>
-class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
-	using Base = internal::TensorWrapper<Tensor<T>, T>;
+class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
+	using Base = impl::TensorWrapper<Tensor<T>, T>;
 
   public:
 	using Base::Base;
@@ -207,11 +207,11 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v) {
 		Device device = CPU;
 		uint8_t currDim = 0;
-		std::array<uint64_t, internal::MAX_DIM> shape;
+		std::array<uint64_t, impl::MAX_DIM> shape;
 
 		getSTDVecShape(v, shape.data(), currDim);
 
-		internal::TensorIMPL<T> t(currDim, shape.data(), device);
+		impl::TensorIMPL<T> t(currDim, shape.data(), device);
 
 		uint64_t offset = 0;
 		flattenSTDVec(v, t.data(), offset);
@@ -229,7 +229,7 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 	template <class K>
 	static void getSTDVecShape(const std::vector<K>& v, uint64_t* const shape, uint8_t& currDim) {
 		shape[currDim++] = v.size();
-		TZ_CHECK(currDim <= internal::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
+		TZ_CHECK(currDim <= impl::MAX_DIM, "tensor dimension exceeds MAX_DIMS");
 		if (v.empty())
 			return;
 		getSTDVecShape(v[0], shape, currDim);
@@ -250,14 +250,14 @@ class Tensor : public internal::TensorWrapper<Tensor<T>, T> {
 // # Scalar =====================================================================
 
 template <typename T>
-class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
-	using Base = internal::TensorWrapper<Scalar<T>, T>;
+class Scalar : public impl::TensorWrapper<Scalar<T>, T> {
+	using Base = impl::TensorWrapper<Scalar<T>, T>;
 
   public:
 	// # constructors ---------------
 
 	// standard constructor with tensor
-	Scalar(internal::TensorIMPL<T>& t) : Base(t) {
+	Scalar(impl::TensorIMPL<T>& t) : Base(t) {
 		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 	}
 
@@ -267,7 +267,7 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	}
 
 	// standard constructor with tensor
-	Scalar(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
+	Scalar(impl::TensorIMPL<T>&& t) : Base(std::move(t)) {
 		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
 	}
 
@@ -317,23 +317,23 @@ class Scalar : public internal::TensorWrapper<Scalar<T>, T> {
 	Vector<T> broadcast(uint64_t size) const {
 		std::array<uint64_t, 1> shape = {size};
 		std::array<uint64_t, 1> strides = {0};
-		return Vector<T>(internal::TensorIMPL<T>(1, shape.data(), strides.data(), this->t_.offset(),
-		                                         this->t_.buffer()));
+		return Vector<T>(impl::TensorIMPL<T>(1, shape.data(), strides.data(), this->t_.offset(),
+		                                     this->t_.buffer()));
 	}
 
 	Matrix<T> broadcast(uint64_t rows, uint64_t cols) const {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		std::array<uint64_t, 2> strides = {0, 0};
-		return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
-		                                         this->t_.buffer()));
+		return Matrix<T>(impl::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
+		                                     this->t_.buffer()));
 	}
 };
 
 // # Vector =====================================================================
 
 template <typename T>
-class Vector : public internal::TensorWrapper<Vector<T>, T> {
-	using Base = internal::TensorWrapper<Vector<T>, T>;
+class Vector : public impl::TensorWrapper<Vector<T>, T> {
+	using Base = impl::TensorWrapper<Vector<T>, T>;
 
   public:
 	// # constructors ---------------
@@ -345,7 +345,7 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	}
 
 	// standard constructor with tensor
-	Vector(const internal::TensorIMPL<T>& t) : Base(t) {
+	Vector(const impl::TensorIMPL<T>& t) : Base(t) {
 		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
@@ -355,7 +355,7 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 	}
 
 	// standard constructor with tensor
-	Vector(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
+	Vector(impl::TensorIMPL<T>&& t) : Base(std::move(t)) {
 		TZ_CHECK(this->t_.dim() == 1, "not a Vector in the TZ::Vector");
 	}
 
@@ -366,8 +366,8 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 
 	// initializer with matrix, the matrix has to be a column vector
 	Vector(const Matrix<T>& t)
-	    : Base(internal::TensorIMPL<T>(1, t.shape(), t.tensor_().strides(), t.tensor_().offset(),
-	                                   t.tensor_().buffer())) {
+	    : Base(impl::TensorIMPL<T>(1, t.shape(), t.tensor_().strides(), t.tensor_().offset(),
+	                               t.tensor_().buffer())) {
 		TZ_CHECK(t.cols() == 1, "not a convertable Matrix in the TZ::Vector constructor");
 	}
 
@@ -413,23 +413,23 @@ class Vector : public internal::TensorWrapper<Vector<T>, T> {
 		// this->size() * stride because we want the new tensor to be dense
 		std::array<uint64_t, 2> strides = {this->size() * stride, stride};
 		std::array<uint64_t, 2> shape = {1, this->size()};
-		return Matrix<T>(internal::TensorIMPL<T>(
-		    2, shape.data(), strides.data(), this->tensor_().offset(), this->tensor_().buffer()));
+		return Matrix<T>(impl::TensorIMPL<T>(2, shape.data(), strides.data(),
+		                                     this->tensor_().offset(), this->tensor_().buffer()));
 	}
 
 	Matrix<T> broadcast(uint64_t rows, uint64_t cols) const {
 		std::array<uint64_t, 2> shape = {rows, cols};
 		std::array<uint64_t, 2> strides = {0, this->t_.strides()[0]};
-		return Matrix<T>(internal::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
-		                                         this->t_.buffer()));
+		return Matrix<T>(impl::TensorIMPL<T>(2, shape.data(), strides.data(), this->t_.offset(),
+		                                     this->t_.buffer()));
 	}
 };
 
 // # Matrix =====================================================================
 
 template <typename T>
-class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
-	using Base = internal::TensorWrapper<Matrix<T>, T>;
+class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
+	using Base = impl::TensorWrapper<Matrix<T>, T>;
 
   public:
 	// # constructors ---------------
@@ -444,7 +444,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// standard constructor with tensor
-	Matrix(const internal::TensorIMPL<T>& t) : Base(t) {
+	Matrix(const impl::TensorIMPL<T>& t) : Base(t) {
 		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
@@ -454,7 +454,7 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// standard constructor with tensor
-	Matrix(internal::TensorIMPL<T>&& t) : Base(std::move(t)) {
+	Matrix(impl::TensorIMPL<T>&& t) : Base(std::move(t)) {
 		TZ_CHECK(this->t_.dim() == 2, "not a Matrix in the TZ::Matrix");
 	}
 
@@ -530,18 +530,18 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 	Vector<T> col(const uint64_t j) {
 		TZ_CHECK(j < this->t_.shape()[1], "column index out of bounds");
 
-		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
-		                                         j * this->t_.strides()[1] + this->t_.offset(),
-		                                         this->t_.buffer()));
+		return Vector<T>(impl::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                                     j * this->t_.strides()[1] + this->t_.offset(),
+		                                     this->t_.buffer()));
 	}
 
 	// returns the j'th collumn
 	const Vector<T> col(const uint64_t j) const {
 		TZ_CHECK(j < this->t_.shape()[1], "column index out of bounds");
 
-		return Vector<T>(internal::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
-		                                         j * this->t_.strides()[1] + this->t_.offset(),
-		                                         this->t_.buffer()));
+		return Vector<T>(impl::TensorIMPL<T>(1, &this->t_.shape()[0], &this->t_.strides()[0],
+		                                     j * this->t_.strides()[1] + this->t_.offset(),
+		                                     this->t_.buffer()));
 	}
 
 	// swap two rows, given by the indexes
@@ -571,8 +571,8 @@ class Matrix : public internal::TensorWrapper<Matrix<T>, T> {
 		std::array<uint64_t, 2> strides = {this->tensor_().strides()[1],
 		                                   this->tensor_().strides()[0]};
 		std::array<uint64_t, 2> shape = {this->cols(), this->rows()};
-		return Matrix<T>(internal::TensorIMPL<T>(
-		    2, shape.data(), strides.data(), this->tensor_().offset(), this->tensor_().buffer()));
+		return Matrix<T>(impl::TensorIMPL<T>(2, shape.data(), strides.data(),
+		                                     this->tensor_().offset(), this->tensor_().buffer()));
 	}
 };
 

@@ -468,8 +468,6 @@ class Salloc : public Allocator {
 		} else {                            //~ 1Mb
 			return la_.dealloc(ptr, bytes); //~
 		}
-		ptr = nullptr;
-		return;
 	};
 
 	~Salloc() = default;

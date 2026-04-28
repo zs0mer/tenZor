@@ -7,7 +7,7 @@
 #include <vector>
 
 using namespace TZ;
-using namespace TZ::internal;
+using namespace TZ::impl;
 
 //& ============================================================
 //& Default construction

@@ -299,12 +299,12 @@ void matmul(const SimpleTensor<double> A, const SimpleTensor<double> B, SimpleTe
 
 template <class T>
 void matmul(const SimpleTensor<T> A, const SimpleTensor<T> B, SimpleTensor<T> C) {
-	TZ_CHECK(false, "matmul is not yet implemented for float and double types.");
+	TZ_CHECK(false, "matmul is only implemented for float and double types");
 }
 
 // # ============================================================================================
 
-using namespace TZ::internal;
+using namespace TZ::impl;
 #define INSTANTIATE_UNARY_APPLY(T, Func)                                                           \
 	template void applyGPU<T, Func<T>>(SimpleTensor<T>, Func<T>)
 

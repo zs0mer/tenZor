@@ -15,7 +15,7 @@ int main() {
 	}
 
 	{
-		TZ::internal::Timer timer("malloc");
+		TZ::impl::Timer timer("malloc");
 		std::vector<void*> space(n);
 
 		for (int k = 0; k < m; k++) {
@@ -29,7 +29,7 @@ int main() {
 
 	TZ::mem::Salloc& aalloc = TZ::mem::Salloc::instance();
 	{
-		TZ::internal::Timer timer("Salloc");
+		TZ::impl::Timer timer("Salloc");
 		std::vector<void*> space(n);
 
 		for (int k = 0; k < m; k++) {

@@ -8,7 +8,7 @@
 #include "buffer.hpp"
 #include "kernel_functions.hpp"
 
-namespace TZ::internal {
+namespace TZ::impl {
 
 // # -------------------------
 #ifdef TZ_UNMUTABLE_BRODCASTS
@@ -233,4 +233,4 @@ class TensorIMPL {
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 };
 
-} // namespace TZ::internal
+} // namespace TZ::impl

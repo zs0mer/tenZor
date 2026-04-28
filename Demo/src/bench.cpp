@@ -19,7 +19,7 @@ int main() {
 	std::vector<uint64_t> l(2);
 
 	{
-		TZ::internal::Timer timer("vector");
+		TZ::impl::Timer timer("vector");
 
 		long long g = 0;
 		for (int i = 0; i < n; i++) {
@@ -36,7 +36,7 @@ int main() {
 	}
 
 	{
-		TZ::internal::Timer timer("tensor");
+		TZ::impl::Timer timer("tensor");
 		long long g = 0;
 		for (uint64_t i = 0; i < n; i++) {
 			l[1] = i;

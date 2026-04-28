@@ -3,7 +3,7 @@
 #include <cstdint>
 
 namespace TZ {
-namespace internal {
+namespace impl {
 
 // # -------------------------
 #ifdef TZ_MAX_DIM
@@ -13,7 +13,7 @@ const constexpr std::uint8_t MAX_DIM = 4;
 #endif
 // # -------------------------
 
-}; // namespace internal
+}; // namespace impl
 namespace cuda {
 constexpr uint32_t THREADS = 256;
 constexpr uint32_t MAXBLOCKNUM = 64;
@@ -23,8 +23,8 @@ constexpr uint32_t MAXBLOCKNUM = 64;
 template <class T>
 struct SimpleTensor {
 	uint8_t dim;
-	uint64_t shape[internal::MAX_DIM];
-	uint64_t strides[internal::MAX_DIM];
+	uint64_t shape[impl::MAX_DIM];
+	uint64_t strides[impl::MAX_DIM];
 	uint64_t offset;
 	T* data;
 

@@ -12,7 +12,7 @@
 #include "utils.hpp"
 
 namespace TZ {
-namespace internal {
+namespace impl {
 
 // these are the CPU impl
 template <class T>
@@ -197,7 +197,7 @@ TensorIMPL<T> TensorIMPL<T>::broadcast(const std::initializer_list<uint64_t>& ta
 	return TensorIMPL<T>(newDim, newShape.data(), newStrides.data(), offset_, data_);
 }
 
-}; // namespace internal
+}; // namespace impl
 
 // # ===========================================================================
 

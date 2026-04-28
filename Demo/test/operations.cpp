@@ -6,7 +6,7 @@
 #include <doctest/doctest.h>
 
 using namespace TZ;
-using namespace TZ::internal;
+using namespace TZ::impl;
 
 //& ============================================================
 //& Unary apply (1-arg static: modifies a)

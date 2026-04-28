@@ -12,7 +12,7 @@
 #include "kernel_functions.hpp"
 
 
-namespace TZ::internal {
+namespace TZ::impl {
 
 // # -------------------------
 #ifdef TZ_NORMAL_EQUAL
@@ -495,4 +495,4 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 	return os;
 }
 
-} // namespace TZ::internal
+} // namespace TZ::impl

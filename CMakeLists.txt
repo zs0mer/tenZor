@@ -18,21 +18,21 @@ find_package(OpenMP REQUIRED)
 # ! THIS DEPENDS ON GPU
 set(CMAKE_CUDA_ARCHITECTURES 61)
 
-# Debugging flags
-set(CMAKE_CXX_FLAGS_DEBUG
-    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-)
+# # Debugging flags
 
-# # ##
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+#)
+
+
 # # Sanitizers
-# # ##
 
 # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
 # set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
-# # ##
+
 # # Paths
-# # ##
+
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/Demo/src")
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib/headers")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
@@ -40,9 +40,9 @@ set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
 set(CUDA_SRC_DIR "${CMAKE_SOURCE_DIR}/lib/cuda")
 set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/headers")
 
-# # ##
+
 # # CUDA Library
-# # ##
+
 add_library(tenzor_cuda
     "${CUDA_SRC_DIR}/kernels.cu"
 )
@@ -50,9 +50,9 @@ add_library(tenzor_cuda
 target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})
 target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 
-# # ##
-# # Application executable
-# # ##
+
+# # Application executables
+
 file(GLOB APP_SOURCES
     "${SRC_DIR}/*.cpp"
 )
@@ -67,10 +67,6 @@ target_compile_options(bench PRIVATE
     -O3
     -march=x86-64-v3
     -ffast-math
-
-    # -funroll-loops
-    # -fopt-info-vec
-    # -fno-omit-frame-pointer
 )
 target_link_libraries(bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
@@ -80,19 +76,15 @@ target_compile_options(alloc_bench PRIVATE
     -O3
     -march=x86-64-v3
     -ffast-math
-
-    # -funroll-loops
-    # -fopt-info-vec
-    # -fno-omit-frame-pointer
 )
 target_link_libraries(alloc_bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
-# # ## ===========================================================================
 # # Testing =====================================================================
-# # ## ===========================================================================
+
 find_package(doctest REQUIRED)
 
 # # allocator ------------------------
+#
 add_executable(Tallocator "${TEST_DIR}/allocator.cpp")
 
 target_include_directories(Tallocator PUBLIC ${INCLUDE_DIR})
@@ -163,4 +155,19 @@ add_test(
 add_test(
     NAME buffer
     COMMAND Tbuffer --color=yes
+)
+
+add_test(
+    NAME tensor
+    COMMAND Ttensor --color=yes
+)
+
+add_test(
+    NAME other_classes
+    COMMAND Tother_classes --color=yes
+)
+
+add_test(
+    NAME operations
+    COMMAND Toperations --color=yes
 )
