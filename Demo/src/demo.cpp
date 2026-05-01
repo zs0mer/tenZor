@@ -33,9 +33,22 @@ int main() {
 using namespace TZ;
 
 int main() {
+	/*
+	    Matrix<float> M = {{1.f, 2.f}, {3.f, 4.f}};
+	    Matrix<float> N = {{5.f, 6.f}, {7.f, 8.f}};
+	    Matrix<float> Mt = M.transpose();
 
-	Vector<int> v = {1, 2, 3};
-	Matrix<int> m(v);
-	std::cout << m << m.rows();
-	return 0;
+	    Matrix<float> gMt = Mt.copyTo(GPU);
+	    Matrix<float> gN = N.copyTo(GPU);
+	    Matrix<float> gc = matmul(gMt, gN);
+	    Matrix<float> back = gc.copyTo(CPU);
+
+	*/
+	Matrix<float> M = {{1.f, 2.f}, {3.f, 4.f}};
+	Matrix<float> C = {{0, 0}, {0, 0}};
+	M = M.transpose();
+	TZ::impl::TensorIMPL<float>::apply(M.tensor_(), C.tensor_(), TZ::impl::Copy<float>{});
+
+	std::cout << M.tensor_().strides()[0] << " " << M.tensor_().strides()[1] << "\n";
+	std::cout << C.tensor_().strides()[0] << " " << C.tensor_().strides()[1] << "\n";
 }

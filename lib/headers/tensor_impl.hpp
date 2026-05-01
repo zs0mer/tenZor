@@ -5,23 +5,14 @@
 #include <cstring>
 #include <iostream>
 
-#include "allocator.hpp"
-#include "buffer.hpp"
-#include "tensor.hpp"
-#include "utils.hpp"
-#include "kernel_functions.hpp"
+#include <allocator.hpp>
+#include <buffer.hpp>
+#include <tensor.hpp>
+#include <utils.hpp>
+#include <kernel_functions.hpp>
 
 
 namespace TZ::impl {
-
-// # -------------------------
-#ifdef TZ_NORMAL_EQUAL
-// nothing
-#else
-#define TZ_NORMAL_EQUAL 1
-#endif
-// # -------------------------
-
 
 template <class T>
 TensorIMPL<T>::TensorIMPL()
@@ -79,47 +70,6 @@ void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t
 	}
 	computeMetadata();
 }
-
-template <class T>
-TensorIMPL<T>& TensorIMPL<T>::operator=(const TensorIMPL<T>& a) {
-#if TZ_NORMAL_EQUAL
-	if (isSameShape(*this, a) && a.device() == this->device()) {
-
-		apply(a, *this, Copy<T>{});
-
-		return *this;
-	}
-#endif
-
-	dim_ = a.dim_;
-	shape_ = a.shape_;
-	strides_ = a.strides_;
-	offset_ = a.offset_;
-	data_ = a.data_;
-
-	return *this;
-}
-
-template <class T>
-TensorIMPL<T>& TensorIMPL<T>::operator=(TensorIMPL<T>&& a) {
-#if TZ_NORMAL_EQUAL
-	if (isSameShape(*this, a) && a.device() == this->device()) {
-
-		apply(a, *this, Copy<T>{});
-
-		return *this;
-	}
-#endif
-
-	dim_ = a.dim_;
-	shape_ = a.shape_;
-	strides_ = a.strides_;
-	offset_ = a.offset_;
-	data_ = std::move(a.data_);
-
-	return *this;
-}
-
 
 // # ====================================================================================
 
@@ -451,6 +401,7 @@ const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
 	cuda::SimpleTensor<T> out;
 	out.dim = static_cast<uint8_t>(dim_);
 	out.offset = offset_;
+	// ! const_cast is needed
 	out.data = const_cast<T*>(reinterpret_cast<const T*>(data_->data()));
 	out.size = this->size();
 	out.dense = this->dense();

@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <initializer_list>
 
-#include "allocator.hpp"
-#include "buffer.hpp"
-#include "kernel_functions.hpp"
+#include <allocator.hpp>
+#include <buffer.hpp>
+#include <kernel_functions.hpp>
 
 namespace TZ::impl {
 
@@ -80,14 +80,14 @@ class TensorIMPL {
 	// * if TZ_NORMAL_EQUAL is 1:
 	// * if the tensors have the same shape and are on the same device,
 	// * it will just copy the data
-	TensorIMPL<T>& operator=(const TensorIMPL<T>&);
+	TensorIMPL<T>& operator=(const TensorIMPL<T>&) = default;
 
 	TensorIMPL(TensorIMPL&&) = default;
 
 	// * if TZ_NORMAL_EQUAL is 1:
 	// * if the tensors have the same shape and are on the same device,
 	// * it will just copy the data
-	TensorIMPL<T>& operator=(TensorIMPL<T>&&);
+	TensorIMPL<T>& operator=(TensorIMPL<T>&&) = default;
 
 	// # metadata geters ==================================================================
 
@@ -195,6 +195,10 @@ class TensorIMPL {
 	// cant do on the GPU
 	const T& get() const;
 
+	cuda::SimpleTensor<T> getCudaTensor();
+
+	const cuda::SimpleTensor<T> getCudaTensor() const;
+
 	// # operators ========================================================================
 
 	// * static
@@ -217,10 +221,6 @@ class TensorIMPL {
 
 	// Broadcasts the tensor to the target shape, if possible
 	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;
-
-	cuda::SimpleTensor<T> getCudaTensor();
-
-	const cuda::SimpleTensor<T> getCudaTensor() const;
 
 	// # private ==========================================================================
   protected:

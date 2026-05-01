@@ -1,13 +1,11 @@
-#include "tensor.hpp"
-#include <Tenzor.hpp>
-#include <cstdint>
-#include "math_classes.hpp"
-#include "tensor_impl.hpp"
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <cstdint>
 #include <doctest/doctest.h>
 #include <sstream>
 #include <vector>
+
+#include <Tenzor.hpp>
 
 using namespace TZ;
 using namespace TZ::impl;
@@ -113,8 +111,7 @@ TEST_CASE("tensorIMPL_low_constructor2") {
 	for (int i = 0; i < 16; i++)
 		parent.rawData()[i] = i;
 
-	uint64_t shape[] = {4};
-	uint64_t strides[] = {1};
+	uint64_t shape[] = {4}, strides[] = {1};
 
 	TensorIMPL<int> view(1, shape, strides, 8, parent.buffer());
 
@@ -356,8 +353,7 @@ TEST_CASE("tensorIMPL_broadcast3") {
 }
 
 TEST_CASE("tensorIMPL_broadcast4") {
-	uint64_t shape[] = {3, 1};
-	uint64_t strides[] = {1, 1};
+	uint64_t shape[] = {3, 1}, strides[] = {1, 1};
 	mem::Buffer buf(3 * sizeof(int));
 	int* d = static_cast<int*>(buf->data());
 	d[0] = 10;

@@ -1,15 +1,12 @@
 #pragma once
 
-#include <array>
 #include <cmath>
 #include <cstdint>
 
-#include "allocator.hpp"
-#include "kernel_functions.hpp"
-#include "math_classes.hpp"
-#include "tensor.hpp"
-#include "tensor_impl.hpp"
-#include "utils.hpp"
+#include <allocator.hpp>
+#include <kernel_functions.hpp>
+#include <math_classes.hpp>
+#include <utils.hpp>
 
 namespace TZ {
 namespace impl {
@@ -239,9 +236,9 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		Matrix<T> inA = a;
 		Matrix<T> inB = b;
 		if (a.tensor_().strides()[1] != 1)
-			inA = a.transpose();
+			inA = a.clone();
 		if (b.tensor_().strides()[1] != 1)
-			inB = b.transpose();
+			inB = b.clone();
 
 		cuda::matmul(inA.tensor_().getCudaTensor(), inB.tensor_().getCudaTensor(),
 		             out.tensor_().getCudaTensor());

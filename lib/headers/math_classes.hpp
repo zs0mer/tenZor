@@ -4,9 +4,10 @@
 #include <array>
 #include <initializer_list>
 
-#include "allocator.hpp"
-#include "tensor.hpp"
-#include "utils.hpp"
+#include <allocator.hpp>
+#include <tensor.hpp>
+#include <tensor_impl.hpp>
+#include <utils.hpp>
 
 namespace TZ {
 

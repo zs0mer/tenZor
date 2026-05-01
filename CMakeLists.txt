@@ -19,20 +19,16 @@ find_package(OpenMP REQUIRED)
 set(CMAKE_CUDA_ARCHITECTURES 61)
 
 # # Debugging flags
-
-#set(CMAKE_CXX_FLAGS_DEBUG
-#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-#)
-
+set(CMAKE_CXX_FLAGS_DEBUG
+    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+)
 
 # # Sanitizers
 
 # set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fno-omit-frame-pointer -g")
 # set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 
-
 # # Paths
-
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/Demo/src")
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib/headers")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
@@ -40,9 +36,7 @@ set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
 set(CUDA_SRC_DIR "${CMAKE_SOURCE_DIR}/lib/cuda")
 set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/headers")
 
-
 # # CUDA Library
-
 add_library(tenzor_cuda
     "${CUDA_SRC_DIR}/kernels.cu"
 )
@@ -50,13 +44,7 @@ add_library(tenzor_cuda
 target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})
 target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 
-
 # # Application executables
-
-file(GLOB APP_SOURCES
-    "${SRC_DIR}/*.cpp"
-)
-
 add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
@@ -80,7 +68,6 @@ target_compile_options(alloc_bench PRIVATE
 target_link_libraries(alloc_bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 # # Testing =====================================================================
-
 find_package(doctest REQUIRED)
 
 # # allocator ------------------------
@@ -144,6 +131,18 @@ target_link_libraries(Toperations
     OpenMP::OpenMP_CXX
 )
 
+# # # gpu function ----------------------------
+add_executable(Tgpu_function "${TEST_DIR}/gpu_function.cpp")
+
+target_include_directories(Tgpu_function PUBLIC ${INCLUDE_DIR})
+
+target_link_libraries(Tgpu_function
+    PRIVATE
+    doctest::doctest
+    tenzor_cuda
+    OpenMP::OpenMP_CXX
+)
+
 # # ---------------------------------
 enable_testing()
 
@@ -170,4 +169,9 @@ add_test(
 add_test(
     NAME operations
     COMMAND Toperations --color=yes
+)
+
+add_test(
+    NAME gpu_function
+    COMMAND Tgpu_function --color=yes
 )

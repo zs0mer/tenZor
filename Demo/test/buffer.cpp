@@ -1,9 +1,9 @@
-#include <Tenzor.hpp>
-#include "buffer.hpp"
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 #include <vector>
+
+#include <Tenzor.hpp>
 
 using namespace TZ;
 using namespace TZ::mem;

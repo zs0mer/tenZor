@@ -6,8 +6,8 @@
 #include <vector>
 #include <atomic>
 
-#include "kernel_functions.hpp"
-#include "utils.hpp"
+#include <kernel_functions.hpp>
+#include <utils.hpp>
 
 namespace TZ {
 

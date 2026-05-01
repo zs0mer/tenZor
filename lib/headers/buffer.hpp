@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <atomic>
 
-#include "allocator.hpp"
+#include <allocator.hpp>
 
 namespace TZ::mem {
 
