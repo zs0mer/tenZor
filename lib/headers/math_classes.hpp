@@ -99,6 +99,10 @@ class TensorWrapper {
 		return Tensor<T>(this->t_[idx]);
 	}
 
+	void copyDataFrom(const TensorWrapper& other) {
+		this->t_.copyDataFrom(other.tensor_());
+	}
+
 	// # operations ===========================================================================
 
 	Derived operator+(const TensorWrapper& other) const {

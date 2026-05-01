@@ -195,6 +195,9 @@ class TensorIMPL {
 	// cant do on the GPU
 	const T& get() const;
 
+	// copies the data from the given tensor to this tensor
+	void copyDataFrom(const TensorIMPL<T>& from);
+
 	cuda::SimpleTensor<T> getCudaTensor();
 
 	const cuda::SimpleTensor<T> getCudaTensor() const;

@@ -319,6 +319,58 @@ const T& TensorIMPL<T>::get() const {
 	return *(static_cast<const T*>(data_->data()) + offset_);
 }
 
+template <class T>
+void TensorIMPL<T>::copyDataFrom(const TensorIMPL<T>& from) {
+	TZ_CHECK(device() == from.device(), "not same device in copyData");
+	TZ_CHECK(isSameShape(*this, from), "not same size in copyData");
+
+	if (dense() && from.dense()) {
+		if (device() == CPU)
+			std::memcpy(this->data(), from.data(), size() * sizeof(T));
+		else if (device() == GPU)
+			cuda::memCopyOnGPU(this->data(), from.data(), size() * sizeof(T));
+		return;
+	}
+
+	apply(from, *this, Copy<T>{});
+}
+
+template <class T>
+cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
+	cuda::SimpleTensor<T> out;
+	out.dim = static_cast<uint8_t>(dim_);
+	out.offset = offset_;
+	out.data = reinterpret_cast<T*>(data_->data());
+	out.size = this->size();
+	out.dense = this->dense();
+
+	// Just copy the small metadata directly into the struct
+	for (uint8_t i = 0; i < dim_; i++) {
+		out.shape[i] = shape_[i];
+		out.strides[i] = strides_[i];
+	}
+
+	return out;
+}
+
+template <class T>
+const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
+	cuda::SimpleTensor<T> out;
+	out.dim = static_cast<uint8_t>(dim_);
+	out.offset = offset_;
+	// ! const_cast is needed
+	out.data = const_cast<T*>(reinterpret_cast<const T*>(data_->data()));
+	out.size = this->size();
+	out.dense = this->dense();
+
+	// Just copy the small metadata directly into the struct
+	for (uint8_t i = 0; i < dim_; i++) {
+		out.shape[i] = shape_[i];
+		out.strides[i] = strides_[i];
+	}
+
+	return out;
+}
 
 // # ====================================================================================
 
@@ -376,43 +428,6 @@ bool TensorIMPL<T>::isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b) 
 			return false;
 
 	return true;
-}
-
-template <class T>
-cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() {
-	cuda::SimpleTensor<T> out;
-	out.dim = static_cast<uint8_t>(dim_);
-	out.offset = offset_;
-	out.data = reinterpret_cast<T*>(data_->data());
-	out.size = this->size();
-	out.dense = this->dense();
-
-	// Just copy the small metadata directly into the struct
-	for (uint8_t i = 0; i < dim_; i++) {
-		out.shape[i] = shape_[i];
-		out.strides[i] = strides_[i];
-	}
-
-	return out;
-}
-
-template <class T>
-const cuda::SimpleTensor<T> TensorIMPL<T>::getCudaTensor() const {
-	cuda::SimpleTensor<T> out;
-	out.dim = static_cast<uint8_t>(dim_);
-	out.offset = offset_;
-	// ! const_cast is needed
-	out.data = const_cast<T*>(reinterpret_cast<const T*>(data_->data()));
-	out.size = this->size();
-	out.dense = this->dense();
-
-	// Just copy the small metadata directly into the struct
-	for (uint8_t i = 0; i < dim_; i++) {
-		out.shape[i] = shape_[i];
-		out.strides[i] = strides_[i];
-	}
-
-	return out;
 }
 
 template <class T>

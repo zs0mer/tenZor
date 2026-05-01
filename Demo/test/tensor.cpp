@@ -300,6 +300,37 @@ TEST_CASE("tensorIMPL_dense2") {
 
 // # ============================================================
 
+TEST_CASE("tensorIMPL_copyDataFrom1") {
+	TensorIMPL<int> t({4, 3}, CPU);
+	for (int i = 0; i < 12; i++)
+		t.rawData()[i] = i * 10;
+
+	TensorIMPL<int> l({4, 3}, CPU);
+	l.copyDataFrom(t);
+
+	CHECK(l.rawData() != t.rawData());
+
+	for (int i = 0; i < 12; i++)
+		CHECK(l.rawData()[i] == i * 10);
+}
+
+TEST_CASE("tensorIMPL_copyDataFrom2") {
+	TensorIMPL<int> t({4, 3}, CPU);
+	for (int i = 0; i < 12; i++)
+		t.rawData()[i] = i * 10;
+
+	TensorIMPL<int> l({4, 3}, CPU);
+	l[0].copyDataFrom(t[1]);
+
+	CHECK(l.rawData() != t.rawData());
+
+	CHECK(l.rawData()[0] == 3 * 10);
+	CHECK(l.rawData()[1] == 4 * 10);
+	CHECK(l.rawData()[2] == 5 * 10);
+}
+
+// # ============================================================
+
 TEST_CASE("tensorIMPL_broadcasted1") {
 	TensorIMPL<float> src({4}, CPU);
 	for (int i = 0; i < 4; i++)
@@ -430,26 +461,7 @@ TEST_CASE("tensorIMPL_move_semantics1") {
 	CHECK(t2.rawData()[0] == 99);
 }
 
-// spacial case: with TZ_NORMAL_EQUAL=1
 TEST_CASE("tensorIMPL_move_semantics2") {
-	TensorIMPL<int> t1({2, 2}, CPU);
-	t1.rawData()[0] = 42;
-	int* t1_raw = t1.rawData();
-
-	TensorIMPL<int> t2({2, 2}, CPU);
-	int* t2_raw = t2.rawData();
-
-	t2 = t1;
-
-	CHECK(t2.rawData()[0] == 42);
-	CHECK(t2.rawData() == t2_raw);
-	CHECK(t2.rawData() != t1.rawData());
-
-	t2.rawData()[0] = 100;
-	CHECK(t1.rawData()[0] == 42);
-}
-
-TEST_CASE("tensorIMPL_move_semantics3") {
 	TensorIMPL<int> t1({2, 3}, CPU);
 	t1.rawData()[0] = 77;
 
@@ -459,13 +471,13 @@ TEST_CASE("tensorIMPL_move_semantics3") {
 	CHECK(t2.rawData() == t1.rawData());
 	CHECK(t2.shape()[0] == 2);
 	CHECK(t2.shape()[1] == 3);
-	CHECK(t2.size() == 4 * 5);
+	CHECK(t2.size() == 6);
 
 	t1.rawData()[0] = 99;
 	CHECK(t2.rawData()[0] == 99);
 }
 
-TEST_CASE("tensorIMPL_move_semantics4") {
+TEST_CASE("tensorIMPL_move_semantics3") {
 	TensorIMPL<int> t1({2, 2}, CPU);
 	t1.rawData()[0] = 55;
 
@@ -474,7 +486,7 @@ TEST_CASE("tensorIMPL_move_semantics4") {
 	t2 = std::move(t1);
 
 	CHECK(t2.rawData()[0] == 55);
-	CHECK(t2.rawData() == t2_raw);
+	CHECK(t2.rawData() != t2_raw);
 }
 
 // # ============================================================
