@@ -516,14 +516,20 @@ TEST_CASE("gpu_matmul4") {
 	CHECK(back.at(1, 1) == doctest::Approx(44.f));
 }
 
-TEST_CASE("gpu_matmul_error") {
+TEST_CASE("gpu_matmul_error1") {
 	Matrix<float> a(2, 3, GPU);
 	Matrix<float> b(4, 2, GPU);
 	CHECK_THROWS_AS(matmul(a, b), std::runtime_error);
 }
 
-TEST_CASE("gpu_matmul_error") {
+TEST_CASE("gpu_matmul_error2") {
 	Matrix<float> a(2, 2, CPU);
 	Matrix<float> b(2, 2, GPU);
+	CHECK_THROWS_AS(matmul(a, b), std::runtime_error);
+}
+
+TEST_CASE("gpu_matmul_error3") {
+	Matrix<int> a(2, 2, GPU);
+	Matrix<int> b(2, 2, GPU);
 	CHECK_THROWS_AS(matmul(a, b), std::runtime_error);
 }

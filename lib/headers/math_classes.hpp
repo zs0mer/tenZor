@@ -70,6 +70,10 @@ class TensorWrapper {
 		return t_.shape();
 	}
 
+	uint64_t size() const {
+		return t_.size();
+	}
+
 	bool empty() const {
 		return t_.empty();
 	}
@@ -223,6 +227,9 @@ class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
 		return Tensor<T>(t);
 	}
 
+	void broadcastTo(const std::initializer_list<uint64_t>& targetShape) {
+		this->t_ = this->t_.broadcast(targetShape);
+	}
 
   private:
 	// base case

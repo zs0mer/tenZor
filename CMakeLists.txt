@@ -12,16 +12,16 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(CUDAToolkit REQUIRED)
 
-# # OpenMP package
+# # OpenMP
 find_package(OpenMP REQUIRED)
 
-# ! THIS DEPENDS ON GPU
-set(CMAKE_CUDA_ARCHITECTURES 61)
+# # Doctest
+find_package(doctest REQUIRED)
 
 # # Debugging flags
-set(CMAKE_CXX_FLAGS_DEBUG
-    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-)
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+#)
 
 # # Sanitizers
 
@@ -44,34 +44,18 @@ add_library(tenzor_cuda
 target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})
 target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 
-# # Application executables
+# # Executable
 add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
+target_compile_options(demo PRIVATE
+    -O3
+    -march=x86-64-v3
+    -ffast-math
+)
 target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
-add_executable(bench "${SRC_DIR}/bench.cpp")
-target_include_directories(bench PRIVATE ${INCLUDE_DIR})
-target_compile_options(bench PRIVATE
-    -O3
-    -march=x86-64-v3
-    -ffast-math
-)
-target_link_libraries(bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
-
-add_executable(alloc_bench "${SRC_DIR}/alloc_bench.cpp")
-target_include_directories(alloc_bench PRIVATE ${INCLUDE_DIR})
-target_compile_options(alloc_bench PRIVATE
-    -O3
-    -march=x86-64-v3
-    -ffast-math
-)
-target_link_libraries(alloc_bench PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
-
 # # Testing =====================================================================
-find_package(doctest REQUIRED)
 
-# # allocator ------------------------
-#
 add_executable(Tallocator "${TEST_DIR}/allocator.cpp")
 
 target_include_directories(Tallocator PUBLIC ${INCLUDE_DIR})
