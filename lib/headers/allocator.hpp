@@ -6,8 +6,8 @@
 #include <vector>
 #include <atomic>
 
-#include <kernel_functions.hpp>
-#include <utils.hpp>
+#include "kernel_functions.hpp"
+#include "utils.hpp"
 
 namespace TZ {
 
@@ -182,10 +182,11 @@ class MediumAllocator {
 		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
 
 		if (bin_.size() <= slab->idxInBin || bin_[slab->idxInBin] != slab) {
-			// ! cross flowing thread deallocation is not supported
-			// ! but this is not safe IF the two threds are flowing AT THE SAME TIME
+			// ! cross concurrent thread deallocation is not supported
+			// ! but this is not safe IF the two threads are concurrent AT THE SAME TIME
 
 #if TZ_CTD
+			// the slab should not be available only for this thread
 			slab->idxInBin = bin_.size();
 			bin_.push_back(slab);
 			return;
@@ -299,7 +300,7 @@ class SmallAllocator {
 	SmallAllocator() = delete;
 
 	void* alloc(const uint64_t bytes) {
-		// determening the sizeType
+		// determining the sizeType
 		uint16_t sizeType = POOLTYPENUMBER;
 		for (uint16_t i = 0; i < POOLTYPENUMBER; i++) {
 			if (bytes <= POOLSIZE[i]) {
@@ -408,8 +409,8 @@ class SmallAllocator {
 
 // # ================================================================================
 
-// a CPU allocater
-// ! singelton
+// a CPU allocator
+// ! singleton
 // max alignment: 64
 // alignment can only be 2^n
 class Salloc : public Allocator {
@@ -446,7 +447,7 @@ class Salloc : public Allocator {
 	// * if size < alignment, alignment will not be used
 	// * alignment can be maximum 64 bytes
 	// * alignment can only be powers of 2
-	// * cross FLOWING thread deallocation is not supported
+	// * cross concurrent thread deallocation is not supported
 	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
 		if (bytes == 0)
 			return nullptr;
@@ -547,7 +548,6 @@ class Galloc : public Allocator {
 
 	void deallocate(void* ptr, const uint64_t bytes = 0) override {
 		cuda::freeGPU(ptr, bytes);
-		ptr = nullptr;
 	};
 
 	~Galloc() = default;

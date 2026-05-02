@@ -28,7 +28,7 @@ struct SimpleTensor {
 	uint64_t offset;
 	T* data;
 
-	// chashed
+	// cached
 	uint64_t size;
 	bool dense;
 };

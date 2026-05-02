@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include <vector>
 
-#include <Tenzor.hpp>
+#include "Tenzor.hpp"
 
 // ! functions using apply are not tested!
 
@@ -81,14 +81,14 @@ TEST_CASE("tensor_wrapper_negation") {
 // # ============================================================
 
 TEST_CASE("scalar_constructor") {
-	Scalar<int> s(42, CPU);
+	Scalar<int> s(42);
 	CHECK(s.get() == 42);
 	CHECK(s.dim() == 0);
 	CHECK(s.empty() == false);
 }
 
 TEST_CASE("scalar_constructor2") {
-	Scalar<float> s(1.5f, CPU);
+	Scalar<float> s(1.5f);
 	CHECK(s.tensor_().scalar());
 	CHECK(s.tensor_().size() == 1);
 	CHECK(!s.tensor_().indexable());
@@ -101,14 +101,14 @@ TEST_CASE("scalar_constructor_error") {
 }
 
 TEST_CASE("scalar_assignment1") {
-	Scalar<int> s(0, CPU);
+	Scalar<int> s(0);
 	s = 77;
 	CHECK(s.get() == 77);
 }
 
 TEST_CASE("scalar_assignment2") {
-	Scalar<int> a(10, CPU);
-	Scalar<int> b(0, CPU);
+	Scalar<int> a(10);
+	Scalar<int> b(0);
 	b = a;
 	CHECK(b.get() == 10);
 	a = 99;
@@ -116,13 +116,13 @@ TEST_CASE("scalar_assignment2") {
 }
 
 TEST_CASE("scalar_conversion_to_T") {
-	Scalar<int> s(55, CPU);
+	Scalar<int> s(55);
 	int v = s;
 	CHECK(v == 55);
 }
 
 TEST_CASE("scalar_broadcast1") {
-	Scalar<int> s(9, CPU);
+	Scalar<int> s(9);
 	Vector<int> v = s.broadcast(5);
 
 	CHECK(v.dim() == 1);
@@ -134,7 +134,7 @@ TEST_CASE("scalar_broadcast1") {
 }
 
 TEST_CASE("scalar_broadcast2") {
-	Scalar<int> s(3, CPU);
+	Scalar<int> s(3);
 	Matrix<int> m = s.broadcast(4, 5);
 
 	CHECK(m.rows() == 4);
@@ -211,7 +211,7 @@ TEST_CASE("vector_slice") {
 
 TEST_CASE("vector_arithmetic_with_scalar") {
 	Vector<int> v = {1, 2, 3};
-	Scalar<int> s(10, CPU);
+	Scalar<int> s(10);
 
 	Vector<int> added = v + s;
 	CHECK(added.at(0) == 11);

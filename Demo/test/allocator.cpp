@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include <Tenzor.hpp>
+#include "Tenzor.hpp"
 
 static std::mt19937 rng(123455);
 
@@ -124,7 +124,7 @@ TEST_CASE("alloc_middle1") {
 	TZ::mem::Salloc& s = TZ::mem::Salloc::instance();
 	int n = 500;
 	for (int i = 0; i < n; i++) {
-		int p = 1024 * 4 + 1; // (rng() % (1024 * 1024)) + 1024 * 4 + 1;  685810 + 64
+		int p = (rng() % (1024 * 1024)) + 1024 * 4 + 1;
 		uint8_t* a = static_cast<uint8_t*>(s.allocate(p, TZ::mem::DEFAULT_ALIGNMENT));
 		*(a + p - 1) = 255;
 		s.deallocate((void*&)a, p);

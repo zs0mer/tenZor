@@ -3,10 +3,10 @@
 #include <cmath>
 #include <cstdint>
 
-#include <allocator.hpp>
-#include <kernel_functions.hpp>
-#include <math_classes.hpp>
-#include <utils.hpp>
+#include "allocator.hpp"
+#include "kernel_functions.hpp"
+#include "math_classes.hpp"
+#include "utils.hpp"
 
 namespace TZ {
 namespace impl {
@@ -15,8 +15,8 @@ namespace impl {
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
-#if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(!a.broadcasted(), "cant apply on broadcasted tensors");
+#if TZ_IMMUTABLE_BROADCASTS
+	TZ_CHECK(!a.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 	if (a.empty())
 		return;
@@ -54,12 +54,18 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 	}
 }
 
+template <class T>
+template <typename Func>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func) {
+	apply(const_cast<TensorIMPL<T>&>(a), func);
+}
+
 // these are the CPU impl
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
-#if TZ_UNMUTABLE_BRODCASTS
-	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "cant apply on broadcasted tensors");
+#if TZ_IMMUTABLE_BROADCASTS
+	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 	if (a.empty())
 		return;
@@ -103,14 +109,20 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	}
 }
 
+template <class T>
+template <typename Func>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func) {
+	apply(a, const_cast<TensorIMPL<T>&>(b), func);
+}
+
 // these are the CPU impl
 template <class T>
 template <typename Func>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func) {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted() && !b.broadcasted() && !c.broadcasted(),
-	         "cant apply on broadcasted tensors");
+	         "can't apply on broadcasted tensors");
 #endif
 
 	if (a.empty())
@@ -160,12 +172,19 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	}
 }
 
+template <class T>
+template <typename Func>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, const TensorIMPL<T>& c,
+                          Func func) {
+	apply(a, b, const_cast<TensorIMPL<T>&>(c), func);
+}
+
 // # --------------------
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::broadcast(const std::initializer_list<uint64_t>& targetShape) const {
-	uint8_t newDim = targetShape.size();
-	uint64_t* targetShapePtr = const_cast<uint64_t*>(targetShape.begin());
+	const uint8_t newDim = targetShape.size();
+	const uint64_t* targetShapePtr = targetShape.begin();
 	TZ_CHECK(newDim >= dim_, "Target shape cannot have fewer dimensions");
 	TZ_CHECK(newDim <= MAX_DIM, "Target shape exceeds MAX_DIM");
 
@@ -198,7 +217,7 @@ TensorIMPL<T> TensorIMPL<T>::broadcast(const std::initializer_list<uint64_t>& ta
 
 // # ===========================================================================
 
-// does a normal dot product beetwen two vectors
+// does a normal dot product between two vectors
 template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() == b.size(), "not the same size vectors in dot");
@@ -263,8 +282,9 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 // returns the determinant of the Matrix
 template <class T>
 Scalar<T> det(const Matrix<T>& m) {
-	//^ https://en.wikipedia.org/wiki/Gaussian_elimination
+	// ? https://en.wikipedia.org/wiki/Gaussian_elimination
 	TZ_CHECK(m.rows() == m.cols(), "matrix must be square");
+	TZ_CHECK(m.device() == CPU, "can't use det() on GPU");
 
 	const uint64_t n = m.rows();
 
@@ -293,7 +313,6 @@ Scalar<T> det(const Matrix<T>& m) {
 		}
 
 		// 4. Eliminate below rows k-th column
-#pragma omp parallel for
 		for (uint64_t i = k + 1; i < n; i++) {
 			T factor = A.at(i, k) / A.at(k, k);
 

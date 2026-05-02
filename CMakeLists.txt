@@ -12,6 +12,9 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(CUDAToolkit REQUIRED)
 
+# ! THIS DEPENDS ON GPU
+set(CMAKE_CUDA_ARCHITECTURES 61)
+
 # # OpenMP
 find_package(OpenMP REQUIRED)
 
@@ -55,7 +58,6 @@ target_compile_options(demo PRIVATE
 target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 # # Testing =====================================================================
-
 add_executable(Tallocator "${TEST_DIR}/allocator.cpp")
 
 target_include_directories(Tallocator PUBLIC ${INCLUDE_DIR})

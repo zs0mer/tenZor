@@ -45,7 +45,7 @@ cublasHandle_t getCublasHandle() {
 // # ---------------------------------------------
 
 void* allocGPU(const uint64_t bytes, const uint8_t alignment) {
-	// * cudaMalloc() already alings memory well (at least 64 byte)
+	// * cudaMalloc() already aligns memory well (at least 64 byte)
 	void* ptr = nullptr;
 	cudaMalloc(&ptr, bytes);
 	CHECK_CUDA;

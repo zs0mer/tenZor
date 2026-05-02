@@ -5,7 +5,10 @@
 #include <sstream>
 #include <vector>
 
-#include <Tenzor.hpp>
+// can't easily test without this
+#define TZ_IMMUTABLE_BROADCASTS 0
+
+#include "Tenzor.hpp"
 
 using namespace TZ;
 using namespace TZ::impl;

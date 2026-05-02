@@ -4,10 +4,9 @@
 #include <array>
 #include <initializer_list>
 
-#include <allocator.hpp>
-#include <tensor.hpp>
-#include <tensor_impl.hpp>
-#include <utils.hpp>
+#include "allocator.hpp"
+#include "tensor.hpp"
+#include "utils.hpp"
 
 namespace TZ {
 
@@ -178,7 +177,7 @@ class TensorWrapper {
 	}
 
 	// sums everything
-	Scalar<T> sum() {
+	Scalar<T> sum() const {
 		Scalar<T> s = TensorIMPL<T>(0, nullptr, device());
 		s.setAll(0);
 		impl::TensorIMPL<T>::apply(this->t_, impl::Sum<T>(s.tensor_().data()));
@@ -214,13 +213,12 @@ class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
 	// the device can only be the CPU
 	template <class NestedVector>
 	static Tensor<T> fromSTDVec(const std::vector<NestedVector>& v) {
-		Device device = CPU;
 		uint8_t currDim = 0;
 		std::array<uint64_t, impl::MAX_DIM> shape;
 
 		getSTDVecShape(v, shape.data(), currDim);
 
-		impl::TensorIMPL<T> t(currDim, shape.data(), device);
+		impl::TensorIMPL<T> t(currDim, shape.data(), CPU);
 
 		uint64_t offset = 0;
 		flattenSTDVec(v, t.data(), offset);
@@ -284,8 +282,8 @@ class Scalar : public impl::TensorWrapper<Scalar<T>, T> {
 	}
 
 	// standard constructor with a T class
-	Scalar(const T& val, Device device = CPU) {
-		set(val, device);
+	Scalar(const T& val) {
+		set(val, CPU);
 	}
 
 	Scalar(const uint8_t dim, const uint64_t* shape, Device device = CPU)
@@ -351,7 +349,7 @@ class Vector : public impl::TensorWrapper<Vector<T>, T> {
 	// # constructors ---------------
 
 	// initializer list constructor
-	Vector(const std::initializer_list<T>& t, Device d = CPU) : Base({t.size()}, d) {
+	Vector(const std::initializer_list<T>& t) : Base({t.size()}, CPU) {
 		for (uint64_t i = 0; i < t.size(); i++)
 			this->t_.data()[i * this->t_.strides()[0]] = t.begin()[i];
 	}
@@ -447,8 +445,8 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	// # constructors ---------------
 
 	// initializer list constructor
-	Matrix(const std::initializer_list<std::initializer_list<T>>& t, Device d = CPU)
-	    : Base({t.size(), t.size() == 0 ? 0 : t.begin()[0].size()}, d) {
+	Matrix(const std::initializer_list<std::initializer_list<T>>& t)
+	    : Base({t.size(), t.size() == 0 ? 0 : t.begin()[0].size()}, CPU) {
 		for (uint64_t i = 0; i < t.size(); i++)
 			for (uint64_t j = 0; j < t.begin()[i].size(); j++)
 				this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]] =

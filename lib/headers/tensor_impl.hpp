@@ -5,12 +5,19 @@
 #include <cstring>
 #include <iostream>
 
-#include <allocator.hpp>
-#include <buffer.hpp>
-#include <tensor.hpp>
-#include <utils.hpp>
-#include <kernel_functions.hpp>
+#include "allocator.hpp"
+#include "buffer.hpp"
+#include "tensor.hpp"
+#include "utils.hpp"
+#include "kernel_functions.hpp"
 
+// # -------------------------
+#ifdef TZ_IMMUTABLE_BROADCASTS
+// nothing
+#else
+#define TZ_IMMUTABLE_BROADCASTS 1
+#endif
+// # -------------------------
 
 namespace TZ::impl {
 
@@ -177,7 +184,7 @@ const mem::Buffer TensorIMPL<T>::buffer() const {
 
 template <class T>
 T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
@@ -196,7 +203,7 @@ T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) const {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
@@ -215,7 +222,7 @@ const T& TensorIMPL<T>::at(const std::initializer_list<uint64_t>& idx) const {
 
 template <class T>
 T& TensorIMPL<T>::at(const uint64_t* idx) {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
@@ -231,7 +238,7 @@ T& TensorIMPL<T>::at(const uint64_t* idx) {
 
 template <class T>
 const T& TensorIMPL<T>::at(const uint64_t* idx) const {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use at() on broadcasted tensors");
 #endif
 	TZ_CHECK(device() == CPU, "not on the CPU");
@@ -247,7 +254,7 @@ const T& TensorIMPL<T>::at(const uint64_t* idx) const {
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use operator[] on broadcasted tensors");
 #endif
 	TZ_CHECK(indexable(), "not indexable");
@@ -258,7 +265,7 @@ TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) {
 
 template <class T>
 TensorIMPL<T> TensorIMPL<T>::operator[](const uint64_t idx) const {
-#if TZ_UNMUTABLE_BRODCASTS
+#if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!broadcasted(), "can't use operator[] on broadcasted tensors");
 #endif
 	TZ_CHECK(indexable(), "not indexable");
@@ -443,7 +450,7 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 	}
 
 	if (t.size() > 1000)
-		return os << "[To many elements to print: " << t.size() << " elements]\n";
+		return os << "[Too many elements to print: " << t.size() << " elements]\n";
 
 	if (t.dim() == 1) {
 		os << "\n[";

@@ -4,19 +4,11 @@
 #include <cstdint>
 #include <initializer_list>
 
-#include <allocator.hpp>
-#include <buffer.hpp>
-#include <kernel_functions.hpp>
+#include "allocator.hpp"
+#include "buffer.hpp"
+#include "kernel_functions.hpp"
 
 namespace TZ::impl {
-
-// # -------------------------
-#ifdef TZ_UNMUTABLE_BRODCASTS
-// nothing
-#else
-#define TZ_UNMUTABLE_BRODCASTS 0
-#endif
-// # -------------------------
 
 template <class T>
 // standard tensor class
@@ -32,7 +24,7 @@ class TensorIMPL {
 	bool dense_;
 	bool broadcasted_;
 
-	// ! The data may not be layed linearly in memory
+	// ! The data may not be laid linearly in memory
 
 	// * the tensor can be:
 	// * - Normal      - dimension: anything   - shape: anything
@@ -120,7 +112,7 @@ class TensorIMPL {
 	// returns the offset of the first element of the tensor in the buffer
 	uint64_t offset() const;
 
-	// the tensor is layed out flat in memory
+	// the tensor is laid out flat in memory
 	bool dense() const;
 
 	// returns true if the tensor is a scalar
@@ -153,21 +145,21 @@ class TensorIMPL {
 	// # geters ===========================================================================
 
 	// returns the data containing in the given index
-	// cant do on the GPU
+	// can't do on the GPU
 	T& at(const std::initializer_list<uint64_t>& idx);
 
 	// returns the data containing in the given index
-	// cant do on the GPU
+	// can't do on the GPU
 	const T& at(const std::initializer_list<uint64_t>& idx) const;
 
 	// returns the data containing in the given index
 	// the input is a C style array containing dim number of indexes
-	// cant do on the GPU
+	// can't do on the GPU
 	T& at(const uint64_t* idx);
 
 	// returns the data containing in the given index
 	// the input is a C style array containing dim number of indexes
-	// cant do on the GPU
+	// can't do on the GPU
 	const T& at(const uint64_t* idx) const;
 
 	// returns a Tensor containing the data in the given index
@@ -188,11 +180,11 @@ class TensorIMPL {
 	TensorIMPL<T> copyTo(Device device) const;
 
 	// IF the tensor is scalar it returns the one element
-	// cant do on the GPU
+	// can't do on the GPU
 	T& get();
 
 	// IF the tensor is scalar it returns the one element
-	// cant do on the GPU
+	// can't do on the GPU
 	const T& get() const;
 
 	// copies the data from the given tensor to this tensor
@@ -210,17 +202,27 @@ class TensorIMPL {
 	template <class Func>
 	static void apply(TensorIMPL<T>& a, Func func);
 
+	template <class Func>
+	static void apply(const TensorIMPL<T>& a, Func func);
+
 	// * static
 	// calls func(a[i], b[i]) for all elements of the tensor
 	// you can modify b
 	template <class Func>
 	static void apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func);
 
+	template <class Func>
+	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
+
 	// * static
 	// calls func(a[i], b[i], c[i]) for all elements of the tensor
 	// you can modify c
 	template <class Func>
 	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func);
+
+	template <class Func>
+	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, const TensorIMPL<T>& c,
+	                  Func func);
 
 	// Broadcasts the tensor to the target shape, if possible
 	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;
