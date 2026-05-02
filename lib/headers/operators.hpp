@@ -8,7 +8,7 @@
 #include "math_classes.hpp"
 #include "utils.hpp"
 
-namespace TZ {
+namespace tz {
 namespace impl {
 
 // these are the CPU impl
@@ -340,4 +340,4 @@ Scalar<T> det(const Matrix<T>& m) {
 
 	return Scalar<T>(det);
 }
-}; // namespace TZ
+}; // namespace tz

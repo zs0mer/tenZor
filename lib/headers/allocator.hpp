@@ -9,7 +9,7 @@
 #include "kernel_functions.hpp"
 #include "utils.hpp"
 
-namespace TZ {
+namespace tz {
 
 enum Device { CPU, GPU };
 
@@ -581,4 +581,4 @@ inline Allocator& defaultAllocator(Device device = CPU) {
 }
 
 } // namespace mem
-} // namespace TZ
+} // namespace tz

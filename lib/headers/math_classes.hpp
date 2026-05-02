@@ -8,7 +8,7 @@
 #include "tensor.hpp"
 #include "utils.hpp"
 
-namespace TZ {
+namespace tz {
 
 template <class T>
 class Scalar;
@@ -588,4 +588,4 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	}
 };
 
-} // namespace TZ
+} // namespace tz

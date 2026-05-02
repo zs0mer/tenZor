@@ -2,7 +2,7 @@
 #include <iostream>
 #include <Tenzor.hpp>
 
-using namespace TZ;
+using namespace tz;
 
 int main() {
 	Matrix<float> m({{2, 3}, {4, 5}});
@@ -11,10 +11,10 @@ int main() {
 
 	std::cout << matmul(m.copyTo(GPU), matmul(Matrix(v1.copyTo(GPU)), v2.transpose())).copyTo(CPU);
 
-	//[
-	//[180, 20],
-	//[342, 38]
-	//]
+	// [
+	// [180, 20],
+	// [342, 38]
+	// ]
 
 	return 0;
 }

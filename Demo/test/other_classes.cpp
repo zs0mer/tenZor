@@ -8,8 +8,8 @@
 
 // ! functions using apply are not tested!
 
-using namespace TZ;
-using namespace TZ::impl;
+using namespace tz;
+using namespace tz::impl;
 
 // # ============================================================
 

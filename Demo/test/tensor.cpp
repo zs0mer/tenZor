@@ -10,8 +10,8 @@
 
 #include "Tenzor.hpp"
 
-using namespace TZ;
-using namespace TZ::impl;
+using namespace tz;
+using namespace tz::impl;
 
 // # ============================================================
 

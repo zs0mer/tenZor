@@ -19,7 +19,7 @@
 #endif
 // # -------------------------
 
-namespace TZ::impl {
+namespace tz::impl {
 
 template <class T>
 TensorIMPL<T>::TensorIMPL()
@@ -468,4 +468,4 @@ std::ostream& operator<<(std::ostream& os, const TensorIMPL<T>& t) {
 	return os;
 }
 
-} // namespace TZ::impl
+} // namespace tz::impl

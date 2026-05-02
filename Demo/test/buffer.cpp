@@ -5,8 +5,8 @@
 
 #include "Tenzor.hpp"
 
-using namespace TZ;
-using namespace TZ::mem;
+using namespace tz;
+using namespace tz::mem;
 
 // # ============================================================
 

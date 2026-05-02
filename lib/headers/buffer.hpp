@@ -6,7 +6,7 @@
 
 #include "allocator.hpp"
 
-namespace TZ::mem {
+namespace tz::mem {
 
 // Buffer implementation
 // holds the metadata for the buffer
@@ -198,4 +198,4 @@ class Buffer {
 };
 
 
-} // namespace TZ::mem
+} // namespace tz::mem

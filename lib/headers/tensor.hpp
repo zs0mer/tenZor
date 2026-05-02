@@ -8,7 +8,7 @@
 #include "buffer.hpp"
 #include "kernel_functions.hpp"
 
-namespace TZ::impl {
+namespace tz::impl {
 
 struct CPUOnly {};
 struct AnyDevice {};
@@ -260,4 +260,4 @@ class TensorIMPL {
 	static bool isSameShape(const TensorIMPL<T>& a, const TensorIMPL<T>& b);
 };
 
-} // namespace TZ::impl
+} // namespace tz::impl

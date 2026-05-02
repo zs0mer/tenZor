@@ -6,7 +6,7 @@
 #include <cassert>
 #include <sstream>
 
-namespace TZ::impl {
+namespace tz::impl {
 
 // # -------------------------
 #ifdef TZ_ERRORS
@@ -17,8 +17,8 @@ namespace TZ::impl {
 // # -------------------------
 
 #if TZ_ERRORS
-#define TZ_CHECK(expr, error) TZ::impl::check((expr), (error), __FILE__, __LINE__, __func__)
-#define TZ_CHECK_(expr) TZ::impl::check((expr), "unexpected", __FILE__, __LINE__, __func__)
+#define TZ_CHECK(expr, error) tz::impl::check((expr), (error), __FILE__, __LINE__, __func__)
+#define TZ_CHECK_(expr) tz::impl::check((expr), "unexpected", __FILE__, __LINE__, __func__)
 #else
 #define TZ_CHECK(expr, error) ((void)0)
 #define TZ_CHECK_(expr) ((void)0)
@@ -208,4 +208,4 @@ struct Sum {
 };
 
 
-} // namespace TZ::impl
+} // namespace tz::impl

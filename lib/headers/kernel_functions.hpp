@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace TZ {
+namespace tz {
 namespace impl {
 
 // # -------------------------
@@ -65,4 +65,4 @@ template <class T>
 void matmul(const SimpleTensor<T> a, const SimpleTensor<T> b, SimpleTensor<T> c);
 
 }; // namespace cuda
-}; // namespace TZ
+}; // namespace tz
