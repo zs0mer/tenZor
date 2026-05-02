@@ -10,23 +10,23 @@
 
 namespace TZ {
 
-template <typename T>
+template <class T>
 class Scalar;
 
-template <typename T>
+template <class T>
 class Vector;
 
-template <typename T>
+template <class T>
 class Matrix;
 
-template <typename T>
+template <class T>
 class Tensor;
 
 namespace impl {
 
 // # tensorWrapper =============================================================
 
-template <typename Derived, typename T>
+template <class Derived, class T>
 class TensorWrapper {
   protected:
 	impl::TensorIMPL<T> t_;
@@ -110,77 +110,79 @@ class TensorWrapper {
 
 	Derived operator+(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Add<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Add<T>{}, AnyDevice{});
 		return out;
 	}
 
 	Derived operator-(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Subtract<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Subtract<T>{}, AnyDevice{});
 		return out;
 	}
 
 	Derived operator-() const {
 		Derived out = this->clone();
-		impl::TensorIMPL<T>::apply(out.t_, impl::Negate<T>{});
+		impl::TensorIMPL<T>::apply(out.t_, impl::Negate<T>{}, AnyDevice{});
 		return out;
 	}
 
 
 	Derived operator+(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::AddScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::AddScalar<T>(s.get()), AnyDevice{});
 		return out;
 	}
 
 	Derived operator-(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::SubtractScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::SubtractScalar<T>(s.get()), AnyDevice{});
 		return out;
 	}
 
 	Derived operator*(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
-		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::MultiplyScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::MultiplyScalar<T>(s.get()), AnyDevice{});
 		return out;
 	}
 
 
 	Derived& operator+=(const TensorWrapper& other) {
-		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Add<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Add<T>{}, AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const TensorWrapper& other) {
-		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Subtract<T>{});
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Subtract<T>{}, AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator+=(const Scalar<T>& s) {
-		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::AddScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::AddScalar<T>(s.get()), AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator-=(const Scalar<T>& s) {
-		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::SubtractScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::SubtractScalar<T>(s.get()),
+		                           AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
 	Derived& operator*=(const Scalar<T>& s) {
-		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::MultiplyScalar<T>(s.get()));
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::MultiplyScalar<T>(s.get()),
+		                           AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
 	// sets everything to a given value
 	void setAll(const T& s) {
-		impl::TensorIMPL<T>::apply(this->t_, impl::Set<T>(s));
+		impl::TensorIMPL<T>::apply(this->t_, impl::Set<T>(s), AnyDevice{});
 	}
 
 	// sums everything
 	Scalar<T> sum() const {
 		Scalar<T> s = TensorIMPL<T>(0, nullptr, device());
 		s.setAll(0);
-		impl::TensorIMPL<T>::apply(this->t_, impl::Sum<T>(s.tensor_().data()));
+		impl::TensorIMPL<T>::apply(this->t_, impl::Sum<T>(s.tensor_().data()), AnyDevice{});
 		return s;
 	}
 
@@ -190,7 +192,7 @@ class TensorWrapper {
 };
 
 
-template <typename Derived, typename T>
+template <class Derived, class T>
 std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 	os << t.tensor_();
 	return os;
@@ -200,7 +202,7 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 
 // # Tensor =============================================================
 
-template <typename T>
+template <class T>
 class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
 	using Base = impl::TensorWrapper<Tensor<T>, T>;
 
@@ -259,7 +261,7 @@ class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
 
 // # Scalar =====================================================================
 
-template <typename T>
+template <class T>
 class Scalar : public impl::TensorWrapper<Scalar<T>, T> {
 	using Base = impl::TensorWrapper<Scalar<T>, T>;
 
@@ -341,7 +343,7 @@ class Scalar : public impl::TensorWrapper<Scalar<T>, T> {
 
 // # Vector =====================================================================
 
-template <typename T>
+template <class T>
 class Vector : public impl::TensorWrapper<Vector<T>, T> {
 	using Base = impl::TensorWrapper<Vector<T>, T>;
 
@@ -437,7 +439,7 @@ class Vector : public impl::TensorWrapper<Vector<T>, T> {
 
 // # Matrix =====================================================================
 
-template <typename T>
+template <class T>
 class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	using Base = impl::TensorWrapper<Matrix<T>, T>;
 

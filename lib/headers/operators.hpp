@@ -13,15 +13,19 @@ namespace impl {
 
 // these are the CPU impl
 template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
+template <class Func, class IsGPUAvalable, class>
+void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 	if (a.empty())
 		return;
 	if (a.device() == GPU) {
-		cuda::applyGPU(a.getCudaTensor(), func);
+		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
+			TZ_CHECK(false, "this operation is CPU only");
+		} else {
+			cuda::applyGPU(a.getCudaTensor(), func);
+		}
 		return;
 	}
 
@@ -55,15 +59,15 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func) {
 }
 
 template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func) {
+template <class Func, class IsGPUAvalable, class>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func, IsGPUAvalable) {
 	apply(const_cast<TensorIMPL<T>&>(a), func);
 }
 
 // these are the CPU impl
 template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
+template <class Func, class IsGPUAvalable, class>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
@@ -72,7 +76,11 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
 	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 	if (a.device() == GPU) {
-		cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), func);
+		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
+			TZ_CHECK(false, "this operation is CPU only");
+		} else {
+			cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), func);
+		}
 		return;
 	}
 
@@ -110,16 +118,17 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func) {
 }
 
 template <class T>
-template <typename Func>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func) {
+template <class Func, class IsGPUAvalable, class>
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func,
+                          IsGPUAvalable) {
 	apply(a, const_cast<TensorIMPL<T>&>(b), func);
 }
 
 // these are the CPU impl
 template <class T>
-template <typename Func>
+template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
-                          Func func) {
+                          Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted() && !b.broadcasted() && !c.broadcasted(),
 	         "can't apply on broadcasted tensors");
@@ -131,7 +140,11 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	TZ_CHECK(a.device() == b.device() && b.device() == c.device(),
 	         "not same device tensors in apply");
 	if (a.device() == GPU) {
-		cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), c.getCudaTensor(), func);
+		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
+			TZ_CHECK(false, "this operation is CPU only");
+		} else {
+			cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), c.getCudaTensor(), func);
+		}
 		return;
 	}
 
@@ -173,9 +186,9 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 }
 
 template <class T>
-template <typename Func>
+template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, const TensorIMPL<T>& c,
-                          Func func) {
+                          Func func, IsGPUAvalable) {
 	apply(a, b, const_cast<TensorIMPL<T>&>(c), func);
 }
 

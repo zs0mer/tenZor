@@ -91,7 +91,7 @@ void check_cuda(const char* file, int line, const char* func);
 #define CHECK_CUDA ((void)0)
 #endif
 
-template <typename T>
+template <class T>
 __device__ inline void gpuAtomicAdd(T* address, T val) {
 	atomicAdd(address, val);
 }
@@ -119,35 +119,35 @@ __device__ inline void gpuAtomicAdd<int64_t>(int64_t* address, int64_t val) {
 
 // # --------------------------------------------------
 
-template <typename T>
+template <class T>
 struct Copy {
 	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a;
 	}
 };
 
-template <typename T>
+template <class T>
 struct Add {
 	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
 		c = a + b;
 	}
 };
 
-template <typename T>
+template <class T>
 struct Subtract {
 	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
 		c = a - b;
 	}
 };
 
-template <typename T>
+template <class T>
 struct Negate {
 	TZ_HOST_DEVICE void operator()(T& a) const {
 		a = -a;
 	}
 };
 
-template <typename T>
+template <class T>
 struct AddScalar {
 	T val;
 
@@ -158,7 +158,7 @@ struct AddScalar {
 	}
 };
 
-template <typename T>
+template <class T>
 struct SubtractScalar {
 	T val;
 
@@ -169,7 +169,7 @@ struct SubtractScalar {
 	}
 };
 
-template <typename T>
+template <class T>
 struct MultiplyScalar {
 	T val;
 
@@ -180,7 +180,7 @@ struct MultiplyScalar {
 	}
 };
 
-template <typename T>
+template <class T>
 struct Set {
 	T val;
 
@@ -191,7 +191,7 @@ struct Set {
 	}
 };
 
-template <typename T>
+template <class T>
 struct Sum {
 	T* val;
 

@@ -10,6 +10,19 @@
 
 namespace TZ::impl {
 
+struct CPUOnly {};
+struct AnyDevice {};
+
+template <class T>
+struct IsPolicy : std::false_type {};
+
+template <>
+struct IsPolicy<CPUOnly> : std::true_type {};
+
+template <>
+struct IsPolicy<AnyDevice> : std::true_type {};
+
+
 template <class T>
 // standard tensor class
 class TensorIMPL {
@@ -199,30 +212,39 @@ class TensorIMPL {
 	// * static
 	// calls func(a[i]) for all elements of the tensor
 	// you can modify a
-	template <class Func>
-	static void apply(TensorIMPL<T>& a, Func func);
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	static void apply(TensorIMPL<T>& a, Func func, IsGPUAvalable constraint = {});
 
-	template <class Func>
-	static void apply(const TensorIMPL<T>& a, Func func);
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	static void apply(const TensorIMPL<T>& a, Func func, IsGPUAvalable constraint = {});
 
 	// * static
 	// calls func(a[i], b[i]) for all elements of the tensor
 	// you can modify b
-	template <class Func>
-	static void apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func);
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	static void apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func,
+	                  IsGPUAvalable constraint = {});
 
-	template <class Func>
-	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func);
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func,
+	                  IsGPUAvalable constraint = {});
 
 	// * static
 	// calls func(a[i], b[i], c[i]) for all elements of the tensor
 	// you can modify c
-	template <class Func>
-	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func);
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c, Func func,
+	                  IsGPUAvalable constraint = {});
 
-	template <class Func>
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
 	static void apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, const TensorIMPL<T>& c,
-	                  Func func);
+	                  Func func, IsGPUAvalable constraint = {});
 
 	// Broadcasts the tensor to the target shape, if possible
 	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;

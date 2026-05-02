@@ -173,7 +173,7 @@ TEST_CASE("gpu_apply1_negate") {
 		cpu_t.rawData()[i] = i + 1;
 
 	TensorIMPL<int> gpu_t = cpu_t.copyTo(GPU);
-	TensorIMPL<int>::apply(gpu_t, Negate<int>{});
+	TensorIMPL<int>::apply(gpu_t, Negate<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gpu_t.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -183,7 +183,7 @@ TEST_CASE("gpu_apply1_negate") {
 TEST_CASE("gpu_apply1_set") {
 	TensorIMPL<float> cpu_t({4, 4}, CPU);
 	TensorIMPL<float> gpu_t = cpu_t.copyTo(GPU);
-	TensorIMPL<float>::apply(gpu_t, Set<float>(3.14f));
+	TensorIMPL<float>::apply(gpu_t, Set<float>(3.14f), AnyDevice{});
 
 	TensorIMPL<float> back = gpu_t.copyTo(CPU);
 	for (int i = 0; i < 16; i++)
@@ -202,7 +202,7 @@ TEST_CASE("gpu_apply1_sum") {
 	cpu_acc.get() = 0;
 	TensorIMPL<int> gpu_acc = cpu_acc.copyTo(GPU);
 
-	TensorIMPL<int>::apply(gpu_t, Sum<int>(gpu_acc.data()));
+	TensorIMPL<int>::apply(gpu_t, Sum<int>(gpu_acc.data()), AnyDevice{});
 
 	TensorIMPL<int> result = gpu_acc.copyTo(CPU);
 	CHECK(result.get() == N);
@@ -219,7 +219,7 @@ TEST_CASE("gpu_apply1_nondense") {
 	TensorIMPL<int> gpu_tr(2, sh, st, 0, gpu_base.buffer());
 	CHECK(!gpu_tr.dense());
 
-	TensorIMPL<int>::apply(gpu_tr, Negate<int>{});
+	TensorIMPL<int>::apply(gpu_tr, Negate<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back_base = gpu_base.copyTo(CPU);
 	for (int i = 0; i < 6; i++)
@@ -236,7 +236,7 @@ TEST_CASE("gpu_apply2_copy") {
 
 	TensorIMPL<int> gpu_src = src.copyTo(GPU);
 	TensorIMPL<int> gpu_dst({N}, GPU);
-	TensorIMPL<int>::apply(gpu_src, gpu_dst, Copy<int>{});
+	TensorIMPL<int>::apply(gpu_src, gpu_dst, Copy<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gpu_dst.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -251,7 +251,7 @@ TEST_CASE("gpu_apply2_add_scalar") {
 
 	TensorIMPL<float> gpu_src = src.copyTo(GPU);
 	TensorIMPL<float> gpu_dst({N}, GPU);
-	TensorIMPL<float>::apply(gpu_src, gpu_dst, AddScalar<float>(10.f));
+	TensorIMPL<float>::apply(gpu_src, gpu_dst, AddScalar<float>(10.f), AnyDevice{});
 
 	TensorIMPL<float> back = gpu_dst.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -266,7 +266,7 @@ TEST_CASE("gpu_apply2_multiply_scalar") {
 
 	TensorIMPL<double> gpu_src = src.copyTo(GPU);
 	TensorIMPL<double> gpu_dst({N}, GPU);
-	TensorIMPL<double>::apply(gpu_src, gpu_dst, MultiplyScalar<double>(2.0));
+	TensorIMPL<double>::apply(gpu_src, gpu_dst, MultiplyScalar<double>(2.0), AnyDevice{});
 
 	TensorIMPL<double> back = gpu_dst.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -286,7 +286,7 @@ TEST_CASE("gpu_apply2_broadcasted") {
 	CHECK(gpu_bcast.broadcasted());
 
 	TensorIMPL<int> gpu_dst({4, 3}, GPU);
-	TensorIMPL<int>::apply(gpu_bcast, gpu_dst, Copy<int>{});
+	TensorIMPL<int>::apply(gpu_bcast, gpu_dst, Copy<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gpu_dst.copyTo(CPU);
 	for (uint64_t r = 0; r < 4; r++)
@@ -305,7 +305,7 @@ TEST_CASE("gpu_apply2_nondense") {
 	TensorIMPL<int> gpu_tr(2, sh, st, 0, gpu_src.buffer());
 
 	TensorIMPL<int> gpu_dst({3, 2}, GPU);
-	TensorIMPL<int>::apply(gpu_tr, gpu_dst, Copy<int>{});
+	TensorIMPL<int>::apply(gpu_tr, gpu_dst, Copy<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gpu_dst.copyTo(CPU);
 	CHECK(back.at({0, 0}) == 0);
@@ -329,7 +329,7 @@ TEST_CASE("gpu_apply3_add") {
 	TensorIMPL<int> ga = a.copyTo(GPU);
 	TensorIMPL<int> gb = b.copyTo(GPU);
 	TensorIMPL<int> gc({N}, GPU);
-	TensorIMPL<int>::apply(ga, gb, gc, Add<int>{});
+	TensorIMPL<int>::apply(ga, gb, gc, Add<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gc.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -347,7 +347,7 @@ TEST_CASE("gpu_apply3_subtract") {
 	TensorIMPL<float> ga = a.copyTo(GPU);
 	TensorIMPL<float> gb = b.copyTo(GPU);
 	TensorIMPL<float> gc({N}, GPU);
-	TensorIMPL<float>::apply(ga, gb, gc, Subtract<float>{});
+	TensorIMPL<float>::apply(ga, gb, gc, Subtract<float>{}, AnyDevice{});
 
 	TensorIMPL<float> back = gc.copyTo(CPU);
 	for (int i = 0; i < N; i++)
@@ -367,11 +367,11 @@ TEST_CASE("gpu_apply3_nondense") {
 	TensorIMPL<int> gpu_tr(2, sh, st, 0, gpu_base.buffer());
 
 	TensorIMPL<int> b_cpu({2, 2}, CPU);
-	TensorIMPL<int>::apply(b_cpu, Set<int>{10});
+	TensorIMPL<int>::apply(b_cpu, Set<int>{10}, AnyDevice{});
 	TensorIMPL<int> gb = b_cpu.copyTo(GPU);
 	TensorIMPL<int> gc({2, 2}, GPU);
 
-	TensorIMPL<int>::apply(gpu_tr, gb, gc, Add<int>{});
+	TensorIMPL<int>::apply(gpu_tr, gb, gc, Add<int>{}, AnyDevice{});
 
 	TensorIMPL<int> back = gc.copyTo(CPU);
 	CHECK(back.at({0, 0}) == 11);

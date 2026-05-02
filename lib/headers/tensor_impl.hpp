@@ -286,7 +286,7 @@ TensorIMPL<T> TensorIMPL<T>::clone() const {
 		return out;
 	}
 
-	apply(*this, out, Copy<T>{});
+	apply(*this, out, Copy<T>{}, AnyDevice{});
 
 	return out;
 }
@@ -339,7 +339,7 @@ void TensorIMPL<T>::copyDataFrom(const TensorIMPL<T>& from) {
 		return;
 	}
 
-	apply(from, *this, Copy<T>{});
+	apply(from, *this, Copy<T>{}, AnyDevice{});
 }
 
 template <class T>
