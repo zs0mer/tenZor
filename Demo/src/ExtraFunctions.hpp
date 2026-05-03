@@ -11,7 +11,6 @@ struct RrandomUniform {
 	T min, max;
 
 	TZ_HOST_DEVICE void operator()(T& x) const {
-		TZ_CHECK_(min < max);
 #ifdef __CUDA_ARCH__
 		uint64_t h = reinterpret_cast<uint64_t>(&x);
 		h ^= h >> 35;
@@ -63,6 +62,7 @@ struct SquaredErrorDerivative {
 };
 
 #define TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE(T)                                                      \
+	INSTANTIATE_UNARY_APPLY(T, zi::RrandomUniform);                                                \
 	INSTANTIATE_BINARY_APPLY(T, zi::Sigmoid);                                                      \
 	INSTANTIATE_BINARY_APPLY(T, zi::SigmoidDerivative);                                            \
 	INSTANTIATE_TERNARY_APPLY(T, zi::SquaredError);                                                \

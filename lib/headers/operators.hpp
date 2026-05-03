@@ -79,7 +79,6 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, I
 #if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
-	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 #if TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
 #else
@@ -87,6 +86,8 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, I
 		b = TensorIMPL<T>(a.dim(), a.shape(), a.device());
 
 #endif
+
+	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
 
 	if (a.empty())
 		return;
