@@ -120,6 +120,12 @@ class TensorWrapper {
 		return out;
 	}
 
+	Derived operator*(const TensorWrapper& other) const {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Multiply<T>{}, AnyDevice{});
+		return out;
+	}
+
 	Derived operator-() const {
 		Derived out = this->clone();
 		impl::TensorIMPL<T>::apply(out.t_, impl::Negate<T>{}, AnyDevice{});
@@ -145,6 +151,11 @@ class TensorWrapper {
 		return out;
 	}
 
+	Derived operator/(const Scalar<T>& s) const {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::DivideScalar<T>(s.get()), AnyDevice{});
+		return out;
+	}
 
 	Derived& operator+=(const TensorWrapper& other) {
 		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Add<T>{}, AnyDevice{});
@@ -153,6 +164,11 @@ class TensorWrapper {
 
 	Derived& operator-=(const TensorWrapper& other) {
 		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Subtract<T>{}, AnyDevice{});
+		return static_cast<Derived&>(*this);
+	}
+
+	Derived& operator*=(const TensorWrapper& other) {
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, this->t_, impl::Multiply<T>{}, AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
@@ -170,6 +186,11 @@ class TensorWrapper {
 	Derived& operator*=(const Scalar<T>& s) {
 		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::MultiplyScalar<T>(s.get()),
 		                           AnyDevice{});
+		return static_cast<Derived&>(*this);
+	}
+
+	Derived& operator/=(const Scalar<T>& s) {
+		impl::TensorIMPL<T>::apply(this->t_, this->t_, impl::DivideScalar<T>(s.get()), AnyDevice{});
 		return static_cast<Derived&>(*this);
 	}
 
@@ -268,6 +289,8 @@ class Scalar : public impl::TensorWrapper<Scalar<T>, T> {
   public:
 	// # constructors ---------------
 
+	Scalar() = default;
+
 	// standard constructor with tensor
 	Scalar(impl::TensorIMPL<T>& t) : Base(t) {
 		TZ_CHECK(this->t_.dim() == 0, "not a Scalar in the TZ::Scalar");
@@ -349,6 +372,8 @@ class Vector : public impl::TensorWrapper<Vector<T>, T> {
 
   public:
 	// # constructors ---------------
+
+	Vector() = default;
 
 	// initializer list constructor
 	Vector(const std::initializer_list<T>& t) : Base({t.size()}, CPU) {
@@ -445,6 +470,8 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 
   public:
 	// # constructors ---------------
+
+	Matrix() = default;
 
 	// initializer list constructor
 	Matrix(const std::initializer_list<std::initializer_list<T>>& t)

@@ -1,0 +1,123 @@
+#pragma once
+#include <cstdint>
+#include <vector>
+
+#include <Tenzor.hpp>
+#include "ExtraFunctions.hpp"
+#include "math_classes.hpp"
+
+
+namespace zi {
+using namespace tz;
+
+template <class T>
+class NeuralNet {
+
+  private:
+	tz::Vector<uint64_t> layerSize_;
+	std::vector<tz::Matrix<T>> weights_;
+	std::vector<tz::Vector<T>> biases_;
+
+	std::vector<tz::Vector<T>> activation_;
+	std::vector<tz::Vector<T>> preActivation_;
+
+	// a : activation_
+	// z : preActivation_
+	std::vector<tz::Vector<T>> dC_da_;
+	std::vector<tz::Vector<T>> dC_dz_;
+
+	std::vector<tz::Matrix<T>> weightGrads_;
+	std::vector<tz::Vector<T>> biasGrads_;
+
+  public:
+	template <class RandomFunc = RrandomUniform<T>>
+	NeuralNet(std::initializer_list<uint64_t> layerSize, RandomFunc random = {.min = 0, .max = 1})
+	    : layerSize_(layerSize), weights_(layerSize.size()), biases_(layerSize.size()),
+	      dC_da_(layerSize.size()), dC_dz_(layerSize.size()), activation_(layerSize.size()),
+	      preActivation_(layerSize.size()), weightGrads_(layerSize.size()),
+	      biasGrads_(layerSize.size()) {
+		uint64_t L = layerSize_.size() - 1;
+
+		for (uint64_t i = 0; i < L; i++) {
+			weights_[i] = Matrix<T>(layerSize_[i + 1], layerSize_[i]);
+			biases_[i] = Vector<T>(layerSize_[i + 1]);
+
+			impl::TensorIMPL<T>::apply(weights_[i].tensor_(), random);
+			impl::TensorIMPL<T>::apply(biases_[i].tensor_(), random);
+
+
+			weightGrads_[i] = Matrix<T>(layerSize_[i + 1], layerSize_[i]);
+			biasGrads_[i] = Vector<T>(layerSize_[i + 1]);
+
+			weightGrads_[i].setAll(T(0.0));
+			biasGrads_[i].setAll(T(0.0));
+		}
+	}
+
+
+	template <class ActivationFunction = Sigmoid<T>>
+	tz::Vector<T> forwardPass(const tz::Vector<T>& input, ActivationFunction activation = {}) {
+		TZ_CHECK(input.size() == layerSize_[0],
+		         "input size must be equal to the size of the first layer");
+
+		activation_[0] = input.clone();
+		uint64_t L = layerSize_.size() - 1;
+
+		// calculating the next layer (i+1)
+		for (uint64_t i = 0; i < L; i++) {
+			preActivation_[i + 1] =
+			    Vector<T>(matmul(weights_[i], Matrix<T>(activation_[i]))) + biases_[i];
+			impl::TensorIMPL<T>::apply(preActivation_[i + 1].tensor_(),
+			                           activation_[i + 1].tensor_(), activation);
+		}
+		return activation_[layerSize_.size() - 1];
+	}
+
+
+	template <class ActivationFunctionDerivative = SigmoidDerivative<T>,
+	          class CostFunctionDerivative = SquaredErrorDerivative<T>>
+	void backwardPass(const tz::Vector<T>& input, const tz::Vector<T>& target,
+	                  ActivationFunctionDerivative activationFunctionDerivative = {},
+	                  CostFunctionDerivative costDerivative = {}) {
+		TZ_CHECK(input.size() == layerSize_[0],
+		         "input size must be equal to the size of the first layer");
+		TZ_CHECK(target.size() == layerSize_[layerSize_.size() - 1],
+		         "target size must be equal to the size of the last layer");
+
+		uint64_t L = layerSize_.size() - 1;
+
+		// dC/da = C'(a, y)
+		impl::TensorIMPL<T>::apply(activation_[layerSize_.size() - 1].tensor_(), target.tensor_(),
+		                           dC_da_[layerSize_.size() - 1].tensor_(), costDerivative);
+
+		// propagating back
+		for (uint64_t i = L; i-- > 0;) {
+			// dz/da = activationFunctionDerivative(z) -> dC/dz = dC/da * da/dz
+			impl::TensorIMPL<T>::apply(preActivation_[i + 1].tensor_(), dC_dz_[i + 1].tensor_(),
+			                           activationFunctionDerivative);
+			dC_dz_[i + 1] *= dC_da_[i + 1];
+
+			// dz/db = 1 -> dC/db = dC/dz
+			biasGrads_[i] += dC_dz_[i + 1];
+
+			// dz/dw = a -> dC/dw = a * dC/dz
+			weightGrads_[i] += matmul(Matrix<T>(activation_[i]), dC_dz_[i + 1].transpose());
+
+			// dz/da = w -> dC/da = w^T * dC/da
+			dC_da_[i] = matmul(Matrix<T>(dC_dz_[i + 1]), weights_[i].transpose());
+		}
+	}
+
+
+	void step(T learnRate, uint64_t batchSize) {
+		uint64_t L = layerSize_.size() - 1;
+		for (uint64_t i = 0; i < L; i++) {
+			weights_[i] /= batchSize;
+			biases_[i] /= batchSize;
+			weights_[i] -= weightGrads_[i] * learnRate;
+			biases_[i] -= biasGrads_[i] * learnRate;
+		}
+	}
+};
+
+} // namespace zi

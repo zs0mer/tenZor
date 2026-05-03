@@ -82,16 +82,10 @@ class TensorIMPL {
 
 	TensorIMPL(const TensorIMPL&) = default;
 
-	// * if TZ_NORMAL_EQUAL is 1:
-	// * if the tensors have the same shape and are on the same device,
-	// * it will just copy the data
 	TensorIMPL<T>& operator=(const TensorIMPL<T>&) = default;
 
 	TensorIMPL(TensorIMPL&&) = default;
 
-	// * if TZ_NORMAL_EQUAL is 1:
-	// * if the tensors have the same shape and are on the same device,
-	// * it will just copy the data
 	TensorIMPL<T>& operator=(TensorIMPL<T>&&) = default;
 
 	// # metadata geters ==================================================================

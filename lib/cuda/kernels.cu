@@ -8,8 +8,9 @@
 
 #include "utils.hpp"
 #include "kernel_functions.hpp"
+#include "ExtraGPUFunctions.hpp"
 
-namespace TZ::cuda {
+namespace tz::cuda {
 
 void check_cuda(const char* file, int line, const char* func) {
 	cudaError_t err = cudaGetLastError();
@@ -304,7 +305,15 @@ void matmul(const SimpleTensor<T> A, const SimpleTensor<T> B, SimpleTensor<T> C)
 
 // # ============================================================================================
 
-using namespace TZ::impl;
+// # -------------------------
+#ifdef TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE
+// nothing
+#else
+#define TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE(T)
+#endif
+// # -------------------------
+
+using namespace tz::impl;
 #define INSTANTIATE_UNARY_APPLY(T, Func)                                                           \
 	template void applyGPU<T, Func<T>>(SimpleTensor<T>, Func<T>)
 
@@ -326,6 +335,7 @@ using namespace TZ::impl;
 
 
 #define INSTANTIATE_ALL(T)                                                                         \
+    TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE(T)                                                             \
 	INSTANTIATE_UNARY_APPLY(T, Negate);                                                            \
 	INSTANTIATE_UNARY_APPLY(T, Set);                                                               \
 	INSTANTIATE_UNARY_APPLY(T, Sum);                                                               \
@@ -334,9 +344,11 @@ using namespace TZ::impl;
 	INSTANTIATE_BINARY_APPLY(T, AddScalar);                                                        \
 	INSTANTIATE_BINARY_APPLY(T, SubtractScalar);                                                   \
 	INSTANTIATE_BINARY_APPLY(T, MultiplyScalar);                                                   \
+    INSTANTIATE_BINARY_APPLY(T, DivideScalar);                                                     \
                                                                                                    \
 	INSTANTIATE_TERNARY_APPLY(T, Add);                                                             \
 	INSTANTIATE_TERNARY_APPLY(T, Subtract);                                                        \
+	INSTANTIATE_TERNARY_APPLY(T, Multiply);                                                        \
                                                                                                    \
 	INSTANTIATE_COMPUTE_LINEAR_IDX(T);                                                             \
                                                                                                    \

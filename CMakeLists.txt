@@ -12,7 +12,6 @@ set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 find_package(CUDAToolkit REQUIRED)
 
-
 set(CMAKE_CUDA_ARCHITECTURES native)
 
 # # OpenMP
@@ -22,9 +21,9 @@ find_package(OpenMP REQUIRED)
 find_package(doctest REQUIRED)
 
 # # Debugging flags
-#set(CMAKE_CXX_FLAGS_DEBUG
-#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-#)
+set(CMAKE_CXX_FLAGS_DEBUG
+    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+)
 
 # # Sanitizers
 
@@ -37,7 +36,7 @@ set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib/headers")
 set(TEST_DIR "${CMAKE_SOURCE_DIR}/Demo/test")
 
 set(CUDA_SRC_DIR "${CMAKE_SOURCE_DIR}/lib/cuda")
-set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/lib/headers")
+set(CUDA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/lib/headers")
 
 # # CUDA Library
 add_library(tenzor_cuda

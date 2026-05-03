@@ -141,6 +141,13 @@ struct Subtract {
 };
 
 template <class T>
+struct Multiply {
+	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
+		c = a * b;
+	}
+};
+
+template <class T>
 struct Negate {
 	TZ_HOST_DEVICE void operator()(T& a) const {
 		a = -a;
@@ -177,6 +184,17 @@ struct MultiplyScalar {
 
 	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
 		b = a * val;
+	}
+};
+
+template <class T>
+struct DivideScalar {
+	T val;
+
+	DivideScalar(const T& s) : val(s) {}
+
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = a / val;
 	}
 };
 

@@ -1,20 +1,18 @@
-#include "math_classes.hpp"
-#include <iostream>
+#include "nn.hpp"
 #include <Tenzor.hpp>
 
 using namespace tz;
 
 int main() {
-	Matrix<float> m({{2, 3}, {4, 5}});
-	Vector<float> v1({7, 2});
-	Vector<float> v2 = Vector<float>({9, 1}).copyTo(GPU);
+	zi::NeuralNet<float> nn({2, 3, 1});
 
-	std::cout << matmul(m.copyTo(GPU), matmul(Matrix(v1.copyTo(GPU)), v2.transpose())).copyTo(CPU);
+	tz::Vector<float> input({0.5f, 0.8f});
+	tz::Vector<float> target({0.3f});
 
-	// [
-	// [180, 20],
-	// [342, 38]
-	// ]
+	tz::Vector<float> output = nn.forwardPass(input);
+	std::cout << "Output: " << output << std::endl;
 
+	nn.backwardPass(input, target);
+	nn.step(0.01f, 1);
 	return 0;
 }
