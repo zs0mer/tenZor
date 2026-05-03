@@ -50,9 +50,10 @@ target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 add_executable(demo "${SRC_DIR}/demo.cpp")
 target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 target_compile_options(demo PRIVATE
-    -O3
-    -march=x86-64-v3
-    -ffast-math
+
+    # -O3
+    # -march=x86-64-v3
+    # -ffast-math
 )
 target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 

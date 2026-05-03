@@ -1,3 +1,5 @@
+#pragma once
+
 #include "utils.hpp"
 #include <cassert>
 #include <math.h>
@@ -55,8 +57,8 @@ struct SquaredError {
 template <class T>
 struct SquaredErrorDerivative {
 	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
-		// c = 2 * (a - b)
-		c = T(2.0) * (a - b);
+		// c = (a - b)
+		c = (a - b);
 	}
 };
 

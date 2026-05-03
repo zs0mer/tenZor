@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <vector>
 
+#define TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME 0
+
 #include <Tenzor.hpp>
 #include "ExtraFunctions.hpp"
 #include "math_classes.hpp"
@@ -31,7 +33,7 @@ class NeuralNet {
 
   public:
 	template <class RandomFunc = RrandomUniform<T>>
-	NeuralNet(std::initializer_list<uint64_t> layerSize, RandomFunc random = {.min = 0, .max = 1})
+	NeuralNet(std::initializer_list<uint64_t> layerSize, RandomFunc random = {.min = -1, .max = 1})
 	    : layerSize_(layerSize), weights_(layerSize.size()), biases_(layerSize.size()),
 	      dC_da_(layerSize.size()), dC_dz_(layerSize.size()), activation_(layerSize.size()),
 	      preActivation_(layerSize.size()), weightGrads_(layerSize.size()),
@@ -101,10 +103,10 @@ class NeuralNet {
 			biasGrads_[i] += dC_dz_[i + 1];
 
 			// dz/dw = a -> dC/dw = a * dC/dz
-			weightGrads_[i] += matmul(Matrix<T>(activation_[i]), dC_dz_[i + 1].transpose());
+			weightGrads_[i] += matmul(Matrix<T>(dC_dz_[i + 1]), activation_[i].transpose());
 
 			// dz/da = w -> dC/da = w^T * dC/da
-			dC_da_[i] = matmul(Matrix<T>(dC_dz_[i + 1]), weights_[i].transpose());
+			dC_da_[i] = matmul(weights_[i].transpose(), Matrix<T>(dC_dz_[i + 1]));
 		}
 	}
 
@@ -112,10 +114,14 @@ class NeuralNet {
 	void step(T learnRate, uint64_t batchSize) {
 		uint64_t L = layerSize_.size() - 1;
 		for (uint64_t i = 0; i < L; i++) {
-			weights_[i] /= batchSize;
-			biases_[i] /= batchSize;
+			weightGrads_[i] /= batchSize;
+			biasGrads_[i] /= batchSize;
+
 			weights_[i] -= weightGrads_[i] * learnRate;
 			biases_[i] -= biasGrads_[i] * learnRate;
+
+			weightGrads_[i].setAll(T(0.0));
+			biasGrads_[i].setAll(T(0.0));
 		}
 	}
 };

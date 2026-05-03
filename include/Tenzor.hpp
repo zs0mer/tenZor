@@ -10,6 +10,9 @@
 // # TZ_MAX_DIM : (4) -> uint8_t
 // # TZ_IMMUTABLE_BROADCASTS : (1) -> bool (can't apply on broadcasted tensors)
 // # TZ_ERRORS : (1) -> bool
+// # TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME : (1) -> bool
+// (if the tensors are not the same in apply,
+// the second tensor will be set to the same shape)
 // # TZ_DEFAULT_ALLOCATOR :
 // (
 // 	if (device == CPU)

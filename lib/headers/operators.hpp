@@ -8,6 +8,14 @@
 #include "math_classes.hpp"
 #include "utils.hpp"
 
+// # -------------------------
+#ifdef TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
+// nothing
+#else
+#define TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME 1
+#endif
+// # -------------------------
+
 namespace tz {
 namespace impl {
 
@@ -71,10 +79,18 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, I
 #if TZ_IMMUTABLE_BROADCASTS
 	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
+	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
+#if TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
+	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
+#else
+	if (!isSameShape(a, b))
+		b = TensorIMPL<T>(a.dim(), a.shape(), a.device());
+
+#endif
+
 	if (a.empty())
 		return;
-	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
-	TZ_CHECK(a.device() == b.device(), "not same device tensors in apply");
+
 	if (a.device() == GPU) {
 		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
 			TZ_CHECK(false, "this operation is CPU only");
@@ -134,11 +150,22 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 	         "can't apply on broadcasted tensors");
 #endif
 
-	if (a.empty())
-		return;
+
+#if TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
 	TZ_CHECK(isSameShape(a, b) && isSameShape(c, b), "not same size tensors in apply");
+#else
+	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
+	if (!isSameShape(a, c))
+		c = TensorIMPL<T>(a.dim(), a.shape(), a.device());
+
+#endif
+
 	TZ_CHECK(a.device() == b.device() && b.device() == c.device(),
 	         "not same device tensors in apply");
+
+	if (a.empty())
+		return;
+
 	if (a.device() == GPU) {
 		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
 			TZ_CHECK(false, "this operation is CPU only");
