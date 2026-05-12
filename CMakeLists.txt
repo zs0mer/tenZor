@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(Tenzor LANGUAGES CXX CUDA)
+project(TenZor LANGUAGES CXX CUDA)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

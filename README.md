@@ -1,10 +1,10 @@
-# Tenzor
+# TenZor
 
 A header-only C++ tensor library with CPU and CUDA GPU support.
 
 ## Features
 
-- **Header-only** — just include `Tenzor.hpp`
+- **Header-only** — just include `TenZor.hpp`
 - **Custom slab allocator** (`Salloc`) — three-tier (small/medium/large), thread-local, cache-friendly
 - **CPU & GPU tensors** — seamlessly move data between devices with `copyTo()`
 - **OpenMP parallelism** — automatic multi-threading for large operations on CPU
@@ -191,7 +191,7 @@ INSTANTIATE_TERNARY_APPLY(T, Func)
 
 ## Configuration
 
-The following can be set as compile-time defines (e.g. via `-DTZ_MAX_DIM=8`), or defined before including `Tenzor.hpp`:
+The following can be set as compile-time defines (e.g. via `-DTZ_MAX_DIM=8`), or defined before including `TenZor.hpp`:
 
 | Define | Default | Description |
 |---|---|---|

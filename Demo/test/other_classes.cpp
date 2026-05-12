@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include <vector>
 
-#include "Tenzor.hpp"
+#include "TenZor.hpp"
 
 // ! functions using apply are not tested!
 
