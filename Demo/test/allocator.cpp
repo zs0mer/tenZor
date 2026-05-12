@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include "Tenzor.hpp"
+#include "TenZor.hpp"
 
 using namespace tz;
 using namespace tz::mem;

@@ -8,7 +8,7 @@
 // can't easily test without this
 #define TZ_IMMUTABLE_BROADCASTS 0
 
-#include "Tenzor.hpp"
+#include "TenZor.hpp"
 
 using namespace tz;
 using namespace tz::impl;

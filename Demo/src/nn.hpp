@@ -6,7 +6,7 @@
 
 #define TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME 0
 
-#include <Tenzor.hpp>
+#include "TenZor.hpp"
 #include "ExtraFunctions.hpp"
 #include "math_classes.hpp"
 

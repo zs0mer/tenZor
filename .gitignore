@@ -1,6 +1,6 @@
 *.o
 build
-.direnv
 .vscode
 .cache
 .zed
+.compile_commands.json

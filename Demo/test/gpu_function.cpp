@@ -3,7 +3,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
-#include "Tenzor.hpp"
+#include "TenZor.hpp"
 
 using namespace tz;
 using namespace tz::impl;
