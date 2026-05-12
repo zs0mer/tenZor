@@ -1,5 +1,5 @@
 {
-  description = "C/C++ (Cuda) environment";
+  description = "C++ / Cuda environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -32,24 +32,27 @@
         packages = with pkgs; [
           gnumake
           pkg-config
+          cmake
+
           old.gcc11
           gdb
-          cmake
+          python3
+
           doctest
-          nixfmt
+
           perf
           valgrind
-          python3
+          clang-tools
+
           old.cudaPackages.cuda_nvcc
           old.cudaPackages.cudatoolkit
 
-          zed-editor
-          tig
-
-          clang-tools
+          nixfmt
           nixd
           nil
           neocmakelsp
+
+          zed-editor
         ];
 
         shellHook = "";

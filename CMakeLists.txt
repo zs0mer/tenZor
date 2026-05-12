@@ -21,9 +21,9 @@ find_package(OpenMP REQUIRED)
 find_package(doctest REQUIRED)
 
 # # Debugging flags
-set(CMAKE_CXX_FLAGS_DEBUG
-    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
-)
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g3 -fno-inline -fno-omit-frame-pointer -fno-optimize-sibling-calls"
+#)
 
 # # Sanitizers
 
@@ -47,25 +47,15 @@ target_include_directories(tenzor_cuda PRIVATE ${CUDA_INCLUDE_DIR})
 target_link_libraries(tenzor_cuda PRIVATE CUDA::cudart CUDA::cublas)
 
 # # Executable
-add_executable(demo1 "${SRC_DIR}/demo1.cpp")
-target_include_directories(demo1 PRIVATE ${INCLUDE_DIR})
-target_compile_options(demo1 PRIVATE
+add_executable(demo "${SRC_DIR}/demo.cpp")
+target_include_directories(demo PRIVATE ${INCLUDE_DIR})
+target_compile_options(demo PRIVATE
 
-    # -O3
-    # -march=x86-64-v3
-    # -ffast-math
+    -O3
+    -march=x86-64-v3
+    -ffast-math
 )
-target_link_libraries(demo1 PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
-
-add_executable(demo2 "${SRC_DIR}/demo2.cpp")
-target_include_directories(demo2 PRIVATE ${INCLUDE_DIR})
-target_compile_options(demo2 PRIVATE
-
-    # -O3
-    # -march=x86-64-v3
-    # -ffast-math
-)
-target_link_libraries(demo2 PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
+target_link_libraries(demo PRIVATE tenzor_cuda OpenMP::OpenMP_CXX)
 
 # # Testing =====================================================================
 add_executable(Tallocator "${TEST_DIR}/allocator.cpp")

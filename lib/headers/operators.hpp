@@ -68,8 +68,8 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func, IsGPUAvalable) {
 
 template <class T>
 template <class Func, class IsGPUAvalable, class>
-void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func, IsGPUAvalable) {
-	apply(const_cast<TensorIMPL<T>&>(a), func);
+void TensorIMPL<T>::apply(const TensorIMPL<T>& a, Func func, IsGPUAvalable u) {
+	apply(const_cast<TensorIMPL<T>&>(a), func, u);
 }
 
 // these are the CPU impl
@@ -137,8 +137,8 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, I
 template <class T>
 template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Func func,
-                          IsGPUAvalable) {
-	apply(a, const_cast<TensorIMPL<T>&>(b), func);
+                          IsGPUAvalable u) {
+	apply(a, const_cast<TensorIMPL<T>&>(b), func, u);
 }
 
 // these are the CPU impl
@@ -216,8 +216,8 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 template <class T>
 template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, const TensorIMPL<T>& c,
-                          Func func, IsGPUAvalable) {
-	apply(a, b, const_cast<TensorIMPL<T>&>(c), func);
+                          Func func, IsGPUAvalable u) {
+	apply(a, b, const_cast<TensorIMPL<T>&>(c), func, u);
 }
 
 // # --------------------
