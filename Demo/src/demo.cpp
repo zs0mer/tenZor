@@ -1,31 +1,42 @@
-#include "Tenzor.hpp"
-#include <iostream>
-#include <random>
+#include "allocator.hpp"
+#include "nn.hpp"
 
-static std::mt19937 rng(345678);
+#include "ExtraFunctions.hpp"
+
+
+// * Simple demo of a neural network learning XOR
 
 int main() {
-	const int n = 100000;
-	const int m = 18;
-	std::vector<int> v(n, 0);
+	tz::Matrix<float> input({{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}});
+	tz::Matrix<float> target({{0.0f}, {1.0f}, {1.0f}, {0.0f}});
 
+	input = input.copyTo(tz::GPU);
+	target = target.copyTo(tz::GPU);
 
-	for (int i = 0; i < n; i++) {
-		v[i] = (rng() % 1024 * 20) + 1;
-	}
+	zi::NeuralNet<float> nn({2, 32, 32, 32, 1}, tz::GPU,
+	                        zi::RrandomUniform<float>{.min = -1.0, .max = 1.0});
+	int n = 5000;
+	float learnRate = 1.0f;
 
+	for (int i = 0; i <= n; i++) {
 
-	TZ::mem::salloc& aalloc = TZ::mem::salloc::instance();
-	{
-		TZ::_Timer timer("salloc");
-		std::vector<void*> space(n);
+		float loss = 0.0f;
+		for (uint64_t j = 0; j < target.size(); j++) {
+			tz::Vector<float> output = nn.forwardPass(input[j]);
+			nn.backwardPass(input[j], target[j]);
 
-		for (int k = 0; k < m; k++) {
-			for (int i = 0; i < n; i++)
-				space[i] = aalloc.allocate(v[i]);
+			tz::Vector<float> diff;
+			tz::impl::TensorIMPL<float>::apply(output.tensor_(), target[j].tensor_(),
+			                                   diff.tensor_(), zi::SquaredError<float>{},
+			                                   tz::impl::AnyDevice{});
+			loss += diff.sum().copyTo(tz::CPU);
+		}
+		nn.step(learnRate, target.size());
 
-			for (int i = 0; i < n; i++)
-				aalloc.deallocate(space[i], v[i]);
+		if (i % 100 == 0) {
+			std::cout << "Epoch " << i << ", Loss: " << loss << std::endl;
 		}
 	}
+
+	return 0;
 }

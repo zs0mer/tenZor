@@ -1,7 +1,12 @@
 #pragma once
 
-namespace TZ {
-namespace mem {
+#include <cstring>
+#include <cstdint>
+#include <atomic>
+
+#include "allocator.hpp"
+
+namespace tz::mem {
 
 // Buffer implementation
 // holds the metadata for the buffer
@@ -18,8 +23,8 @@ class BufferIMPL {
 
 	// standard constructor
 	// you can only construct with this constructor
-	BufferIMPL(const uint64_t size, const uint8_t alignment,
-	           Allocator* allocator = &salloc::instance())
+	BufferIMPL(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
+	           Allocator* allocator = &defaultAllocator())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
 	      data_(allocator->allocate(size, alignment)) {}
 
@@ -27,7 +32,12 @@ class BufferIMPL {
 	BufferIMPL(const BufferIMPL& other)
 	    : size_(other.size_), alignment_(other.alignment_), allocator_(other.allocator_),
 	      data_(allocator_->allocate(size_, alignment_)) {
-		memcpy(data_, other.data_, size_);
+		if (size_ != 0 && other.data_) {
+			if (allocator_->device() == CPU)
+				memcpy(data_, other.data_, size_);
+			if (allocator_->device() == GPU)
+				cuda::memCopyOnGPU(data_, other.data_, size_);
+		}
 	}
 
 	BufferIMPL& operator=(const BufferIMPL&) = delete;
@@ -36,7 +46,39 @@ class BufferIMPL {
 
 	BufferIMPL& operator=(BufferIMPL&&) = delete;
 
-	//& lifetime----
+	// # data--------
+
+	// returns the pointer to the buffer
+	void* data() noexcept {
+		return data_;
+	};
+
+	// returns the pointer to the buffer
+	const void* data() const noexcept {
+		return data_;
+	};
+
+	// # metadata----
+
+	// returns size of the buffer
+	uint64_t size() const noexcept {
+		return size_;
+	};
+
+	// returns the device that this data is allocated on
+	Device device() const noexcept {
+		return allocator_->device();
+	};
+
+	// returns the allocator that this buffer is using
+	Allocator* allocator() const noexcept {
+		return allocator_;
+	}
+
+  private:
+	// # lifetime----
+
+	friend class Buffer;
 
 	// increment the reference count
 	void retain() noexcept {
@@ -53,38 +95,9 @@ class BufferIMPL {
 		}
 		return false;
 	}
-
-	//& data--------
-
-	// returns the pointer to the buffer
-	void* data() noexcept {
-		return data_;
-	};
-
-	// returns the pointer to the buffer
-	const void* data() const noexcept {
-		return data_;
-	};
-
-	//& metadata----
-
-	// returns size of the buffer
-	uint64_t size() const noexcept {
-		return size_;
-	};
-
-	// returns the device that this data is allocated on
-	Device device() const noexcept {
-		return allocator_->device();
-	};
-
-	// returns the allocator that this buffer is using
-	Allocator* allocator() const noexcept {
-		return allocator_;
-	}
 };
 
-//& ================================================================================
+// # ================================================================================
 
 // standard memory buffer
 // holds the BufferIMPL
@@ -93,13 +106,24 @@ class Buffer {
 
   public:
 	// this buffer will become the new owner of the BufferIMPL
-	Buffer(BufferIMPL* buffer)
-	    : ptr_(buffer ? buffer : new BufferIMPL(0, DEFAULT_ALIGNMENT, &salloc::instance())) {}
+	Buffer(BufferIMPL* buffer) {
+		if (buffer) {
+			ptr_ = buffer;
+			return;
+		}
+
+
+		ptr_ = static_cast<BufferIMPL*>(
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
+		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &defaultAllocator());
+	}
 
 	// standard constructor
-	Buffer(const uint64_t size = 0, const uint8_t alignment = DEFAULT_ALIGNMENT,
-	       Allocator* allocator = &salloc::instance())
-	    : ptr_(new BufferIMPL(size, alignment, allocator)) {}
+	Buffer(const uint64_t size = 0, Allocator* allocator = &defaultAllocator())
+	    : ptr_(static_cast<BufferIMPL*>( // allocate with the default CPU allocater
+	          defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+		new (ptr_) BufferIMPL(size, DEFAULT_ALIGNMENT, allocator);
+	}
 
 	// this buffer will contain the same BufferIMPL
 	Buffer(const Buffer& other) : ptr_(other.ptr_) {
@@ -143,26 +167,35 @@ class Buffer {
 		clear();
 	}
 
-	BufferIMPL* operator->() {
+	BufferIMPL* operator->() noexcept {
 		return ptr_;
 	}
 
-	const BufferIMPL* operator->() const {
+	const BufferIMPL* operator->() const noexcept {
 		return ptr_;
 	}
 
 	// makes a new buffer with the same data
 	Buffer clone() const {
-		return Buffer(new BufferIMPL(*ptr_));
+		if (!ptr_)
+			return Buffer();
+
+		BufferIMPL* p = static_cast<BufferIMPL*>(
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
+		new (p) BufferIMPL(*ptr_);
+		return Buffer(p);
 	}
 
   private:
 	void clear() {
-		if (ptr_)
-			if (ptr_->release())
-				delete ptr_;
+		if (ptr_) {
+			if (ptr_->release()) {
+				ptr_->~BufferIMPL();
+				defaultAllocator(CPU).deallocate(static_cast<void*>(ptr_), sizeof(BufferIMPL));
+			}
+		}
 	}
 };
 
-} // namespace mem
-} // namespace TZ
+
+} // namespace tz::mem
