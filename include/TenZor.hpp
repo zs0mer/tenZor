@@ -2,6 +2,7 @@
 
 // # these are changeable:
 
+// # TZ_CUDA_AVAILABLE : (1) -> bool
 // # TZ_START_MEM_SIZE : (10 * 1024 * 1024) -> uint64
 // # TZ_DEFAULT_ALIGNMENT : (64) -> uint8_t
 // # TZ_CTD : (1) -> bool (cross thread deallocation,

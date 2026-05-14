@@ -15,7 +15,12 @@
 #define TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME 1
 #endif
 // # -------------------------
-
+#ifdef TZ_CUDA_AVAILABLE
+// nothing
+#else
+#define TZ_CUDA_AVAILABLE 1
+#endif
+// # -------------------------
 namespace tz {
 namespace impl {
 
@@ -32,7 +37,11 @@ void TensorIMPL<T>::apply(TensorIMPL<T>& a, Func func, IsGPUAvalable) {
 		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
 			TZ_CHECK(false, "this operation is CPU only");
 		} else {
+#if TZ_CUDA_AVAILABLE
 			cuda::applyGPU(a.getCudaTensor(), func);
+#else
+			TZ_CHECK(false, "CUDA is not available");
+#endif
 		}
 		return;
 	}
@@ -96,7 +105,11 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, I
 		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
 			TZ_CHECK(false, "this operation is CPU only");
 		} else {
+#if TZ_CUDA_AVAILABLE
 			cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), func);
+#else
+			TZ_CHECK(false, "CUDA is not available");
+#endif
 		}
 		return;
 	}
@@ -171,7 +184,11 @@ void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, Tensor
 		if constexpr (std::is_same_v<IsGPUAvalable, CPUOnly>) {
 			TZ_CHECK(false, "this operation is CPU only");
 		} else {
+#if TZ_CUDA_AVAILABLE
 			cuda::applyGPU(a.getCudaTensor(), b.getCudaTensor(), c.getCudaTensor(), func);
+#else
+			TZ_CHECK(false, "CUDA is not available");
+#endif
 		}
 		return;
 	}
@@ -263,8 +280,15 @@ template <class T>
 Scalar<T> dot(const Vector<T>& a, const Vector<T>& b) {
 	TZ_CHECK(a.size() == b.size(), "not the same size vectors in dot");
 	TZ_CHECK(a.device() == b.device(), "not same device vectors in dot");
-	if (a.device() == GPU)
+	if (a.device() == GPU) {
+#if TZ_CUDA_AVAILABLE
 		return Scalar<T>(cuda::dot(a.tensor_().getCudaTensor(), b.tensor_().getCudaTensor()));
+#else
+		TZ_CHECK(false, "CUDA is not available");
+		return Scalar<T>(0);
+#endif
+	}
+
 
 	uint64_t n = a.size();
 	T sum = 0;
@@ -300,8 +324,14 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 		if (b.tensor_().strides()[1] != 1)
 			inB = b.clone();
 
+#if TZ_CUDA_AVAILABLE
 		cuda::matmul(inA.tensor_().getCudaTensor(), inB.tensor_().getCudaTensor(),
 		             out.tensor_().getCudaTensor());
+#else
+		TZ_CHECK(false, "CUDA is not available");
+#endif
+
+
 		return out;
 	}
 #pragma omp parallel for

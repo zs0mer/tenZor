@@ -281,8 +281,14 @@ TensorIMPL<T> TensorIMPL<T>::clone() const {
 	if (dense()) {
 		if (device() == CPU)
 			std::memcpy(out.data(), this->data(), size() * sizeof(T));
-		if (device() == GPU)
+		if (device() == GPU) {
+#if TZ_CUDA_AVAILABLE
 			cuda::memCopyOnGPU(out.data(), this->data(), size() * sizeof(T));
+#else
+			TZ_CHECK(false, "CUDA is not available");
+#endif
+		}
+
 		return out;
 	}
 
@@ -303,11 +309,14 @@ TensorIMPL<T> TensorIMPL<T>::copyTo(Device toDevice) const {
 	mem::Buffer buff = mem::Buffer(t.data_->size(), &mem::defaultAllocator(toDevice));
 	uint64_t byteSize = t.size() * sizeof(T);
 
+#if TZ_CUDA_AVAILABLE
 	if (toDevice == GPU)
 		cuda::copyToGPU(buff->data(), t.data(), byteSize);
 	else if (toDevice == CPU)
 		cuda::copyToCPU(buff->data(), t.data(), byteSize);
-
+#else
+	TZ_CHECK(false, "CUDA is not available");
+#endif
 
 	return TensorIMPL<T>(dim_, t.shape_.data(), t.strides_.data(), 0, buff);
 }
