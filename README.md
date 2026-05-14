@@ -66,7 +66,7 @@ Or run individual test binaries:
 Include the main header:
 
 ```cpp
-#include "Tenzor.hpp"
+#include "TenZor.hpp"
 ```
 
 ### Basic Types
