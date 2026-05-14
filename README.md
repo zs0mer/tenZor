@@ -31,15 +31,16 @@ nix develop
 
 ```sh
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release -DTESTS=OFF
 make -j$(nproc)
 ```
 
 For a debug build:
 
 ```sh
-cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DTESTS=OFF
 ```
+if you don't have CUDA, then also do ```-DUSE_CUDA=OFF```
 
 ## Running Tests
 
