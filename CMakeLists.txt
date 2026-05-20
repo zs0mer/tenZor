@@ -56,12 +56,13 @@ target_include_directories(demo PRIVATE ${INCLUDE_DIR})
 target_link_libraries(demo PRIVATE OpenMP::OpenMP_CXX)
 
 if(USE_CUDA)
+  target_compile_definitions(demo PRIVATE TZ_CUDA_AVAILABLE=1)
   target_link_libraries(demo PRIVATE tenzor_cuda)
 else()
   target_compile_definitions(demo PRIVATE TZ_CUDA_AVAILABLE=0)
 endif()
 
-  # # Testing - only with GPU =====================================================================
+# # Testing - only with GPU =====================================================================
 if(USE_CUDA AND TESTS)
   add_executable(Tallocator     "${TEST_DIR}/allocator.cpp")
   add_executable(Tbuffer        "${TEST_DIR}/buffer.cpp")
@@ -72,6 +73,7 @@ if(USE_CUDA AND TESTS)
 
   foreach(T Tallocator Tbuffer Ttensor Tother_classes Toperations Tgpu_function)
     target_include_directories(${T} PRIVATE ${INCLUDE_DIR})
+    target_compile_definitions(${T} PRIVATE TZ_CUDA_AVAILABLE=1)
     target_link_libraries(${T} PRIVATE doctest::doctest tenzor_cuda OpenMP::OpenMP_CXX)
   endforeach()
 

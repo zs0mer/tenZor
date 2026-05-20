@@ -42,8 +42,8 @@ class NeuralNet {
 			weights_[i] = tz::Matrix<T>(layerSize_[i + 1], layerSize_[i], d);
 			biases_[i] = tz::Vector<T>(layerSize_[i + 1], d);
 
-			tz::impl::TensorIMPL<T>::apply(weights_[i].tensor_(), random, tz::impl::AnyDevice{});
-			tz::impl::TensorIMPL<T>::apply(biases_[i].tensor_(), random, tz::impl::AnyDevice{});
+			weights_[i].apply(random, tz::impl::AnyDevice{});
+			biases_[i].apply(random, tz::impl::AnyDevice{});
 
 
 			weightGrads_[i] = tz::Matrix<T>(layerSize_[i + 1], layerSize_[i], d);
@@ -67,9 +67,7 @@ class NeuralNet {
 		for (uint64_t i = 0; i < L; i++) {
 			preActivation_[i + 1] =
 			    tz::Vector<T>(matmul(weights_[i], tz::Matrix<T>(activation_[i]))) + biases_[i];
-			tz::impl::TensorIMPL<T>::apply(preActivation_[i + 1].tensor_(),
-			                               activation_[i + 1].tensor_(), activation,
-			                               tz::impl::AnyDevice{});
+			activation_[i + 1].apply(preActivation_[i + 1], activation, tz::impl::AnyDevice{});
 		}
 		return activation_[layerSize_.size() - 1];
 	}
@@ -88,15 +86,14 @@ class NeuralNet {
 		uint64_t L = layerSize_.size() - 1;
 
 		// dC/da = C'(a, y)
-		tz::impl::TensorIMPL<T>::apply(activation_[layerSize_.size() - 1].tensor_(),
-		                               target.tensor_(), dC_da_[layerSize_.size() - 1].tensor_(),
-		                               costDerivative, tz::impl::AnyDevice{});
+		dC_da_[layerSize_.size() - 1].apply(activation_[layerSize_.size() - 1], target,
+		                                    costDerivative, tz::impl::AnyDevice{});
 
 		// propagating back
 		for (uint64_t i = L; i-- > 0;) {
 			// dz/da = activationFunctionDerivative(z) -> dC/dz = dC/da * da/dz
-			tz::impl::TensorIMPL<T>::apply(preActivation_[i + 1].tensor_(), dC_dz_[i + 1].tensor_(),
-			                               activationFunctionDerivative, tz::impl::AnyDevice{});
+			dC_dz_[i + 1].apply(preActivation_[i + 1].tensor_(), activationFunctionDerivative,
+			                    tz::impl::AnyDevice{});
 			dC_dz_[i + 1] *= dC_da_[i + 1];
 
 			// dz/db = 1 -> dC/db = dC/dz

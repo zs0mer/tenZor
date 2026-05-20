@@ -15,12 +15,6 @@
 #define TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME 1
 #endif
 // # -------------------------
-#ifdef TZ_CUDA_AVAILABLE
-// nothing
-#else
-#define TZ_CUDA_AVAILABLE 1
-#endif
-// # -------------------------
 namespace tz {
 namespace impl {
 

@@ -108,6 +108,30 @@ class TensorWrapper {
 
 	// # operations ===========================================================================
 
+	// calls func(this[i]) for all elements of the tensor
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	void apply(Func func, IsGPUAvalable constraint = {}) {
+		impl::TensorIMPL<T>::apply(this->t_, func, constraint);
+	}
+
+	// calls func(const other[i], this[i]) for all elements of the tensor
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	void apply(const impl::TensorWrapper<Derived, T>& other, Func func,
+	           IsGPUAvalable constraint = {}) {
+		impl::TensorIMPL<T>::apply(other.t_, this->t_, func, constraint);
+	}
+
+	// calls func(const a[i], const b[i], this[i]) for all elements of the tensor
+	template <class Func, class IsGPUAvalable = CPUOnly,
+	          class = std::enable_if_t<IsPolicy<IsGPUAvalable>::value>>
+	void apply(const impl::TensorWrapper<Derived, T>& a, const impl::TensorWrapper<Derived, T>& b,
+	           Func func, IsGPUAvalable constraint = {}) {
+		impl::TensorIMPL<T>::apply(a.t_, b.t_, this->t_, func, constraint);
+	}
+
+
 	Derived operator+(const TensorWrapper& other) const {
 		Derived out(t_.dim(), t_.shape(), device());
 		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Add<T>{}, AnyDevice{});
