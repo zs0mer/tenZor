@@ -543,11 +543,22 @@ class Galloc : public Allocator {
 	};
 
 	void* allocate(const uint64_t bytes, const uint8_t alignment) override {
+
+#if TZ_CUDA_AVAILABLE
 		return cuda::allocGPU(bytes, alignment);
+#else
+		TZ_CHECK(false, "CUDA is not available");
+		return nullptr;
+#endif
 	};
 
 	void deallocate(void* ptr, const uint64_t bytes = 0) override {
+
+#if TZ_CUDA_AVAILABLE
 		cuda::freeGPU(ptr, bytes);
+#else
+		TZ_CHECK(false, "CUDA is not available");
+#endif
 	};
 
 	~Galloc() = default;

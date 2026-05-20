@@ -1,4 +1,3 @@
-#include "allocator.hpp"
 #include "nn.hpp"
 
 #include "ExtraFunctions.hpp"
@@ -10,10 +9,10 @@ int main() {
 	tz::Matrix<float> input({{0.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}});
 	tz::Matrix<float> target({{0.0f}, {1.0f}, {1.0f}, {0.0f}});
 
-	input = input.copyTo(tz::GPU);
-	target = target.copyTo(tz::GPU);
+	input = input.copyTo(tz::CPU);
+	target = target.copyTo(tz::CPU);
 
-	zi::NeuralNet<float> nn({2, 32, 32, 32, 1}, tz::GPU,
+	zi::NeuralNet<float> nn({2, 32, 32, 32, 1}, tz::CPU,
 	                        zi::RrandomUniform<float>{.min = -1.0, .max = 1.0});
 	int n = 5000;
 	float learnRate = 1.0f;

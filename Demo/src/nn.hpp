@@ -1,6 +1,4 @@
 #pragma once
-#include "allocator.hpp"
-#include "tensor.hpp"
 #include <cstdint>
 #include <vector>
 
@@ -8,7 +6,6 @@
 
 #include "TenZor.hpp"
 #include "ExtraFunctions.hpp"
-#include "math_classes.hpp"
 
 namespace zi {
 
