@@ -243,7 +243,7 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 	return os;
 }
 
-}; // namespace impl
+} // namespace impl
 
 // # Tensor =============================================================
 
