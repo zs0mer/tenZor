@@ -241,7 +241,7 @@ class TensorIMPL {
 	                  Func func, IsGPUAvalable constraint = {});
 
 	// Broadcasts the tensor to the target shape, if possible
-	TensorIMPL<T> broadcast(const std::initializer_list<uint64_t>& targetShape) const;
+	TensorIMPL<T> broadcast(const uint8_t dim, const uint64_t* targetShape);
 
 	// # private ==========================================================================
   protected:

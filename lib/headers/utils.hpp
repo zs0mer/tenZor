@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <iostream>
 #include <chrono>
 #include <iomanip>
@@ -148,9 +149,41 @@ struct Multiply {
 };
 
 template <class T>
+struct Divide {
+	TZ_HOST_DEVICE void operator()(const T& a, const T& b, T& c) const {
+		c = a / b;
+	}
+};
+
+template <class T>
 struct Negate {
-	TZ_HOST_DEVICE void operator()(T& a) const {
-		a = -a;
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = -a;
+	}
+};
+
+template <class T>
+struct Exp {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = std::exp(double(a));
+	}
+};
+
+template <class T>
+struct Log {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = std::log(double(a));
+	}
+};
+
+template <class T>
+struct Pow {
+	T val;
+
+	Pow(const T& s) : val(s) {}
+
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = std::pow(a, val);
 	}
 };
 
@@ -225,5 +258,72 @@ struct Sum {
 	}
 };
 
+// # other functions --------------------------------------------------
+
+template <class T>
+struct Sigmoid {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = T(1) / (T(1) + ::exp(-double(a)));
+	}
+};
+
+template <class T>
+struct SigmoidGrad {
+	TZ_HOST_DEVICE void operator()(const T& upstream, const T& s, T& out) const {
+		out = s * (T(1) - s);
+		out *= upstream;
+	}
+};
+
+template <class T>
+struct Relu {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = a > 0 ? a : 0;
+	}
+};
+
+template <class T>
+struct ReluGrad {
+	TZ_HOST_DEVICE void operator()(const T& upstream, const T& a, T& out) const {
+		out = a > T(0) ? upstream : T(0);
+	}
+};
+
+template <class T>
+struct Tanh {
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = ::tanh(double(a));
+	}
+};
+
+template <class T>
+struct TanhGrad {
+	TZ_HOST_DEVICE void operator()(const T& upstream, const T& s, T& out) const {
+		out = 1 - s * s;
+		out *= upstream;
+	}
+};
+
+template <class T>
+struct Softmax {
+	T sum;
+
+	Softmax(const T& s) : sum(s) {}
+
+	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
+		b = T(::exp(double(a))) / sum;
+	}
+};
+
+template <class T>
+struct SoftmaxGrad {
+	T dotVal;
+
+	SoftmaxGrad(const T& s) : dotVal(s) {}
+
+	TZ_HOST_DEVICE void operator()(const T& upstream, const T& s, T& out) const {
+		out = s * (upstream - dotVal);
+	}
+};
 
 } // namespace tz::impl

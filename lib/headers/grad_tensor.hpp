@@ -19,9 +19,9 @@ template <class Derived, class DataType, class T>
 class GradWrapper {
   private:
 	DataType data_;
-	DataType grad_;
+	mutable DataType grad_;
 	// this class owns *fromOp_
-	GradOpNode<T, DataType>* fromOp_ = nullptr;
+	mutable GradOpNode<T, DataType>* fromOp_ = nullptr;
 
   public:
 	GradWrapper() = default;
@@ -31,7 +31,7 @@ class GradWrapper {
 	}
 
 	GradWrapper(const GradWrapper& other)
-	    : data_(other.data_), grad_(data_.dim(), data_.shape(), data_.device()), fromOp_(nullptr) {
+	    : data_(other.data_), grad_(createSame(data_)), fromOp_(nullptr) {
 		grad_.setAll(0);
 	}
 
@@ -39,7 +39,7 @@ class GradWrapper {
 		clean();
 
 		data_ = other.data_;
-		grad_ = DataType(data_.dim(), data_.shape(), data_.device());
+		grad_ = DataType(createSame(data_));
 		fromOp_ = nullptr;
 
 		grad_.setAll(0);
@@ -64,8 +64,7 @@ class GradWrapper {
 	}
 
 
-	GradWrapper(const DataType& data)
-	    : data_(data), grad_(data_.dim(), data_.shape(), data_.device()), fromOp_(nullptr) {
+	GradWrapper(const DataType& data) : data_(data), grad_(createSame(data_)), fromOp_(nullptr) {
 		grad_.setAll(0);
 	}
 
@@ -73,7 +72,7 @@ class GradWrapper {
 		clean();
 
 		data_ = other;
-		grad_ = DataType(data_.dim(), data_.shape(), data_.device());
+		grad_ = DataType(createSame(data_));
 		fromOp_ = nullptr;
 
 		grad_.setAll(0);
@@ -82,8 +81,7 @@ class GradWrapper {
 	}
 
 	GradWrapper(DataType&& other)
-	    : data_(std::move(other)), grad_(data_.dim(), data_.shape(), data_.device()),
-	      fromOp_(nullptr) {
+	    : data_(std::move(other)), grad_(createSame(data_)), fromOp_(nullptr) {
 		grad_.setAll(0);
 	}
 
@@ -91,7 +89,7 @@ class GradWrapper {
 		clean();
 
 		data_ = std::move(other);
-		grad_ = DataType(data_.dim(), data_.shape(), data_.device());
+		grad_ = DataType(createSame(data_));
 		fromOp_ = nullptr;
 
 		grad_.setAll(0);
@@ -129,7 +127,7 @@ class GradWrapper {
 		return out;
 	}
 
-	void propagate(const DataType& upstream) {
+	void propagate(const DataType& upstream) const {
 		grad_ += upstream;
 
 		if (!fromOp_)
@@ -165,7 +163,6 @@ class GradTensor : public GradWrapper<GradTensor<T>, Tensor<T>, T> {
   public:
 	using Base::Base;
 };
-
 
 template <class T>
 class GradScalar : public GradWrapper<GradScalar<T>, Scalar<T>, T> {
