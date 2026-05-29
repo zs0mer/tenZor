@@ -55,7 +55,7 @@ class TensorWrapper {
 
 	TensorWrapper& operator=(TensorWrapper&&) = default;
 
-	Tensor<T> toTensor() {
+	Tensor<T> toTensor() const {
 		return Tensor<T>(this->tensor_());
 	}
 

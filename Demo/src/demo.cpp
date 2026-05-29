@@ -40,42 +40,53 @@ tz::impl::AnyDevice{}); loss += diff.sum().copyTo(tz::CPU);
 */
 
 #include "TenZor.hpp"
+#include "grad_functions.hpp"
+#include "grad_tensor.hpp"
+#include <vector>
 using namespace tz;
 using namespace grad;
 
 int main() {
-	// XOR dataset — 4 samples, 2 features
-	GradMatrix<float> x(Matrix<float>(4, 2, CPU));
-	x.val().at(0, 0) = 0;
-	x.val().at(0, 1) = 0;
-	x.val().at(1, 0) = 0;
-	x.val().at(1, 1) = 1;
-	x.val().at(2, 0) = 1;
-	x.val().at(2, 1) = 0;
-	x.val().at(3, 0) = 1;
-	x.val().at(3, 1) = 1;
+	// XOR dataset - 4 samples, 2 features
+	Matrix<float> m(4, 2, CPU);
+	m.at(0, 0) = 0;
+	m.at(0, 1) = 0;
+	m.at(1, 0) = 0;
+	m.at(1, 1) = 1;
+	m.at(2, 0) = 1;
+	m.at(2, 1) = 0;
+	m.at(3, 0) = 1;
+	m.at(3, 1) = 1;
+
+	GradMatrix<float> x(m);
 
 	// targets
-	GradVector<float> target(Vector<float>(4, CPU));
-	target.val().at(0) = 0;
-	target.val().at(1) = 1;
-	target.val().at(2) = 1;
-	target.val().at(3) = 0;
+	Vector<float> v(4, CPU);
+	v.at(0) = 0;
+	v.at(1) = 1;
+	v.at(2) = 1;
+	v.at(3) = 0;
+
+	GradVector<float> target(v);
+
 
 	// weights: 2 -> 4 -> 1
 	GradMatrix<float> w1(Matrix<float>(2, 4, CPU));
 	GradVector<float> w2(Vector<float>(4, CPU));
 
 	// random init
-	w1.val().apply([](float& x) { x = (float)rand() / RAND_MAX * 0.2f - 0.1f; });
-	w2.val().apply([](float& x) { x = (float)rand() / RAND_MAX * 0.2f - 0.1f; });
+	w1.val().apply([](float& x) { x = (float)rand() / RAND_MAX * 2.0f - 1.0f; });
+	w2.val().apply([](float& x) { x = (float)rand() / RAND_MAX * 2.0f - 1.0f; });
+
 
 	float lr = 0.1f;
+
+	RMSProp<float> optimizer(std::vector<GradBase<float>*>{&w1, &w2}, lr, 0.9f);
 
 	for (int epoch = 0; epoch < 1000; epoch++) {
 		// forward: (4x2) * (2x4) -> (4x4), then matvec (4x4) * (4) -> (4)
 		GradMatrix<float> h = grad::matmul<float>(x, w1);
-		GradMatrix<float> h_act = grad::relu<float>(h);
+		GradMatrix<float> h_act = grad::sigmoid<float>(h);
 		GradVector<float> out = grad::matmul<float>(h_act, w2);
 
 		// MSE loss
@@ -85,14 +96,9 @@ int main() {
 
 		// backward
 		loss.backward();
-
-		// gradient descent step
-		w1.val() -= w1.grad() * Scalar<float>(lr);
-		w2.val() -= w2.grad() * Scalar<float>(lr);
-
-		// zero grads
-		w1.grad().setAll(0);
-		w2.grad().setAll(0);
+		// std::cout << "w1 grad: " << w1.grad() << std::endl;
+		// std::cout << "w2 grad: " << w2.grad() << std::endl;
+		optimizer.step();
 
 		if (epoch % 100 == 0)
 			std::cout << "epoch " << epoch << " loss: " << loss << std::endl;

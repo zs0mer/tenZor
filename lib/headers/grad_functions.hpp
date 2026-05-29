@@ -145,7 +145,7 @@ template <class T, class GradType>
 GradType sigmoid(GradType& a) {
 	auto out = createSame(a.val());
 	out.apply(a.val(), impl::Sigmoid<T>{}, impl::AnyDevice{});
-	auto saved = out.val();
+	auto saved = out;
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {
