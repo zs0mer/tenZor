@@ -7,8 +7,7 @@
 #include "math_classes.hpp"
 
 
-namespace tz {
-namespace grad {
+namespace tz::grad {
 
 template <class T, class DataType>
 struct GradOpNode {
@@ -29,7 +28,7 @@ class GradWrapper : public GradBase<T> {
   private:
 	DataType data_;
 	mutable DataType grad_;
-	// this class owns *fromOp_
+	// * this class owns *fromOp_
 	mutable GradOpNode<T, DataType>* fromOp_ = nullptr;
 
   public:
@@ -107,7 +106,7 @@ class GradWrapper : public GradBase<T> {
 		return *this;
 	}
 
-	// # essential functions ===============================================================
+	// # user function ===============================================================
 
 	void backward() {
 		TZ_CHECK(fromOp_, "backward() called on a leaf tensor");
@@ -170,7 +169,7 @@ class GradWrapper : public GradBase<T> {
 
 template <class Derived, class DataType, class T>
 std::ostream& operator<<(std::ostream& os, const GradWrapper<Derived, DataType, T>& t) {
-	os << "data: " << t.val();
+	os << t.val();
 	return os;
 }
 
@@ -214,10 +213,10 @@ class GradMatrix : public GradWrapper<GradMatrix<T>, Matrix<T>, T> {
 template <class T>
 class SGD {
 	std::vector<GradBase<T>*> params_;
-	double learnRate_;
+	T learnRate_;
 
   public:
-	SGD(std::vector<GradBase<T>*> params, double lr) : params_(params), learnRate_(lr) {}
+	SGD(std::vector<GradBase<T>*> params, T lr) : params_(params), learnRate_(lr) {}
 
 	void step() {
 		for (GradBase<T>* p : params_) {
@@ -227,17 +226,16 @@ class SGD {
 	}
 };
 
-
 // sochastic gradient descent optimizer with momentum
 template <class T>
 class SGDmomentum {
 	std::vector<GradBase<T>*> params_;
-	double learnRate_;
-	double momentumConstant_;
+	T learnRate_;
+	T momentumConstant_;
 	std::vector<Tensor<T>> momentum_;
 
   public:
-	SGDmomentum(std::vector<GradBase<T>*> params, double lr, double momentumConstant)
+	SGDmomentum(std::vector<GradBase<T>*> params, T lr, T momentumConstant)
 	    : params_(params), learnRate_(lr), momentumConstant_(momentumConstant),
 	      momentum_(params_.size()) {
 		for (uint64_t i = 0; i < params_.size(); i++) {
@@ -256,19 +254,18 @@ class SGDmomentum {
 	}
 };
 
-
 // RMSProp optimizer
 template <class T>
 class RMSProp {
-	constexpr static double EPSILON = 1e-8;
+	constexpr static T EPSILON = 1e-8;
 
 	std::vector<GradBase<T>*> params_;
-	double learnRate_;
-	double decayRate_;
+	T learnRate_;
+	T decayRate_;
 	std::vector<Tensor<T>> movingAverage_;
 
   public:
-	RMSProp(std::vector<GradBase<T>*> params, double lr, double decayRate)
+	RMSProp(std::vector<GradBase<T>*> params, T lr, T decayRate)
 	    : params_(params), learnRate_(lr), decayRate_(decayRate), movingAverage_(params_.size()) {
 		for (uint64_t i = 0; i < params_.size(); i++) {
 			movingAverage_[i] = Tensor<T>(createSame(params_[i]->tensor()));
@@ -287,6 +284,46 @@ class RMSProp {
 	}
 };
 
+// Adam optimizer
+template <class T>
+class Adam {
+	constexpr static T EPSILON = 1e-8;
 
-} // namespace grad
-} // namespace tz
+	std::vector<GradBase<T>*> params_;
+	T learnRate_;
+	T decayRate_;
+	T momentumConstant_;
+	std::vector<Tensor<T>> movingAverage_;
+	std::vector<Tensor<T>> momentum_;
+	uint64_t t_ = 0;
+
+  public:
+	Adam(std::vector<GradBase<T>*> params, T lr, T momentumConstant, T decayRate)
+	    : params_(params), learnRate_(lr), momentumConstant_(momentumConstant),
+	      decayRate_(decayRate), movingAverage_(params_.size()), momentum_(params_.size()) {
+		for (uint64_t i = 0; i < params_.size(); i++) {
+			movingAverage_[i] = Tensor<T>(createSame(params_[i]->tensor()));
+			movingAverage_[i].setAll(0);
+			momentum_[i] = Tensor<T>(createSame(params_[i]->tensor()));
+			momentum_[i].setAll(0);
+		}
+	}
+
+	void step() {
+		t_++;
+		for (uint64_t i = 0; i < params_.size(); i++) {
+			GradBase<T>* p = params_[i];
+			momentum_[i] = momentum_[i] * momentumConstant_ + p->grad() * (1 - momentumConstant_);
+			movingAverage_[i] =
+			    movingAverage_[i] * decayRate_ + p->grad() * p->grad() * (1 - decayRate_);
+
+			Tensor<T> mHat = momentum_[i] / (1 - std::pow(momentumConstant_, t_));
+			Tensor<T> vHat = movingAverage_[i] / (1 - std::pow(decayRate_, t_));
+
+			p->tensor() -= mHat / (vHat.pow(T(0.5)) + EPSILON) * learnRate_;
+			p->zeroGrad();
+		}
+	}
+};
+
+} // namespace tz::grad

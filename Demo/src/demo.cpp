@@ -81,7 +81,7 @@ int main() {
 
 	float lr = 0.1f;
 
-	RMSProp<float> optimizer(std::vector<GradBase<float>*>{&w1, &w2}, lr, 0.9f);
+	Adam<float> optimizer(std::vector<GradBase<float>*>{&w1, &w2}, lr, 0.9f, 0.99f);
 
 	for (int epoch = 0; epoch < 1000; epoch++) {
 		// forward: (4x2) * (2x4) -> (4x4), then matvec (4x4) * (4) -> (4)
