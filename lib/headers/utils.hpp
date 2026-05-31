@@ -326,4 +326,26 @@ struct SoftmaxGrad {
 	}
 };
 
+template <class T>
+struct RrandomUniform {
+	T min_, max_;
+
+	RrandomUniform(const T& mn, const T& mx) : min_(mn), max_(mx) {}
+
+	TZ_HOST_DEVICE void operator()(T& x) const {
+#ifdef __CUDA_ARCH__
+		uint64_t h = reinterpret_cast<uint64_t>(&x);
+		h ^= h >> 35;
+		h *= 2512347u;
+		h ^= h >> 27;
+		h *= 43543563u;
+		h ^= h >> 3;
+		h ^= h << 7;
+		x = (T)(min_ + (max_ - min_) * (double)(h & 0xFFFFFF) / (double)0xFFFFFF);
+#else
+		x = (T)(min_ + (max_ - min_) * ((double)rand() / RAND_MAX));
+#endif
+	}
+};
+
 } // namespace tz::impl

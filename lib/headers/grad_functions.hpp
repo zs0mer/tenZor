@@ -1,11 +1,10 @@
 #pragma once
-#include "grad_tensor.hpp"
+#include "grad_classes.hpp"
 #include "math_classes.hpp"
 #include "tensor.hpp"
 #include "utils.hpp"
 
-namespace tz::grad {
-
+namespace tz::grad::fn {
 
 // # elementary functions =======================================================================
 
@@ -143,13 +142,13 @@ GradType transpose(const GradType& a) {
 template <class T, class GradType>
 GradType sigmoid(GradType& a) {
 	auto out = createSame(a.val());
-	out.apply(a.val(), impl::Sigmoid<T>{}, impl::AnyDevice{});
+	out.apply(a.val(), tz::impl::Sigmoid<T>{}, tz::impl::AnyDevice{});
 	auto saved = out;
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {
 		auto grad = createSame(upstream);
-		grad.apply(upstream, saved, impl::SigmoidGrad<T>{}, impl::AnyDevice{});
+		grad.apply(upstream, saved, tz::impl::SigmoidGrad<T>{}, tz::impl::AnyDevice{});
 		a.propagate(grad);
 	});
 }
@@ -157,12 +156,12 @@ GradType sigmoid(GradType& a) {
 template <class T, class GradType>
 GradType relu(GradType& a) {
 	auto out = createSame(a.val());
-	out.apply(a.val(), impl::Relu<T>{}, impl::AnyDevice{});
+	out.apply(a.val(), tz::impl::Relu<T>{}, tz::impl::AnyDevice{});
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&](const auto& upstream) {
 		auto grad = createSame(upstream);
-		grad.apply(upstream, a.val(), impl::ReluGrad<T>{}, impl::AnyDevice{});
+		grad.apply(upstream, a.val(), tz::impl::ReluGrad<T>{}, tz::impl::AnyDevice{});
 		a.propagate(grad);
 	});
 }
@@ -170,13 +169,13 @@ GradType relu(GradType& a) {
 template <class T, class GradType>
 GradType tanh(GradType& a) {
 	auto out = createSame(a.val());
-	out.apply(a.val(), impl::Tanh<T>{}, impl::AnyDevice{});
+	out.apply(a.val(), tz::impl::Tanh<T>{}, tz::impl::AnyDevice{});
 	auto saved = out.val();
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {
 		auto grad = createSame(upstream);
-		grad.apply(upstream, saved, impl::TanhGrad<T>{}, impl::AnyDevice{});
+		grad.apply(upstream, saved, tz::impl::TanhGrad<T>{}, tz::impl::AnyDevice{});
 		a.propagate(grad);
 	});
 }
@@ -184,16 +183,16 @@ GradType tanh(GradType& a) {
 template <class T, class GradType>
 GradType softmax(GradType& a) {
 	auto out = createSame(a);
-	out.apply(a.val(), impl::Softmax<T>{a.val().exp().sum().get()}, impl::AnyDevice{});
+	out.apply(a.val(), tz::impl::Softmax<T>{a.val().exp().sum().get()}, tz::impl::AnyDevice{});
 	auto saved = out.val();
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {
 		auto grad = createSame(upstream);
-		grad.apply(upstream, saved, impl::SoftmaxGrad<T>{dot(upstream, saved).get()},
-		           impl::AnyDevice{});
+		grad.apply(upstream, saved, tz::impl::SoftmaxGrad<T>{dot(upstream, saved).get()},
+		           tz::impl::AnyDevice{});
 		a.propagate(grad);
 	});
 }
 
-} // namespace tz::grad
+} // namespace tz::grad::fn
