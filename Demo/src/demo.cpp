@@ -1,49 +1,76 @@
 #include "TenZor.hpp"
-#include <vector>
+#include <iostream>
+#include <cmath>
+
 using namespace tz;
 using namespace grad;
 
+static GradVector<float> makeVec(std::initializer_list<float> vals, Device dev) {
+	Vector<float> v(vals.size(), CPU);
+	uint64_t i = 0;
+	for (float f : vals)
+		v.at(i++) = f;
+	return GradVector<float>(v.copyTo(dev));
+}
+
 int main() {
-	// XOR dataset
-	std::vector<GradVector<float>> x(4);
-	x[0] = GradVector<float>(Vector<float>({0.0f, 0.0f}));
-	x[1] = GradVector<float>(Vector<float>({0.0f, 1.0f}));
-	x[2] = GradVector<float>(Vector<float>({1.0f, 0.0f}));
-	x[3] = GradVector<float>(Vector<float>({1.0f, 1.0f}));
+	const Device dev = CPU;
 
-	std::vector<GradVector<float>> target(4);
-	target[0] = GradVector<float>(Vector<float>({0.0f}));
-	target[1] = GradVector<float>(Vector<float>({1.0f}));
-	target[2] = GradVector<float>(Vector<float>({1.0f}));
-	target[3] = GradVector<float>(Vector<float>({0.0f}));
+	GradVector<float> x[4] = {
+	    makeVec({0.f, 0.f}, dev),
+	    makeVec({0.f, 1.f}, dev),
+	    makeVec({1.f, 0.f}, dev),
+	    makeVec({1.f, 1.f}, dev),
+	};
+	GradVector<float> y[4] = {
+	    makeVec({0.f}, dev),
+	    makeVec({1.f}, dev),
+	    makeVec({1.f}, dev),
+	    makeVec({0.f}, dev),
+	};
 
-	Linear<float> L1(2, 8);
-	Linear<float> L2(8, 1);
+	// network: 2 -> 8 -> 1
+	Linear<float> L1(2, 8, dev);
+	Linear<float> L2(8, 1, dev);
 
-	Adam<float> optimizer({}, 0.01f, 0.9f, 0.99f);
-	optimizer.add(L1.parameters());
-	optimizer.add(L2.parameters());
+	SGD<float> opt({}, 0.5f);
+	opt.add(L1.parameters());
+	opt.add(L2.parameters());
 
-	for (int epoch = 0; epoch <= 1000; epoch++) {
-		float total_loss = 0;
+	for (int epoch = 1; epoch <= 5000; epoch++) {
+		float total_loss = 0.f;
 
 		for (int i = 0; i < 4; i++) {
-			GradVector<float> h = L1(x[i]);
-			GradVector<float> h_act = grad::fn::relu<float>(h);
-			GradVector<float> out = L2(h_act);
+			auto z1 = L1(x[i]);
+			auto h = fn::sigmoid<float, GradVector<float>>(z1);
+			auto z2 = L2(h);
+			auto out = fn::sigmoid<float, GradVector<float>>(z2);
+			auto diff = fn::subtract<float, GradVector<float>>(out, y[i]);
+			auto sq = fn::multiply<float, GradVector<float>>(diff, diff);
+			auto loss = fn::sum<float>(sq);
 
-			GradVector<float> diff = grad::fn::subtract<float>(out, target[i]);
-			GradVector<float> sq = grad::fn::multiply<float>(diff, diff);
-			GradScalar<float> loss = grad::fn::sum<float>(sq);
-
+			total_loss += loss.val().copyTo(CPU).get();
 			loss.backward();
-
-			total_loss += loss.val();
 		}
-		optimizer.step(4);
 
-		if (epoch % 100 == 0)
-			std::cout << "epoch " << epoch << " loss: " << total_loss / 4 << std::endl;
+		opt.step();
+
+		if (epoch % 500 == 0)
+			std::cout << "epoch " << epoch << "  loss: " << total_loss / 4.f << "\n";
+	}
+
+	std::cout << "\nResults:\n";
+	for (int i = 0; i < 4; i++) {
+		auto z1 = L1(x[i]);
+		auto h = fn::sigmoid<float, GradVector<float>>(z1);
+		auto z2 = L2(h);
+		auto out = fn::sigmoid<float, GradVector<float>>(z2);
+
+		float pred = out.val().copyTo(CPU).at(0);
+		float expected = y[i].val().copyTo(CPU).at(0);
+
+		std::cout << "pred: " << pred << "  expected: " << expected
+		          << (std::round(pred) == expected ? "  ✓" : "  ✗") << "\n";
 	}
 
 	return 0;

@@ -51,7 +51,7 @@ class SGDmomentum {
   public:
 	SGDmomentum() = default;
 
-	SGDmomentum(std::vector<GradBase<T>*> params, T lr, T momentumConstant)
+	SGDmomentum(std::vector<GradBase<T>*> params, T lr, T momentumConstant = 0.9)
 	    : params_(params), learnRate_(lr), momentumConstant_(momentumConstant),
 	      momentum_(params_.size()) {
 		for (uint64_t i = 0; i < params_.size(); i++) {
@@ -102,7 +102,7 @@ class RMSProp {
   public:
 	RMSProp() = default;
 
-	RMSProp(std::vector<GradBase<T>*> params, T lr, T decayRate)
+	RMSProp(std::vector<GradBase<T>*> params, T lr, T decayRate = 0.9)
 	    : params_(params), learnRate_(lr), decayRate_(decayRate), movingAverage_(params_.size()) {
 		for (uint64_t i = 0; i < params_.size(); i++) {
 			movingAverage_[i] = createSame(params_[i]->tensor());
@@ -156,7 +156,7 @@ class Adam {
   public:
 	Adam() = default;
 
-	Adam(std::vector<GradBase<T>*> params, T lr, T momentumConstant, T decayRate)
+	Adam(std::vector<GradBase<T>*> params, T lr, T momentumConstant = 0.9, T decayRate = 0.999)
 	    : params_(params), learnRate_(lr), momentumConstant_(momentumConstant),
 	      decayRate_(decayRate), movingAverage_(params_.size()), momentum_(params_.size()) {
 		for (uint64_t i = 0; i < params_.size(); i++) {

@@ -80,9 +80,10 @@ GradScalar<T> sum(GradTensor<T>& a) {
 
 template <class T, class GradType>
 GradType exp(const GradType& a) {
+	auto saved = a.val().exp();
 	a.addConsumer();
-	return GradType::fromOp(a.val().exp(),
-	                        [&](const auto& upstream) { a.propagate(upstream * a.val().exp()); });
+	return GradType::fromOp(std::move(saved),
+	                        [&a, saved](const auto& upstream) { a.propagate(upstream * saved); });
 }
 
 template <class T, class GradType>
@@ -95,8 +96,8 @@ GradType log(const GradType& a) {
 template <class T, class GradType>
 GradType pow(const GradType& a, const Scalar<T>& p) {
 	a.addConsumer();
-	return GradType::fromOp(a.val().pow(p), [&](const auto& upstream) {
-		a.propagate(upstream * p * a.val().pow(p - 1));
+	return GradType::fromOp(a.val().pow(p), [&a, p](const auto& upstream) {
+		a.propagate(upstream * p * a.val().pow(p - Scalar<T>(1)));
 	});
 }
 
@@ -170,7 +171,7 @@ template <class T, class GradType>
 GradType tanh(GradType& a) {
 	auto out = createSame(a.val());
 	out.apply(a.val(), tz::impl::Tanh<T>{}, tz::impl::AnyDevice{});
-	auto saved = out.val();
+	auto saved = out;
 
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {

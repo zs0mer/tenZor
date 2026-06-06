@@ -114,14 +114,14 @@ class Buffer {
 
 
 		ptr_ = static_cast<BufferIMPL*>(
-		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), alignof(BufferIMPL)));
 		new (ptr_) BufferIMPL(0, DEFAULT_ALIGNMENT, &defaultAllocator());
 	}
 
 	// standard constructor
 	Buffer(const uint64_t size = 0, Allocator* allocator = &defaultAllocator())
 	    : ptr_(static_cast<BufferIMPL*>( // allocate with the default CPU allocater
-	          defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT))) {
+	          defaultAllocator(CPU).allocate(sizeof(BufferIMPL), alignof(BufferIMPL)))) {
 		new (ptr_) BufferIMPL(size, DEFAULT_ALIGNMENT, allocator);
 	}
 
@@ -181,7 +181,7 @@ class Buffer {
 			return Buffer();
 
 		BufferIMPL* p = static_cast<BufferIMPL*>(
-		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), DEFAULT_ALIGNMENT));
+		    defaultAllocator(CPU).allocate(sizeof(BufferIMPL), alignof(BufferIMPL)));
 		new (p) BufferIMPL(*ptr_);
 		return Buffer(p);
 	}

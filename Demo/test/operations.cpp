@@ -9,19 +9,6 @@ using namespace tz::impl;
 
 // # ============================================================
 
-TEST_CASE("ops_apply1_negate") {
-	TensorIMPL<int> t({4}, CPU);
-	for (int i = 0; i < 4; i++)
-		t.rawData()[i] = i;
-
-	TensorIMPL<int>::apply(t, Negate<int>{});
-
-	CHECK(t.rawData()[0] == 0);
-	CHECK(t.rawData()[1] == -1);
-	CHECK(t.rawData()[2] == -2);
-	CHECK(t.rawData()[3] == -3);
-}
-
 TEST_CASE("ops_apply1_set") {
 	TensorIMPL<float> t({3, 3}, CPU);
 	TensorIMPL<float>::apply(t, Set<float>(7.f));
@@ -31,14 +18,14 @@ TEST_CASE("ops_apply1_set") {
 
 TEST_CASE("ops_apply1_empty") {
 	TensorIMPL<int> t({0, 5}, CPU);
-	CHECK_NOTHROW(TensorIMPL<int>::apply(t, Negate<int>{}));
+	CHECK_NOTHROW(TensorIMPL<int>::apply(t, Set<int>{3}));
 }
 
 TEST_CASE("ops_apply1_scalar") {
 	TensorIMPL<float> s(0, nullptr, CPU);
 	s.get() = 5.f;
-	TensorIMPL<float>::apply(s, Negate<float>{});
-	CHECK(s.get() == doctest::Approx(-5.f));
+	TensorIMPL<float>::apply(s, Set<float>{4});
+	CHECK(s.get() == doctest::Approx(4.f));
 }
 
 TEST_CASE("ops_apply1_nondense") {
@@ -50,10 +37,10 @@ TEST_CASE("ops_apply1_nondense") {
 	TensorIMPL<int> tr(2, sh, st, 0, t.buffer());
 	CHECK(!tr.dense());
 
-	TensorIMPL<int>::apply(tr, Negate<int>{});
+	TensorIMPL<int>::apply(tr, Set<int>{9});
 
 	for (int i = 0; i < 6; i++)
-		CHECK(t.rawData()[i] == -(i + 1));
+		CHECK(t.rawData()[i] == 9);
 }
 
 TEST_CASE("ops_apply1_sums1") {
@@ -94,6 +81,20 @@ TEST_CASE("ops_apply2_copy") {
 
 	for (int i = 0; i < 4; i++)
 		CHECK(b.rawData()[i] == i * 3);
+}
+
+TEST_CASE("ops_apply1_negate") {
+	TensorIMPL<int> a({4}, CPU);
+	TensorIMPL<int> b({4}, CPU);
+	for (int i = 0; i < 4; i++)
+		a.rawData()[i] = i;
+
+	TensorIMPL<int>::apply(a, b, Negate<int>{});
+
+	CHECK(b.rawData()[0] == 0);
+	CHECK(b.rawData()[1] == -1);
+	CHECK(b.rawData()[2] == -2);
+	CHECK(b.rawData()[3] == -3);
 }
 
 TEST_CASE("ops_apply2_add") {

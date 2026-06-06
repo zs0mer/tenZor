@@ -76,10 +76,11 @@ class GradWrapper : public GradBase<T> {
 		grad_.setAll(0);
 	}
 
+	// clones the data
 	GradWrapper& operator=(const DataType& other) {
 		clean();
 
-		data_ = other;
+		data_ = other.clone();
 		grad_ = DataType(createSame(data_));
 		fromOp_ = nullptr;
 
@@ -111,6 +112,11 @@ class GradWrapper : public GradBase<T> {
 		TZ_CHECK(fromOp_, "backward() called on a leaf tensor");
 		grad_.setAll(T(1));
 		fromOp_->backwardFn(grad_);
+	}
+
+	void copyTo(Device device) {
+		data_ = data_.copyTo(device);
+		grad_ = grad_.copyTo(device);
 	}
 
 	// # internal use ======================================================================
@@ -161,8 +167,10 @@ class GradWrapper : public GradBase<T> {
 
   private:
 	void clean() {
-		if (fromOp_)
+		if (fromOp_) {
+			fromOp_->~GradOpNode<T, DataType>();
 			mem::defaultAllocator(CPU).deallocate(fromOp_, sizeof(GradOpNode<T, DataType>));
+		}
 	}
 };
 
