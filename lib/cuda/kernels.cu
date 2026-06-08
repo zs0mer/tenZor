@@ -370,8 +370,6 @@ using namespace tz::impl;
 	INSTANTIATE_BINARY_APPLY(T, Tanh);                                                             \
 	INSTANTIATE_TERNARY_APPLY(T, TanhGrad);                                                        \
 	                                                                                               \
-	INSTANTIATE_BINARY_APPLY(T, Softmax);                                                          \
-	INSTANTIATE_TERNARY_APPLY(T, SoftmaxGrad);                                                     \
 	INSTANTIATE_UNARY_APPLY(T, RrandomUniform);
 
 // # --------------------

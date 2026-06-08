@@ -305,28 +305,6 @@ struct TanhGrad {
 };
 
 template <class T>
-struct Softmax {
-	T sum;
-
-	Softmax(const T& s) : sum(s) {}
-
-	TZ_HOST_DEVICE void operator()(const T& a, T& b) const {
-		b = T(::exp(double(a))) / sum;
-	}
-};
-
-template <class T>
-struct SoftmaxGrad {
-	T dotVal;
-
-	SoftmaxGrad(const T& s) : dotVal(s) {}
-
-	TZ_HOST_DEVICE void operator()(const T& upstream, const T& s, T& out) const {
-		out = s * (upstream - dotVal);
-	}
-};
-
-template <class T>
 struct RrandomUniform {
 	T min_, max_;
 

@@ -98,6 +98,11 @@ class TensorWrapper {
 		return Derived(this->t_.clone());
 	}
 
+	// returns the element at the index
+	T at(std::initializer_list<uint64_t> idx) const {
+		return this->t_.at(idx);
+	}
+
 	Tensor<T> operator[](uint64_t idx) const {
 		return Tensor<T>(this->t_[idx]);
 	}
@@ -274,6 +279,11 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 template <class Derived>
 Derived createSame(const Derived& t) {
 	return Derived(t.dim(), t.shape(), t.device());
+}
+
+template <class From, class To>
+To convertTo(From t) {
+	return To(t.tensor_());
 }
 
 // # Tensor =============================================================

@@ -122,12 +122,12 @@ GradVector<T> matmul(const GradMatrix<T>& a, const GradVector<T>& b) {
 }
 
 template <class T>
-GradVector<T> dot(const GradVector<T>& a, const GradVector<T>& b) {
+GradScalar<T> dot(const GradVector<T>& a, const GradVector<T>& b) {
 	a.addConsumer();
 	b.addConsumer();
-	return GradVector<T>::fromOp(dot(a.val(), b.val()), [&](const auto& upstream) {
-		a.propagate(b.val() * upstream.val());
-		b.propagate(a.val() * upstream.val());
+	return GradScalar<T>::fromOp(dot(a.val(), b.val()), [&](const auto& upstream) {
+		a.propagate(b.val() * upstream);
+		b.propagate(a.val() * upstream);
 	});
 }
 
@@ -183,17 +183,60 @@ GradType tanh(GradType& a) {
 
 template <class T, class GradType>
 GradType softmax(GradType& a) {
-	auto out = createSame(a);
-	out.apply(a.val(), tz::impl::Softmax<T>{a.val().exp().sum().get()}, tz::impl::AnyDevice{});
-	auto saved = out.val();
+	auto e = a.val().exp();
+	auto out = e / e.sum();
 
+	auto saved = out;
 	a.addConsumer();
 	return GradType::fromOp(std::move(out), [&a, saved](const auto& upstream) {
-		auto grad = createSame(upstream);
-		grad.apply(upstream, saved, tz::impl::SoftmaxGrad<T>{dot(upstream, saved).get()},
-		           tz::impl::AnyDevice{});
+		auto grad = saved * (upstream - dot(upstream, saved));
 		a.propagate(grad);
 	});
 }
+
+
+#define TZ_DELETE_RVALUE(func)                                                                     \
+	template <class T>                                                                             \
+	GradScalar<T> func(GradScalar<T>&&) = delete;                                                  \
+	template <class T>                                                                             \
+	GradVector<T> func(GradVector<T>&&) = delete;                                                  \
+	template <class T>                                                                             \
+	GradMatrix<T> func(GradMatrix<T>&&) = delete;
+
+TZ_DELETE_RVALUE(log)
+TZ_DELETE_RVALUE(exp)
+TZ_DELETE_RVALUE(negate)
+TZ_DELETE_RVALUE(sigmoid)
+TZ_DELETE_RVALUE(relu)
+TZ_DELETE_RVALUE(tanh)
+TZ_DELETE_RVALUE(softmax)
+
+#define TZ_DELETE_RVALUE_BINARY(func)                                                              \
+	template <class T>                                                                             \
+	GradScalar<T> func(GradScalar<T>&&, GradScalar<T>&&) = delete;                                 \
+	template <class T>                                                                             \
+	GradVector<T> func(GradVector<T>&&, GradVector<T>&&) = delete;                                 \
+	template <class T>                                                                             \
+	GradMatrix<T> func(GradMatrix<T>&&, GradMatrix<T>&&) = delete;                                 \
+	template <class T>                                                                             \
+                                                                                                   \
+	GradScalar<T> func(const GradScalar<T>&, GradScalar<T>&&) = delete;                            \
+	template <class T>                                                                             \
+	GradVector<T> func(const GradVector<T>&, GradVector<T>&&) = delete;                            \
+	template <class T>                                                                             \
+	GradMatrix<T> func(const GradMatrix<T>&, GradMatrix<T>&&) = delete;                            \
+                                                                                                   \
+	template <class T>                                                                             \
+	GradScalar<T> func(GradScalar<T>&&, const GradScalar<T>&) = delete;                            \
+	template <class T>                                                                             \
+	GradVector<T> func(GradVector<T>&&, const GradVector<T>&) = delete;                            \
+	template <class T>                                                                             \
+	GradMatrix<T> func(GradMatrix<T>&&, const GradMatrix<T>&) = delete;
+
+
+TZ_DELETE_RVALUE_BINARY(add)
+TZ_DELETE_RVALUE_BINARY(subtract)
+TZ_DELETE_RVALUE_BINARY(multiply)
+TZ_DELETE_RVALUE_BINARY(divide)
 
 } // namespace tz::grad::fn
