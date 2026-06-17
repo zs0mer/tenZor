@@ -6,15 +6,14 @@ using namespace tz;
 using namespace grad;
 
 static GradVector<float> makeVec(std::initializer_list<float> vals, Device dev) {
-	Vector<float> v(vals.size(), CPU);
+	Vector<float> v(vals.size(), CPU); // create on CPU to fill with at()
 	uint64_t i = 0;
 	for (float f : vals)
 		v.at(i++) = f;
 	return GradVector<float>(v.copyTo(dev));
 }
-
 int main() {
-	const Device dev = CPU;
+	const Device dev = GPU;
 
 	GradVector<float> x[4] = {
 	    makeVec({0.f, 0.f}, dev),
@@ -29,13 +28,15 @@ int main() {
 	    makeVec({0.f}, dev),
 	};
 
-	// network: 2 -> 8 -> 1
+	// network: 2 -> 1024 -> 1024 -> 1
 	Linear<float> L1(2, 8, dev);
-	Linear<float> L2(8, 1, dev);
+	Linear<float> L2(8, 8, dev);
+	Linear<float> L3(8, 1, dev);
 
 	SGD<float> opt({}, 0.5f);
 	opt.add(L1.parameters());
 	opt.add(L2.parameters());
+	opt.add(L3.parameters());
 
 	for (int epoch = 1; epoch <= 5000; epoch++) {
 		float total_loss = 0.f;
@@ -44,7 +45,9 @@ int main() {
 			auto z1 = L1(x[i]);
 			auto h = fn::sigmoid<float, GradVector<float>>(z1);
 			auto z2 = L2(h);
-			auto out = fn::sigmoid<float, GradVector<float>>(z2);
+			auto h2 = fn::sigmoid<float, GradVector<float>>(z2);
+			auto z3 = L3(h2);
+			auto out = fn::sigmoid<float, GradVector<float>>(z3);
 			auto diff = fn::subtract<float, GradVector<float>>(out, y[i]);
 			auto sq = fn::multiply<float, GradVector<float>>(diff, diff);
 			auto loss = fn::sum<float>(sq);
@@ -53,7 +56,7 @@ int main() {
 			loss.backward();
 		}
 
-		opt.step();
+		opt.step(4);
 
 		if (epoch % 500 == 0)
 			std::cout << "epoch " << epoch << "  loss: " << total_loss / 4.f << "\n";

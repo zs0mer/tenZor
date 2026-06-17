@@ -43,11 +43,10 @@
           perf
           valgrind
           clang-tools
+          neocmakelsp
 
           old.cudaPackages.cuda_nvcc
           old.cudaPackages.cudatoolkit
-
-          neocmakelsp
         ];
 
         shellHook = "";

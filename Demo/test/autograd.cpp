@@ -240,7 +240,7 @@ TEST_CASE("chain_linear2") {
 
 // # ================================================================================
 
-TEST_CASE("grad_xor") {
+TEST_CASE("grad_xor_gpu") {
 	Vector<float> vx[4], vy[4];
 	float xi[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
 	float yi[4] = {0, 1, 1, 0};
@@ -255,12 +255,12 @@ TEST_CASE("grad_xor") {
 
 	GradVector<float> x[4], y[4];
 	for (uint64_t i = 0; i < 4; i++) {
-		x[i] = vx[i];
-		y[i] = vy[i];
+		x[i] = vx[i].copyTo(GPU);
+		y[i] = vy[i].copyTo(GPU);
 	}
 
-	Linear<float> L1(2, 8);
-	Linear<float> L2(8, 1);
+	Linear<float> L1(2, 8, GPU);
+	Linear<float> L2(8, 1, GPU);
 
 	auto train = [&](auto& opt) {
 		for (uint64_t epoch = 0; epoch < 2000; epoch++) {
@@ -284,7 +284,8 @@ TEST_CASE("grad_xor") {
 			auto h = sigmoid<float>(z1);
 			auto z2 = L2(h);
 			auto out = sigmoid<float>(z2);
-			CHECK((out.val().at(0)) == doctest::Approx(yi[i]).epsilon(0.2));
+			auto cpu = out.val().copyTo(CPU);
+			CHECK(cpu.at(0) == doctest::Approx(yi[i]).epsilon(0.2));
 		}
 	};
 
