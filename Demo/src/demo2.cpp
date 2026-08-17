@@ -54,9 +54,9 @@ int main() {
 
 			total_loss += loss.val().copyTo(CPU).get();
 			loss.backward();
-
 			opt.step();
 		}
+
 
 		std::cout << "epoch " << epoch << "  loss: " << total_loss / 4.f << "\n";
 	}

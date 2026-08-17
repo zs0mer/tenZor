@@ -29,11 +29,8 @@ class SGD {
 			params_.push_back(p);
 	}
 
-	void step(uint64_t batchSize = 1) {
+	void step() {
 		for (GradBase<T>* p : params_) {
-			if (batchSize != 1)
-				p->grad() /= batchSize;
-
 			p->tensor() -= p->grad() * learnRate_;
 			p->zeroGrad();
 		}

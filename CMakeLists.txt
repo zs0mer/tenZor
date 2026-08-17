@@ -62,6 +62,17 @@ else()
   target_compile_definitions(demo PRIVATE TZ_CUDA_AVAILABLE=0)
 endif()
 
+add_executable(demo2 "${SRC_DIR}/demo2.cpp")
+target_include_directories(demo2 PRIVATE ${INCLUDE_DIR})
+target_link_libraries(demo2 PRIVATE OpenMP::OpenMP_CXX)
+
+if(USE_CUDA)
+  target_compile_definitions(demo2 PRIVATE TZ_CUDA_AVAILABLE=1)
+  target_link_libraries(demo2 PRIVATE tenzor_cuda)
+else()
+  target_compile_definitions(demo2 PRIVATE TZ_CUDA_AVAILABLE=0)
+endif()
+
 # # Testing - only with GPU =====================================================================
 if(USE_CUDA AND TESTS)
   add_executable(Tallocator     "${TEST_DIR}/allocator.cpp")

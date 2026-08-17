@@ -66,6 +66,8 @@ class Allocator {
 // uses headers
 class LargeAllocator {
   private:
+	const static uint16_t HEADERSIZE = 64;
+
 	struct LargeBlock {
 		uint64_t size = 0;
 		LargeBlock* next = nullptr;
@@ -75,7 +77,7 @@ class LargeAllocator {
 	LargeBlock* blocks_ = nullptr;
 
   public:
-	void* alloc(const uint64_t bytes, const uint16_t alignment) {
+	void* alloc(uint64_t bytes, const uint16_t alignment) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
@@ -87,23 +89,28 @@ class LargeAllocator {
 				else
 					blocks_ = ptr->next;
 
-				return ptr;
+				return reinterpret_cast<uint8_t*>(ptr) + HEADERSIZE;
 			}
 			last = ptr;
 			ptr = ptr->next;
 		}
 
-		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+		uint64_t totalBytes = bytes + HEADERSIZE;
 
-		return std::aligned_alloc(DEFAULT_ALIGNMENT, size);
+		uint64_t size =
+		    ((totalBytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+
+		LargeBlock* block = static_cast<LargeBlock*>(std::aligned_alloc(DEFAULT_ALIGNMENT, size));
+		TZ_CHECK(block, "out of memory");
+		block->size = size - HEADERSIZE;
+		return reinterpret_cast<uint8_t*>(block) + HEADERSIZE;
 	}
 
 	void dealloc(void* ptr, const uint64_t bytes) {
 		std::lock_guard<std::mutex> lock(mtx_);
-		LargeBlock* currBlock = reinterpret_cast<LargeBlock*>(ptr);
-		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+		LargeBlock* currBlock =
+		    reinterpret_cast<LargeBlock*>(reinterpret_cast<uint8_t*>(ptr) - HEADERSIZE);
 
-		currBlock->size = size;
 		currBlock->next = blocks_;
 		blocks_ = currBlock;
 	}
