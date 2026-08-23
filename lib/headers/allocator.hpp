@@ -4,7 +4,6 @@
 #include <mutex>
 #include <cstdlib>
 #include <vector>
-#include <atomic>
 
 #include "kernel_functions.hpp"
 #include "utils.hpp"
@@ -66,6 +65,8 @@ class Allocator {
 // uses headers
 class LargeAllocator {
   private:
+	const static uint16_t HEADERSIZE = 64;
+
 	struct LargeBlock {
 		uint64_t size = 0;
 		LargeBlock* next = nullptr;
@@ -75,7 +76,7 @@ class LargeAllocator {
 	LargeBlock* blocks_ = nullptr;
 
   public:
-	void* alloc(const uint64_t bytes, const uint16_t alignment) {
+	void* alloc(uint64_t bytes, const uint16_t alignment) {
 		std::lock_guard<std::mutex> lock(mtx_);
 		LargeBlock* ptr = blocks_;
 		LargeBlock* last = nullptr;
@@ -87,23 +88,28 @@ class LargeAllocator {
 				else
 					blocks_ = ptr->next;
 
-				return ptr;
+				return reinterpret_cast<uint8_t*>(ptr) + HEADERSIZE;
 			}
 			last = ptr;
 			ptr = ptr->next;
 		}
 
-		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+		uint64_t totalBytes = bytes + HEADERSIZE;
 
-		return std::aligned_alloc(DEFAULT_ALIGNMENT, size);
+		uint64_t size =
+		    ((totalBytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+
+		LargeBlock* block = static_cast<LargeBlock*>(std::aligned_alloc(DEFAULT_ALIGNMENT, size));
+		TZ_CHECK(block, "out of memory");
+		block->size = size - HEADERSIZE;
+		return reinterpret_cast<uint8_t*>(block) + HEADERSIZE;
 	}
 
 	void dealloc(void* ptr, const uint64_t bytes) {
 		std::lock_guard<std::mutex> lock(mtx_);
-		LargeBlock* currBlock = reinterpret_cast<LargeBlock*>(ptr);
-		uint64_t size = ((bytes + DEFAULT_ALIGNMENT - 1) / DEFAULT_ALIGNMENT) * DEFAULT_ALIGNMENT;
+		LargeBlock* currBlock =
+		    reinterpret_cast<LargeBlock*>(reinterpret_cast<uint8_t*>(ptr) - HEADERSIZE);
 
-		currBlock->size = size;
 		currBlock->next = blocks_;
 		blocks_ = currBlock;
 	}
@@ -132,7 +138,7 @@ class MediumAllocator {
   private:
 	struct MediumSlab {
 		uint8_t* freeMem = nullptr;
-		std::atomic<uint32_t> allocatedBlocks{0};
+		uint32_t allocatedBlocks{0};
 		uint64_t idxInBin = 0;
 	};
 
@@ -163,7 +169,7 @@ class MediumAllocator {
 
 				slab->freeMem = reinterpret_cast<uint8_t*>(alignedAddr + bytes);
 				void* ptr = reinterpret_cast<void*>(alignedAddr);
-				slab->allocatedBlocks.fetch_add(1, std::memory_order_relaxed);
+				slab->allocatedBlocks++;
 				return ptr;
 			}
 			activeSlabIdx_++;
@@ -176,7 +182,7 @@ class MediumAllocator {
 		MediumSlab* slab =
 		    reinterpret_cast<MediumSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
-		if (slab->allocatedBlocks.fetch_sub(1, std::memory_order_acq_rel) != 1)
+		if (--slab->allocatedBlocks != 0)
 			return;
 
 		slab->freeMem = reinterpret_cast<uint8_t*>(slab) + SLABHEADERSIZE;
@@ -209,7 +215,7 @@ class MediumAllocator {
 
 	~MediumAllocator() {
 		for (auto* i : bin_) {
-			if (i->allocatedBlocks.load(std::memory_order_relaxed) == 0)
+			if (i->allocatedBlocks == 0)
 				free(i);
 		}
 	}
@@ -227,12 +233,12 @@ class MediumAllocator {
 	void fillSlabs(const uint16_t slabNum) {
 		bin_.reserve(bin_.size() + slabNum);
 		for (uint32_t i = 0; i < slabNum; i++) {
-			MediumSlab* mem = static_cast<MediumSlab*>(std::aligned_alloc(SLABSIZE, SLABSIZE));
-			TZ_CHECK_(mem);
+			void* raw = std::aligned_alloc(SLABSIZE, SLABSIZE);
 
-			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
-			mem->allocatedBlocks.store(0, std::memory_order_relaxed);
+			TZ_CHECK_(raw);
+			MediumSlab* mem = new (raw) MediumSlab();
 			mem->idxInBin = bin_.size();
+			mem->freeMem = reinterpret_cast<uint8_t*>(mem) + SLABHEADERSIZE;
 
 			bin_.push_back(mem);
 		}
@@ -252,34 +258,12 @@ class SmallAllocator {
 		FreeBlock* next = nullptr;
 	};
 
-	// * Treiber stack
-	struct BlockStack {
-		std::atomic<FreeBlock*> head{nullptr};
-
-		void push(FreeBlock* block) {
-			block->next = head.load(std::memory_order_relaxed);
-			while (!head.compare_exchange_weak(block->next, block, std::memory_order_release,
-			                                   std::memory_order_relaxed)) {
-				block->next = head.load(std::memory_order_relaxed);
-			}
-		}
-
-		FreeBlock* pop() {
-			FreeBlock* block = head.load(std::memory_order_acquire);
-			while (block &&
-			       !head.compare_exchange_weak(block, block->next, std::memory_order_acquire,
-			                                   std::memory_order_relaxed)) {
-			}
-			return block;
-		}
-	};
-
 	struct SmallSlab {
 		uint16_t blockSizeType = UINT16_MAX;
 		SmallSlab* nextSlab = nullptr;
-		BlockStack nextFreeBlock;
-		std::atomic<uint32_t> allocatedBlocks{0};
-		std::atomic<bool> available{true};
+		FreeBlock* nextFreeBlock;
+		uint32_t allocatedBlocks{0};
+		bool available{true};
 	};
 
 
@@ -314,12 +298,13 @@ class SmallAllocator {
 		while (true) {
 			SmallSlab* slab = bin_[sizeType];
 			if (slab) [[likely]] {
-				TZ_CHECK_(slab->nextFreeBlock.head.load(std::memory_order_relaxed));
+				TZ_CHECK_(slab->nextFreeBlock);
 
-				void* block = slab->nextFreeBlock.pop();
-				slab->allocatedBlocks.fetch_add(1, std::memory_order_relaxed);
-				if (!slab->nextFreeBlock.head.load(std::memory_order_relaxed)) {
-					slab->available.store(false, std::memory_order_release);
+				void* block = slab->nextFreeBlock;
+				slab->allocatedBlocks++;
+				slab->nextFreeBlock = reinterpret_cast<FreeBlock*>(block)->next;
+				if (!slab->nextFreeBlock) {
+					slab->available = false;
 					bin_[sizeType] = slab->nextSlab;
 				}
 
@@ -335,13 +320,13 @@ class SmallAllocator {
 		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
 		FreeBlock* block = reinterpret_cast<FreeBlock*>(ptr);
-		slab->nextFreeBlock.push(block);
+		block->next = slab->nextFreeBlock;
+		slab->nextFreeBlock = block;
 
-		if (slab->allocatedBlocks.fetch_sub(1, std::memory_order_acq_rel) != 1 ||
-		    slab->available.load(std::memory_order_acquire))
+		if (slab->available)
 			return;
 
-		slab->available.store(true, std::memory_order_relaxed);
+		slab->available = true;
 		slab->nextSlab = bin_[slab->blockSizeType];
 		bin_[slab->blockSizeType] = slab;
 	}
@@ -351,10 +336,10 @@ class SmallAllocator {
 			SmallSlab* slab = bin_[t];
 			while (slab) {
 				SmallSlab* next = slab->nextSlab;
-				if (slab->allocatedBlocks.load(std::memory_order_relaxed) == 0)
+				if (slab->allocatedBlocks == 0)
 					midAlloc_.dealloc(slab);
 				else
-					slab->available.store(false, std::memory_order_relaxed);
+					slab->available = false;
 				slab = next;
 			}
 		}
@@ -395,9 +380,8 @@ class SmallAllocator {
 			uint8_t* end = ptr + SLABSIZE - SLABHEADERSIZE;
 
 			while (ptr + blockSize <= end) {
-				reinterpret_cast<FreeBlock*>(ptr)->next =
-				    slab->nextFreeBlock.head.load(std::memory_order_relaxed);
-				slab->nextFreeBlock.push(reinterpret_cast<FreeBlock*>(ptr));
+				reinterpret_cast<FreeBlock*>(ptr)->next = slab->nextFreeBlock;
+				slab->nextFreeBlock = reinterpret_cast<FreeBlock*>(ptr);
 
 				ptr = ptr + blockSize;
 			}

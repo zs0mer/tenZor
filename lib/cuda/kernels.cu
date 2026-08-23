@@ -335,8 +335,8 @@ using namespace tz::impl;
 
 
 #define INSTANTIATE_ALL(T)                                                                         \
-    TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE(T)                                                             \
-	INSTANTIATE_UNARY_APPLY(T, Negate);                                                            \
+    TZ_EXTRA_GPU_FUNCTIONS_INSTANTIATE(T)                                                          \
+	                                                                                               \
 	INSTANTIATE_UNARY_APPLY(T, Set);                                                               \
 	INSTANTIATE_UNARY_APPLY(T, Sum);                                                               \
                                                                                                    \
@@ -345,16 +345,32 @@ using namespace tz::impl;
 	INSTANTIATE_BINARY_APPLY(T, SubtractScalar);                                                   \
 	INSTANTIATE_BINARY_APPLY(T, MultiplyScalar);                                                   \
     INSTANTIATE_BINARY_APPLY(T, DivideScalar);                                                     \
+    INSTANTIATE_BINARY_APPLY(T, Negate);                                                           \
+    INSTANTIATE_BINARY_APPLY(T, Exp);                                                              \
+    INSTANTIATE_BINARY_APPLY(T, Log);                                                              \
+    INSTANTIATE_BINARY_APPLY(T, Pow);                                                              \
                                                                                                    \
 	INSTANTIATE_TERNARY_APPLY(T, Add);                                                             \
 	INSTANTIATE_TERNARY_APPLY(T, Subtract);                                                        \
 	INSTANTIATE_TERNARY_APPLY(T, Multiply);                                                        \
+    INSTANTIATE_TERNARY_APPLY(T, Divide);                                                          \
                                                                                                    \
 	INSTANTIATE_COMPUTE_LINEAR_IDX(T);                                                             \
                                                                                                    \
 	INSTANTIATE_DOT(T);                                                                            \
                                                                                                    \
-	INSTANTIATE_MATMUL(T);
+	INSTANTIATE_MATMUL(T);                                                                         \
+	                                                                                               \
+	INSTANTIATE_BINARY_APPLY(T, Sigmoid);                                                          \
+	INSTANTIATE_TERNARY_APPLY(T, SigmoidGrad);                                                     \
+	                                                                                               \
+	INSTANTIATE_BINARY_APPLY(T, Relu);                                                             \
+	INSTANTIATE_TERNARY_APPLY(T, ReluGrad);                                                        \
+	                                                                                               \
+	INSTANTIATE_BINARY_APPLY(T, Tanh);                                                             \
+	INSTANTIATE_TERNARY_APPLY(T, TanhGrad);                                                        \
+	                                                                                               \
+	INSTANTIATE_UNARY_APPLY(T, RrandomUniform);
 
 // # --------------------
 

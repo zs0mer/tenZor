@@ -55,7 +55,7 @@ class TensorWrapper {
 
 	TensorWrapper& operator=(TensorWrapper&&) = default;
 
-	Tensor<T> toTensor() {
+	Tensor<T> toTensor() const {
 		return Tensor<T>(this->tensor_());
 	}
 
@@ -96,6 +96,11 @@ class TensorWrapper {
 	// clones the object
 	Derived clone() const {
 		return Derived(this->t_.clone());
+	}
+
+	// returns the element at the index
+	T at(std::initializer_list<uint64_t> idx) const {
+		return this->t_.at(idx);
 	}
 
 	Tensor<T> operator[](uint64_t idx) const {
@@ -150,12 +155,17 @@ class TensorWrapper {
 		return out;
 	}
 
-	Derived operator-() const {
-		Derived out = this->clone();
-		impl::TensorIMPL<T>::apply(out.t_, impl::Negate<T>{}, AnyDevice{});
+	Derived operator/(const TensorWrapper& other) const {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, other.t_, out.t_, impl::Divide<T>{}, AnyDevice{});
 		return out;
 	}
 
+	Derived operator-() const {
+		Derived out = impl::TensorIMPL<T>(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::Negate<T>{}, AnyDevice{});
+		return out;
+	}
 
 	Derived operator+(const Scalar<T>& s) const {
 		Derived out(t_.dim(), t_.shape(), device());
@@ -231,6 +241,27 @@ class TensorWrapper {
 		return s;
 	}
 
+	// applies exp (e^) to every element of the tensor
+	Derived exp() {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::Exp<T>{}, AnyDevice{});
+		return out;
+	}
+
+	// applies log (ln) to every element of the tensor
+	Derived log() {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::Log<T>{}, AnyDevice{});
+		return out;
+	}
+
+	// applies pow to every element of the tensor
+	Derived pow(const Scalar<T>& p) const {
+		Derived out(t_.dim(), t_.shape(), device());
+		impl::TensorIMPL<T>::apply(this->t_, out.t_, impl::Pow<T>(p.get()), AnyDevice{});
+		return out;
+	}
+
 	Derived copyTo(Device device) {
 		return Derived(this->t_.copyTo(device));
 	}
@@ -243,7 +274,17 @@ std::ostream& operator<<(std::ostream& os, const TensorWrapper<Derived, T>& t) {
 	return os;
 }
 
-}; // namespace impl
+} // namespace impl
+
+template <class Derived>
+Derived createSame(const Derived& t) {
+	return Derived(t.dim(), t.shape(), t.device());
+}
+
+template <class From, class To>
+To convertTo(From t) {
+	return To(t.tensor_());
+}
 
 // # Tensor =============================================================
 
@@ -273,7 +314,7 @@ class Tensor : public impl::TensorWrapper<Tensor<T>, T> {
 	}
 
 	void broadcastTo(const std::initializer_list<uint64_t>& targetShape) {
-		this->t_ = this->t_.broadcast(targetShape);
+		this->t_ = this->t_.broadcast(targetShape.size(), targetShape.begin());
 	}
 
   private:

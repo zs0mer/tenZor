@@ -31,5 +31,3 @@
 //	                                   SimpleTensor<T>, Func<T>)
 
 // # make sure to include a header
-
-#include "../Demo/src/ExtraFunctions.hpp"

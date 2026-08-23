@@ -29,3 +29,5 @@
 #include "math_classes.hpp"
 #include "operators.hpp"
 #include "tensor_impl.hpp"
+#include "grad_functions.hpp"
+#include "grad_extras.hpp"

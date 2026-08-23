@@ -1,4 +1,5 @@
 #include "tensor.hpp"
+#include "utils.hpp"
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
@@ -166,18 +167,18 @@ TEST_CASE("gpu_tensor_clone") {
 
 // # ============================================================
 
-TEST_CASE("gpu_apply1_negate") {
+TEST_CASE("gpu_apply1_set") {
 	const int N = 8;
 	TensorIMPL<int> cpu_t({N}, CPU);
 	for (int i = 0; i < N; i++)
 		cpu_t.rawData()[i] = i + 1;
 
 	TensorIMPL<int> gpu_t = cpu_t.copyTo(GPU);
-	TensorIMPL<int>::apply(gpu_t, Negate<int>{}, AnyDevice{});
+	TensorIMPL<int>::apply(gpu_t, Set<int>{1}, AnyDevice{});
 
 	TensorIMPL<int> back = gpu_t.copyTo(CPU);
 	for (int i = 0; i < N; i++)
-		CHECK(back.rawData()[i] == -(i + 1));
+		CHECK(back.rawData()[i] == 1);
 }
 
 TEST_CASE("gpu_apply1_set") {
@@ -219,11 +220,11 @@ TEST_CASE("gpu_apply1_nondense") {
 	TensorIMPL<int> gpu_tr(2, sh, st, 0, gpu_base.buffer());
 	CHECK(!gpu_tr.dense());
 
-	TensorIMPL<int>::apply(gpu_tr, Negate<int>{}, AnyDevice{});
+	TensorIMPL<int>::apply(gpu_tr, Set<int>{4}, AnyDevice{});
 
 	TensorIMPL<int> back_base = gpu_base.copyTo(CPU);
 	for (int i = 0; i < 6; i++)
-		CHECK(back_base.rawData()[i] == -(i + 1));
+		CHECK(back_base.rawData()[i] == 4);
 }
 
 // # ============================================================

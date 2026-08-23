@@ -356,8 +356,9 @@ TEST_CASE("tensorIMPL_broadcasted1") {
 TEST_CASE("tensorIMPL_broadcasted2") {
 	TensorIMPL<int> s(0, nullptr, CPU);
 	s.get() = 7;
+	uint64_t shape[] = {3, 4};
 
-	auto b = s.broadcast({3, 4});
+	auto b = s.broadcast(2, shape);
 	CHECK(b.dim() == 2);
 	CHECK(b.shape()[0] == 3);
 	CHECK(b.shape()[1] == 4);
@@ -375,7 +376,9 @@ TEST_CASE("tensorIMPL_broadcast3") {
 	for (int i = 0; i < 4; i++)
 		v.rawData()[i] = i + 1;
 
-	auto b = v.broadcast({3, 4});
+	uint64_t shape[] = {3, 4};
+
+	auto b = v.broadcast(2, shape);
 	CHECK(b.dim() == 2);
 	CHECK(b.strides()[0] == 0);
 	CHECK(b.strides()[1] == 1);
@@ -387,15 +390,18 @@ TEST_CASE("tensorIMPL_broadcast3") {
 }
 
 TEST_CASE("tensorIMPL_broadcast4") {
-	uint64_t shape[] = {3, 1}, strides[] = {1, 1};
+	uint64_t shape1[] = {3, 1}, strides[] = {1, 1};
 	mem::Buffer buf(3 * sizeof(int));
 	int* d = static_cast<int*>(buf->data());
 	d[0] = 10;
 	d[1] = 20;
 	d[2] = 30;
 
-	TensorIMPL<int> col(2, shape, strides, 0, buf);
-	auto b = col.broadcast({3, 4});
+	TensorIMPL<int> col(2, shape1, strides, 0, buf);
+
+	uint64_t shape2[] = {3, 4};
+
+	auto b = col.broadcast(2, shape2);
 
 	CHECK(b.strides()[0] == 1);
 	CHECK(b.strides()[1] == 0);
@@ -409,8 +415,11 @@ TEST_CASE("tensorIMPL_broadcast4") {
 TEST_CASE("tensorIMPL_broadcast_error") {
 	TensorIMPL<int> t({2, 3}, CPU);
 
-	CHECK_THROWS_AS(t.broadcast({3}), std::runtime_error);
-	CHECK_THROWS_AS(t.broadcast({4, 5}), std::runtime_error);
+	uint64_t shape1[] = {3};
+	uint64_t shape2[] = {4, 5};
+
+	CHECK_THROWS_AS(t.broadcast(1, shape1), std::runtime_error);
+	CHECK_THROWS_AS(t.broadcast(2, shape2), std::runtime_error);
 }
 
 // # ============================================================

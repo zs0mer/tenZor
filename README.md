@@ -71,11 +71,11 @@ Include the main header:
 
 ### Basic Types
 
-| Type | Description |
-|---|---|
-| `tz::Scalar<T>` | 0-dimensional tensor (single value) |
-| `tz::Vector<T>` | 1-dimensional tensor |
-| `tz::Matrix<T>` | 2-dimensional tensor |
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| `tz::Scalar<T>` | 0-dimensional tensor (single value)               |
+| `tz::Vector<T>` | 1-dimensional tensor                              |
+| `tz::Matrix<T>` | 2-dimensional tensor                              |
 | `tz::Tensor<T>` | N-dimensional tensor (up to `MAX_DIM`, default 4) |
 
 ### Creating Tensors
@@ -194,18 +194,19 @@ INSTANTIATE_TERNARY_APPLY(T, Func)
 
 The following can be set as compile-time defines (e.g. via `-DTZ_MAX_DIM=8`), or defined before including `TenZor.hpp`:
 
-| Define | Default | Description |
-|---|---|---|
-| `TZ_MAX_DIM` | `4` | Maximum number of tensor dimensions |
-| `TZ_START_MEM_SIZE` | `10 * 1024 * 1024` | Initial pool size for `Salloc` (bytes) |
-| `TZ_DEFAULT_ALIGNMENT` | `64` | Default memory alignment |
-| `TZ_CTD` | `1` | Allow cross-thread deallocation (sequential only — both threads must not run simultaneously) |
-| `TZ_ERRORS` | `1` | Enable runtime error checking (throws `std::runtime_error`) |
-| `TZ_IMMUTABLE_BROADCASTS` | `1` | Disallow `at()` and `apply()` on broadcasted tensors |
-| `TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME` | `1` | Error instead of reshape in `apply()` when shapes differ |
-| `TZ_DEFAULT_ALLOCATOR` | See below | Override the default allocator selection logic |
+| Define                             | Default            | Description                                                                                  |
+| ---------------------------------- | ------------------ | -------------------------------------------------------------------------------------------- |
+| `TZ_MAX_DIM`                       | `4`                | Maximum number of tensor dimensions                                                          |
+| `TZ_START_MEM_SIZE`                | `10 * 1024 * 1024` | Initial pool size for `Salloc` (bytes)                                                       |
+| `TZ_DEFAULT_ALIGNMENT`             | `64`               | Default memory alignment                                                                     |
+| `TZ_CTD`                           | `1`                | Allow cross-thread deallocation (sequential only — both threads must not run simultaneously) |
+| `TZ_ERRORS`                        | `1`                | Enable runtime error checking (throws `std::runtime_error`)                                  |
+| `TZ_IMMUTABLE_BROADCASTS`          | `1`                | Disallow `at()` and `apply()` on broadcasted tensors                                         |
+| `TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME` | `1`                | Error instead of reshape in `apply()` when shapes differ                                     |
+| `TZ_DEFAULT_ALLOCATOR`             | See below          | Override the default allocator selection logic                                               |
 
 Default allocator logic:
+
 ```cpp
 if (device == CPU) return Salloc::instance();
 if (device == GPU) return Galloc::instance();
@@ -214,11 +215,11 @@ return Malloc::instance();
 
 ## Allocators
 
-| Allocator | Device | Description |
-|---|---|---|
-| `tz::mem::Salloc` | CPU | Thread-local slab allocator. Fast for all sizes. Singleton. |
-| `tz::mem::Malloc` | CPU | Thin wrapper around `aligned_alloc` / `free`. Singleton. |
-| `tz::mem::Galloc` | GPU | Wrapper around `cudaMalloc` / `cudaFree`. Singleton. |
+| Allocator         | Device | Description                                                 |
+| ----------------- | ------ | ----------------------------------------------------------- |
+| `tz::mem::Salloc` | CPU    | Thread-local slab allocator. Fast for all sizes. Singleton. |
+| `tz::mem::Malloc` | CPU    | Thin wrapper around `aligned_alloc` / `free`. Singleton.    |
+| `tz::mem::Galloc` | GPU    | Wrapper around `cudaMalloc` / `cudaFree`. Singleton.        |
 
 All implement the `tz::mem::Allocator` interface and can be passed anywhere an allocator is expected.
 
