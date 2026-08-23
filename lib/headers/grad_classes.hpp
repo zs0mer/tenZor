@@ -110,8 +110,13 @@ class GradWrapper : public GradBase<T> {
 
 	void backward() {
 		TZ_CHECK(fromOp_, "backward() called on a leaf tensor");
+		TZ_CHECK(fromOp_->backwardFn != nullptr, "backward() called on an already consumed graph");
+
+		auto fn = std::move(fromOp_->backwardFn);
+		fromOp_->backwardFn = nullptr; // consume the node
+
 		grad_.setAll(T(1));
-		fromOp_->backwardFn(grad_);
+		fn(grad_);
 	}
 
 	void copyTo(Device device) {
@@ -155,9 +160,16 @@ class GradWrapper : public GradBase<T> {
 		if (!fromOp_)
 			return;
 
+		TZ_CHECK(fromOp_->inEdges > 0, "gradient graph was already consumed");
 		fromOp_->inEdges--;
-		if (fromOp_->inEdges == 0)
-			fromOp_->backwardFn(grad_);
+
+		if (fromOp_->inEdges == 0) {
+			TZ_CHECK(fromOp_->backwardFn != nullptr, "gradient graph was already consumed");
+			auto fn = std::move(fromOp_->backwardFn);
+			fromOp_->backwardFn = nullptr;
+
+			fn(grad_);
+		}
 	}
 
 	void addConsumer() const {

@@ -194,6 +194,7 @@ GradType softmax(GradType& a) {
 	});
 }
 
+// # delete some rvalues =====================================================================
 
 #define TZ_DELETE_RVALUE(func)                                                                     \
 	template <class T>                                                                             \
@@ -238,5 +239,28 @@ TZ_DELETE_RVALUE_BINARY(add)
 TZ_DELETE_RVALUE_BINARY(subtract)
 TZ_DELETE_RVALUE_BINARY(multiply)
 TZ_DELETE_RVALUE_BINARY(divide)
+TZ_DELETE_RVALUE_BINARY(pow)
+
+
+template <class T>
+GradMatrix<T> matmul(GradMatrix<T>&&, GradMatrix<T>&&) = delete;
+template <class T>
+GradMatrix<T> matmul(const GradMatrix<T>&, GradMatrix<T>&&) = delete;
+template <class T>
+GradMatrix<T> matmul(GradMatrix<T>&&, const GradMatrix<T>&) = delete;
+
+template <class T>
+GradVector<T> matmul(GradMatrix<T>&&, GradVector<T>&&) = delete;
+template <class T>
+GradVector<T> matmul(const GradMatrix<T>&&, GradVector<T>&&) = delete;
+template <class T>
+GradVector<T> matmul(GradMatrix<T>&&, const GradVector<T>&) = delete;
+
+template <class T>
+GradScalar<T> dot(GradVector<T>&&, GradVector<T>&&) = delete;
+template <class T>
+GradScalar<T> dot(const GradVector<T>&, GradVector<T>&&) = delete;
+template <class T>
+GradScalar<T> dot(GradVector<T>&&, const GradVector<T>&) = delete;
 
 } // namespace tz::grad::fn
