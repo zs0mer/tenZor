@@ -329,11 +329,18 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 #pragma omp parallel for
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
-			out.at(i, j) = 0;
+			const uint64_t* strides = out.tensor_().strides();
+			out.tensor_().data()[i * strides[0] + j * strides[1]] = 0;
 		}
 		for (uint64_t k = 0; k < a.cols(); k++) {
 			for (uint64_t j = 0; j < b.cols(); j++) {
-				out.at(i, j) += a.at(i, k) * b.at(k, j);
+				const uint64_t* stridesOut = out.tensor_().strides();
+				const uint64_t* stridesA = a.tensor_().strides();
+				const uint64_t* stridesB = b.tensor_().strides();
+
+				out.tensor_().data()[i * stridesOut[0] + j * stridesOut[1]] +=
+				    a.tensor_().data()[i * stridesA[0] + k * stridesA[1]] *
+				    b.tensor_().data()[k * stridesB[0] + j * stridesB[1]];
 			}
 		}
 	}
