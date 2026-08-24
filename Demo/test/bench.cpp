@@ -30,20 +30,14 @@ static double timeIt(F&& f) {
 }
 
 static void report(const std::string name, double secs, double iters, double flops = 0) {
-	double per = secs / iters;
+	double ns = secs / iters * 1e9;
 
-	std::cout << std::left << std::setw(40) << name << std::right << std::fixed
-	          << std::setprecision(1);
+	std::cout << name << "[" << std::fixed << std::setprecision(2);
 
-	if (per < 1e-6)
-		std::cout << std::setw(9) << per * 1e9 << " ns/op";
-	else if (per < 1e-3)
-		std::cout << std::setw(9) << per * 1e6 << " us/op";
-	else
-		std::cout << std::setw(9) << per * 1e3 << " ms/op";
+	std::cout << ns << "] ns/op";
 
 	if (flops > 0)
-		std::cout << "   " << std::setw(7) << flops * iters / secs / 1e9 << " GFLOP/s";
+		std::cout << " - [" << flops * iters / secs / 1e9 << "] GFLOP/s";
 
 	std::cout << "\n";
 }
@@ -83,8 +77,8 @@ static void benchAllocator(const char* name, Allocator& a, uint64_t minSize, uin
 }
 
 TEST_CASE("alloc_small") {
-	benchAllocator("small  Salloc (1B-4KB)", Salloc::instance(), 1, 4096, 256, 2000);
-	benchAllocator("small  Malloc (1B-4KB)", Malloc::instance(), 1, 4096, 256, 2000);
+	benchAllocator("small Salloc (1B-4KB)", Salloc::instance(), 1, 4096, 256, 2000);
+	benchAllocator("small Malloc (1B-4KB)", Malloc::instance(), 1, 4096, 256, 2000);
 }
 
 TEST_CASE("alloc_medium") {
@@ -93,8 +87,8 @@ TEST_CASE("alloc_medium") {
 }
 
 TEST_CASE("alloc_large") {
-	benchAllocator("large  Salloc (2MB-16MB)", Salloc::instance(), 2 << 20, 16 << 20, 8, 100);
-	benchAllocator("large  Malloc (2MB-16MB)", Malloc::instance(), 2 << 20, 16 << 20, 8, 100);
+	benchAllocator("large Salloc (2MB-16MB)", Salloc::instance(), 2 << 20, 16 << 20, 8, 100);
+	benchAllocator("large Malloc (2MB-16MB)", Malloc::instance(), 2 << 20, 16 << 20, 8, 100);
 }
 
 TEST_CASE("tensor_churn") {
@@ -124,7 +118,7 @@ TEST_CASE("elementwise_cpu") {
 		doNotOptimize(a.at(0));
 	});
 
-	report("CPU  a += b (~16M floats, 64MB)", secs, 20);
+	report("CPU a += b (~16M floats, 64MB)", secs, 20);
 }
 
 
@@ -140,7 +134,7 @@ TEST_CASE("elementwise_gpu") {
 		auto r = a.copyTo(CPU);
 		doNotOptimize(r.at(0));
 	});
-	report("GPU  a += b (~16M floats, 64MB)", secs, 100);
+	report("GPU a += b (~16M floats, 64MB)", secs, 100);
 }
 
 
@@ -159,7 +153,7 @@ static void benchMatmulCPU(uint64_t n, int iters) {
 		}
 	});
 
-	report("CPU  matmul " + std::to_string(n) + "x" + std::to_string(n), secs, iters,
+	report("CPU matmul " + std::to_string(n) + "x" + std::to_string(n), secs, iters,
 	       2.0 * n * n * n);
 }
 
@@ -179,7 +173,7 @@ static void benchMatmulGPU(uint64_t n, int iters) {
 		doNotOptimize(r.at(0, 0));
 	});
 
-	report("GPU  matmul " + std::to_string(n) + "x" + std::to_string(n), secs, iters,
+	report("GPU matmul " + std::to_string(n) + "x" + std::to_string(n), secs, iters,
 	       2.0 * n * n * n);
 }
 

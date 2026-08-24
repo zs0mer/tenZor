@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # # Build type flags
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=x86-64-v3 -ffast-math -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=x86-64-v3 -ffast-math")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3 -fno-inline -fno-omit-frame-pointer")
 
 # # nvcc standard
