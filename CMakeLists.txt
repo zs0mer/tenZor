@@ -83,7 +83,9 @@ if(USE_CUDA AND TESTS)
   add_executable(Tgpu_function  "${TEST_DIR}/gpu_function.cpp")
   add_executable(Tautograd      "${TEST_DIR}/autograd.cpp")
 
-  foreach(T Tallocator Tbuffer Ttensor Tother_classes Toperations Tgpu_function Tautograd)
+  add_executable(bench "${TEST_DIR}/bench.cpp")
+
+  foreach(T Tallocator Tbuffer Ttensor Tother_classes Toperations Tgpu_function Tautograd bench)
     target_include_directories(${T} PRIVATE ${INCLUDE_DIR})
     target_compile_definitions(${T} PRIVATE TZ_CUDA_AVAILABLE=1)
     target_link_libraries(${T} PRIVATE doctest::doctest tenzor_cuda OpenMP::OpenMP_CXX)

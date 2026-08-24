@@ -1,0 +1,22 @@
+[doctest] doctest version is "2.4.12"
+[doctest] run with "--help" for options
+small  Salloc (1B-4KB)                       32.0 ns/op
+small  Malloc (1B-4KB)                       80.9 ns/op
+medium Salloc (8KB-512KB)                    21.8 ns/op
+medium Malloc (8KB-512KB)                     2.0 us/op
+large  Salloc (2MB-16MB)                     55.4 ns/op
+large  Malloc (2MB-16MB)                      4.5 us/op
+Vector<float>(256) create+destroy            90.3 ns/op
+CPU  a += b (~16M floats, 64MB)               9.5 ms/op
+GPU  a += b (~16M floats, 64MB)               1.4 ms/op
+CPU  matmul 256x256                          54.7 ms/op       0.6 GFLOP/s
+CPU  matmul 512x512                         433.4 ms/op       0.6 GFLOP/s
+GPU  matmul 256x256                          20.9 us/op    1604.1 GFLOP/s
+GPU  matmul 512x512                         185.7 us/op    1445.2 GFLOP/s
+GPU  matmul 1024x1024                       709.9 us/op    3025.1 GFLOP/s
+SGD train step CPU (2-8-8-1 nn)              85.3 us/op
+SGD train step GPU (2-8-8-1 nn)             757.4 us/op
+===============================================================================
+[doctest] test cases: 8 | 8 passed | 0 failed | 0 skipped
+[doctest] assertions: 0 | 0 passed | 0 failed |
+[doctest] Status: SUCCESS!

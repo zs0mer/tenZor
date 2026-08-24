@@ -341,6 +341,26 @@ TEST_CASE("alloc_large_multy2") {
 	}
 }
 
+
+TEST_CASE("alloc_large_same_ptr") {
+	Salloc& s = Salloc::instance();
+	const uint64_t big = 10 * 1024 * 1024;
+
+	void* p1 = s.allocate(big, DEFAULT_ALIGNMENT);
+	static_cast<uint8_t*>(p1)[big - 1] = 255;
+	s.deallocate(p1, big);
+
+	// reuse for a smaller request must not shrink the block's capacity
+	void* p2 = s.allocate(2 * 1024 * 1024, DEFAULT_ALIGNMENT);
+	CHECK(p2 == p1);
+	s.deallocate(p2, 2 * 1024 * 1024);
+
+	// with the old re-tagging bug, this missed the cached 10MB block
+	void* p3 = s.allocate(9 * 1024 * 1024, DEFAULT_ALIGNMENT);
+	CHECK(p3 == p1);
+	s.deallocate(p3, 9 * 1024 * 1024);
+}
+
 //& ============================================================
 
 TEST_CASE("alloc_zero") {

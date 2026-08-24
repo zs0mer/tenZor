@@ -22,7 +22,6 @@ class BufferIMPL {
 	BufferIMPL() = delete;
 
 	// standard constructor
-	// you can only construct with this constructor
 	BufferIMPL(const uint64_t size, const uint8_t alignment = DEFAULT_ALIGNMENT,
 	           Allocator* allocator = &defaultAllocator())
 	    : size_(size), alignment_(alignment), allocator_(allocator),
