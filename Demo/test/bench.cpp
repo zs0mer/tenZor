@@ -1,3 +1,4 @@
+#include <cstdint>
 #define DOCTEST_CONFIG_COLORS
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
@@ -182,9 +183,9 @@ TEST_CASE("matmul") {
 	benchMatmulCPU(256, 20);
 	benchMatmulCPU(512, 20);
 
-	benchMatmulGPU(256, 50);
-	benchMatmulGPU(512, 50);
-	benchMatmulGPU(1024, 20);
+	benchMatmulGPU(256, 500);
+	benchMatmulGPU(512, 500);
+	benchMatmulGPU(1024, 200);
 }
 
 // # training step ================================================================
@@ -197,11 +198,12 @@ static GradVector<float> makeVec(std::initializer_list<float> vals, Device dev) 
 	return GradVector<float>(v.copyTo(dev));
 }
 
-static void benchTrainStep(const char* name, Device dev, int steps) {
+static void benchTrainStep(const char* name, Device dev, int steps, uint64_t layer1 = 8,
+                           uint64_t layer2 = 8) {
 	GradVector<float> x = makeVec({1.f, 0.f}, dev);
 	GradVector<float> y = makeVec({1.f}, dev);
 
-	Linear<float> L1(2, 8, dev), L2(8, 8, dev), L3(8, 1, dev);
+	Linear<float> L1(2, layer1, dev), L2(layer1, layer2, dev), L3(layer2, 1, dev);
 	SGD<float> opt({}, 0.5f);
 	opt.add(L1.parameters());
 	opt.add(L2.parameters());
@@ -230,7 +232,11 @@ static void benchTrainStep(const char* name, Device dev, int steps) {
 }
 
 TEST_CASE("train_step") {
-	benchTrainStep("SGD train step CPU (2-8-8-1 nn)", CPU, 500);
+	benchTrainStep("SGD train step CPU (2-8-8-1 nn)", CPU, 500, 8, 8);
 
-	benchTrainStep("SGD train step GPU (2-8-8-1 nn)", GPU, 500);
+	benchTrainStep("SGD train step GPU (2-8-8-1 nn)", GPU, 500, 8, 8);
+
+	benchTrainStep("SGD train step CPU (2-1000-1000-1 nn)", CPU, 200, 1000, 1000);
+
+	benchTrainStep("SGD train step GPU (2-1000-1000-1 nn)", GPU, 500, 1000, 1000);
 }

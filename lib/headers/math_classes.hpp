@@ -568,7 +568,13 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// initializer with a Vector
-	Matrix(const Vector<T>& t) : Base(t.transpose().transpose().tensor_()) {}
+	Matrix(const Vector<T>& t) {
+		std::array<uint64_t, 2> shape = {t.tensor_().shape()[0], 1};
+		std::array<uint64_t, 2> strides = {t.tensor_().strides()[0], 1};
+
+		this->t_ = tz::impl::TensorIMPL<T>(2, shape.data(), strides.data(), t.tensor_().offset(),
+		                                   t.tensor_().buffer());
+	}
 
 	Matrix(const uint8_t dim, const uint64_t* shape, Device device = CPU)
 	    : Base(dim, shape, device) {
