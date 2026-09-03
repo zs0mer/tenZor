@@ -319,9 +319,12 @@ class SmallAllocator {
 		SmallSlab* slab =
 		    reinterpret_cast<SmallSlab*>(reinterpret_cast<uintptr_t>(ptr) & (~(SLABSIZE - 1)));
 
+		TZ_CHECK_(slab->allocatedBlocks > 0);
+
 		FreeBlock* block = reinterpret_cast<FreeBlock*>(ptr);
 		block->next = slab->nextFreeBlock;
 		slab->nextFreeBlock = block;
+		slab->allocatedBlocks--;
 
 		if (slab->available)
 			return;

@@ -542,7 +542,7 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	Matrix(const std::initializer_list<std::initializer_list<T>>& t)
 	    : Base({t.size(), t.size() == 0 ? 0 : t.begin()[0].size()}, CPU) {
 		for (uint64_t i = 0; i < t.size(); i++)
-			for (uint64_t j = 0; j < t.begin()[i].size(); j++)
+			for (uint64_t j = 0; j < t.begin()[0].size(); j++)
 				this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]] =
 				    t.begin()[i].begin()[j];
 	}

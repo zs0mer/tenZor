@@ -80,7 +80,7 @@ template <class T>
 template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
-	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
+	TZ_CHECK(!b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 #if TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
@@ -154,8 +154,7 @@ template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
-	TZ_CHECK(!a.broadcasted() && !b.broadcasted() && !c.broadcasted(),
-	         "can't apply on broadcasted tensors");
+	TZ_CHECK(!c.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 
 
