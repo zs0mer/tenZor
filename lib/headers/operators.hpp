@@ -80,7 +80,7 @@ template <class T>
 template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, TensorIMPL<T>& b, Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
-	TZ_CHECK(!a.broadcasted() && !b.broadcasted(), "can't apply on broadcasted tensors");
+	TZ_CHECK(!b.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 #if TZ_APPLY_ERROR_IF_SHAPE_NOT_SAME
 	TZ_CHECK(isSameShape(a, b), "not same size tensors in apply");
@@ -154,8 +154,7 @@ template <class Func, class IsGPUAvalable, class>
 void TensorIMPL<T>::apply(const TensorIMPL<T>& a, const TensorIMPL<T>& b, TensorIMPL<T>& c,
                           Func func, IsGPUAvalable) {
 #if TZ_IMMUTABLE_BROADCASTS
-	TZ_CHECK(!a.broadcasted() && !b.broadcasted() && !c.broadcasted(),
-	         "can't apply on broadcasted tensors");
+	TZ_CHECK(!c.broadcasted(), "can't apply on broadcasted tensors");
 #endif
 
 
@@ -329,65 +328,20 @@ Matrix<T> matmul(const Matrix<T>& a, const Matrix<T>& b) {
 #pragma omp parallel for
 	for (uint64_t i = 0; i < a.rows(); i++) {
 		for (uint64_t j = 0; j < b.cols(); j++) {
-			out.at(i, j) = 0;
+			const uint64_t* strides = out.tensor_().strides();
+			out.tensor_().data()[i * strides[0] + j * strides[1]] = 0;
 		}
 		for (uint64_t k = 0; k < a.cols(); k++) {
 			for (uint64_t j = 0; j < b.cols(); j++) {
-				out.at(i, j) += a.at(i, k) * b.at(k, j);
+				const uint64_t* stridesOut = out.tensor_().strides();
+				const uint64_t* stridesA = a.tensor_().strides();
+				const uint64_t* stridesB = b.tensor_().strides();
+
+				out.tensor_().data()[i * stridesOut[0] + j * stridesOut[1]] +=
+				    a.tensor_().data()[i * stridesA[0] + k * stridesA[1]] *
+				    b.tensor_().data()[k * stridesB[0] + j * stridesB[1]];
 			}
 		}
 	}
 	return out;
 }
-
-// ! don't use with integers
-// ! can't run on GPU
-// returns the determinant of the Matrix
-template <class T>
-Scalar<T> det(const Matrix<T>& m) {
-	// ? https://en.wikipedia.org/wiki/Gaussian_elimination
-	TZ_CHECK(m.rows() == m.cols(), "matrix must be square");
-	TZ_CHECK(m.device() == CPU, "can't use det() on GPU");
-
-	const uint64_t n = m.rows();
-
-	Matrix<T> A = m.clone();
-
-	T det = 1;
-
-	for (uint64_t k = 0; k < n; k++) {
-		// 1. Find pivot row
-		uint64_t pivot = k;
-		for (uint64_t i = k + 1; i < n; i++) {
-			if (std::abs(A.at(i, k)) > std::abs(A.at(pivot, k))) {
-				pivot = i;
-			}
-		}
-
-		// 2. If pivot is zero return 0
-		if (A.at(pivot, k) == T(0)) {
-			return Scalar<T>(0);
-		}
-
-		// 3. Swap rows if needed
-		if (pivot != k) {
-			A.swapRow(k, pivot);
-			det = -det;
-		}
-
-		// 4. Eliminate below rows k-th column
-		for (uint64_t i = k + 1; i < n; i++) {
-			T factor = A.at(i, k) / A.at(k, k);
-
-			for (uint64_t j = k + 1; j < n; j++) {
-				A.at(i, j) -= factor * A.at(k, j);
-			}
-		}
-
-		// 5. Multiply diagonal
-		det *= A.at(k, k);
-	}
-
-	return Scalar<T>(det);
-}
-}; // namespace tz

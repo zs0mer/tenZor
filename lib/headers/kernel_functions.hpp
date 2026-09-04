@@ -16,7 +16,7 @@ const constexpr std::uint8_t MAX_DIM = 4;
 }; // namespace impl
 namespace cuda {
 constexpr uint32_t THREADS = 256;
-constexpr uint32_t MAXBLOCKNUM = 64;
+constexpr uint32_t MAXBLOCKNUM = 2048;
 
 // # -------------------------
 

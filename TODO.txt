@@ -1,2 +1,5 @@
 using alignof() in mem::defaultAllocator...
 save for grads
+
+to benchmark:
+./bench | tee ../bench_results/$(git rev-parse --short HEAD).txt

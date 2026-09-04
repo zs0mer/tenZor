@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # # Build type flags
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=x86-64-v3 -ffast-math -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=x86-64-v3 -ffast-math")
 set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3 -fno-inline -fno-omit-frame-pointer")
 
 # # nvcc standard
@@ -83,7 +83,9 @@ if(USE_CUDA AND TESTS)
   add_executable(Tgpu_function  "${TEST_DIR}/gpu_function.cpp")
   add_executable(Tautograd      "${TEST_DIR}/autograd.cpp")
 
-  foreach(T Tallocator Tbuffer Ttensor Tother_classes Toperations Tgpu_function Tautograd)
+  add_executable(bench "${TEST_DIR}/bench.cpp")
+
+  foreach(T Tallocator Tbuffer Ttensor Tother_classes Toperations Tgpu_function Tautograd bench)
     target_include_directories(${T} PRIVATE ${INCLUDE_DIR})
     target_compile_definitions(${T} PRIVATE TZ_CUDA_AVAILABLE=1)
     target_link_libraries(${T} PRIVATE doctest::doctest tenzor_cuda OpenMP::OpenMP_CXX)

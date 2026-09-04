@@ -542,7 +542,7 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	Matrix(const std::initializer_list<std::initializer_list<T>>& t)
 	    : Base({t.size(), t.size() == 0 ? 0 : t.begin()[0].size()}, CPU) {
 		for (uint64_t i = 0; i < t.size(); i++)
-			for (uint64_t j = 0; j < t.begin()[i].size(); j++)
+			for (uint64_t j = 0; j < t.begin()[0].size(); j++)
 				this->t_.data()[i * this->t_.strides()[0] + j * this->t_.strides()[1]] =
 				    t.begin()[i].begin()[j];
 	}
@@ -568,7 +568,13 @@ class Matrix : public impl::TensorWrapper<Matrix<T>, T> {
 	}
 
 	// initializer with a Vector
-	Matrix(const Vector<T>& t) : Base(t.transpose().transpose().tensor_()) {}
+	Matrix(const Vector<T>& t) {
+		std::array<uint64_t, 2> shape = {t.tensor_().shape()[0], 1};
+		std::array<uint64_t, 2> strides = {t.tensor_().strides()[0], 1};
+
+		this->t_ = tz::impl::TensorIMPL<T>(2, shape.data(), strides.data(), t.tensor_().offset(),
+		                                   t.tensor_().buffer());
+	}
 
 	Matrix(const uint8_t dim, const uint64_t* shape, Device device = CPU)
 	    : Base(dim, shape, device) {

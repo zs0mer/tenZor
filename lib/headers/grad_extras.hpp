@@ -24,7 +24,7 @@ class SGD {
 		params_.push_back(&param);
 	}
 
-	void add(const std::vector<GradBase<T>*>& params) {
+	void add(const std::vector<GradBase<T>*> params) {
 		for (GradBase<T>* p : params)
 			params_.push_back(p);
 	}
@@ -64,7 +64,7 @@ class SGDmomentum {
 		momentum_.back().setAll(0);
 	}
 
-	void add(const std::vector<GradBase<T>*>& params) {
+	void add(const std::vector<GradBase<T>*> params) {
 		for (GradBase<T>* p : params) {
 			params_.push_back(p);
 
@@ -114,7 +114,7 @@ class RMSProp {
 		movingAverage_.back().setAll(0);
 	}
 
-	void add(const std::vector<GradBase<T>*>& params) {
+	void add(const std::vector<GradBase<T>*> params) {
 		for (GradBase<T>* p : params) {
 			params_.push_back(p);
 
@@ -174,7 +174,7 @@ class Adam {
 		movingAverage_.back().setAll(0);
 	}
 
-	void add(const std::vector<GradBase<T>*>& params) {
+	void add(const std::vector<GradBase<T>*> params) {
 		for (GradBase<T>* p : params) {
 			params_.push_back(p);
 
@@ -213,13 +213,14 @@ class Linear {
   private:
 	GradMatrix<T> weights_;
 	GradVector<T> bias_;
+
+	// this is needed, because we have to keep it alive before the backward
 	GradVector<T> tmp_;
-	std::vector<GradBase<T>*> params_;
 
   public:
 	Linear(uint64_t in, uint64_t out, Device device = CPU)
-	    : weights_(Matrix<T>(out, in, device)), bias_(Vector<T>(out, device)),
-	      params_({&weights_, &bias_}) {
+	    : weights_(Matrix<T>(out, in, device)), bias_(Vector<T>(out, device)) {
+
 		// He weight initialization (uniformly)
 		T scale = std::sqrt(T(6.0) / in);
 
@@ -227,8 +228,8 @@ class Linear {
 		weights_.val().apply(impl::RrandomUniform<T>(-scale, scale), impl::AnyDevice{});
 	}
 
-	const std::vector<GradBase<T>*>& parameters() {
-		return params_;
+	const std::vector<GradBase<T>*> parameters() {
+		return std::vector<GradBase<T>*>({&weights_, &bias_});
 	}
 
 	GradVector<T> operator()(const GradVector<T>& input) {

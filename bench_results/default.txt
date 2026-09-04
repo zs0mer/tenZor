@@ -1,0 +1,5 @@
+CPU: Intel Core i7-4790 @ 3.60 GHz
+GPU: NVIDIA GeForce GTX 1070
+Compiler: GCC 11.4.0
+CUDA: 11.8
+Build: Release

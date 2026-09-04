@@ -1,0 +1,19 @@
+runs: 13
+small Salloc (1B-4KB)                   31.6 ns ± 4.3%
+small Malloc (1B-4KB)                   79.1 ns ± 4.6%
+medium Salloc (8KB-512KB)               22.5 ns ±26.8%
+medium Malloc (8KB-512KB)                2.1 us ± 6.9%
+large Salloc (2MB-16MB)                 54.6 ns ±55.3%
+large Malloc (2MB-16MB)                  4.2 us ±10.3%
+Vector<float>(256) create+destroy       73.0 ns ±16.1%
+CPU a += b (~16M floats, 64MB)          11.7 ms ± 3.5%
+GPU a += b (~16M floats, 64MB)           1.1 ms ± 2.4%
+CPU matmul 256x256                       4.9 ms ± 8.0%      6.8 GF/s ± 7.8%
+CPU matmul 512x512                      34.0 ms ± 6.7%      7.9 GF/s ± 6.5%
+GPU matmul 256x256                      12.1 us ±12.2%   2768.9 GF/s ± 9.6%
+GPU matmul 512x512                      68.1 us ± 6.8%   3939.8 GF/s ± 5.9%
+GPU matmul 1024x1024                   479.9 us ± 5.6%   4475.3 GF/s ± 5.0%
+SGD train step CPU (2-8-8-1 nn)        165.0 us ±46.4%
+SGD train step GPU (2-8-8-1 nn)        630.5 us ± 3.8%
+SGD train step CPU (2-1000-1000-1 nn)   11.3 ms ±21.8%
+SGD train step GPU (2-1000-1000-1 nn)    1.5 ms ± 3.6%

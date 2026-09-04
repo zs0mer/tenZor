@@ -68,6 +68,7 @@ void TensorIMPL<T>::set(const uint64_t dim, const uint64_t* shape, Device device
 template <class T>
 void TensorIMPL<T>::set(const uint8_t dim, const uint64_t* shape, const uint64_t* strides,
                         const uint64_t offset, mem::Buffer data) {
+	TZ_CHECK_(dim <= MAX_DIM);
 	dim_ = dim;
 	offset_ = offset;
 	data_ = data;
